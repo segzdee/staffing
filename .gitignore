@@ -1,0 +1,27 @@
+/node_modules
+/public/hot
+/public/storage
+/public/temp
+/storage/*.key
+/vendor
+composer.lock
+.env
+.env.*
+.env copy
+.env.backup
+.env.production.backup
+.env.example.bak
+.phpunit.result.cache
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+.htaccess
+composer.lock
+storage
+storage/*
+
+# Large archive files
+public/*.zip
+*.zip

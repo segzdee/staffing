@@ -1,0 +1,22 @@
+/**
+ * OvertimeStaff Main Stylesheet
+ * shadcn/ui Inspired Clean Design
+ * Version: 3.0
+ */
+
+/* Tailwind CSS Layers */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Design System - CSS Variables and Base Styles */
+@import './design-system.css';
+
+/* Component Styles - shadcn-style components */
+@import './components.css';
+
+/* Global Form Styles */
+@import './forms.css';
+
+/* Inter Font Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');

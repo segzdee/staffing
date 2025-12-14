@@ -1,0 +1,69 @@
+version: "3.7"
+
+services:
+
+  web:
+    container_name: overtimestaff-nginx-${APP_ENV}
+    image: nginx:latest
+    restart: ${DOCKER_RESTART:-no}
+    build:
+      context: ./docker/nginx
+      args:
+        - UID=${UID:-1000}
+    environment:
+      - NGINX_SERVER_NAME=${APP_SERVER_NAME}
+      - NGINX_PORT=${APP_PORT}
+      - PHP_CONTAINER=overtimestaff-php-${APP_ENV}
+      - PHP_PORT=${PHP_PORT}
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/templates:/etc/nginx/templates
+    depends_on:
+      - php
+      - database
+  # node:
+  #   image: node:overtimestaff-node-${APP_ENV}
+  #   environment:
+  #   - NODE_OPTIONS=--openssl-legacy-provider
+  #   volumes:
+  #   - .:/var/www/html
+  #   entrypoint: ['npm']
+
+  php:
+    container_name: overtimestaff-php-${APP_ENV}
+    image: overtimestaff/php:7.4-fpm
+    restart: ${DOCKER_RESTART:-no}
+    build:
+      context: ./docker/php
+      args:
+        - UID=${UID:-1000}
+    environment:
+      - PHP_PORT=${PHP_PORT}
+    ports:
+      - "${PHP_PORT}:${PHP_PORT}"
+    volumes:
+      - .:/var/www/html
+      - ./docker/php/zz-docker.conf:/usr/local/etc/php-fpm.d/zz-docker.conf
+
+  database:
+    container_name: ${DB_HOST}
+    image: mysql:8.0
+    restart: ${DOCKER_RESTART:-no}
+    command: --authentication-policy=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_TCP_PORT: ${DB_PORT}
+    volumes:
+      - overtimestaff-database:/var/lib/mysql
+    cap_add:
+      - SYS_NICE
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+
+volumes:
+  overtimestaff-database:

@@ -6,6 +6,39 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property int $worker_id
+ * @property string $day_of_week
+ * @property \Illuminate\Support\Carbon $start_time
+ * @property \Illuminate\Support\Carbon $end_time
+ * @property bool $is_available
+ * @property array<array-key, mixed>|null $preferred_shift_types
+ * @property string $recurrence
+ * @property \Illuminate\Support\Carbon|null $effective_from
+ * @property \Illuminate\Support\Carbon|null $effective_until
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $worker
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule forDay($dayOfWeek)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereDayOfWeek($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereEffectiveFrom($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereEffectiveUntil($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereEndTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereIsAvailable($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule wherePreferredShiftTypes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereRecurrence($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereStartTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerAvailabilitySchedule whereWorkerId($value)
+ * @mixin \Eloquent
+ */
 class WorkerAvailabilitySchedule extends Model
 {
     use HasFactory;

@@ -129,16 +129,38 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <!-- Logo -->
-                    <a href="{{ url('/') }}" class="flex items-center">
-                        <img src="/images/logo.svg" alt="OvertimeStaff" class="h-8">
+                    <a href="{{ url('/') }}" class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                                <rect x="14" y="14" width="7" height="7" rx="1"/>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold tracking-tight">
+                            OVER<span class="text-blue-600">TIME</span>STAFF
+                        </span>
                     </a>
 
                     <!-- Navigation -->
                     <nav class="hidden md:flex items-center space-x-6">
                         <a href="{{ url('/') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Home</a>
-                        <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Browse Shifts</a>
-                        <a href="#" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
-                        <a href="#" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Contact</a>
+                        @guest
+                            <a href="{{ route('register', ['type' => 'worker']) }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Shifts</a>
+                            <a href="{{ route('register', ['type' => 'business']) }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Staff</a>
+                        @else
+                            @if(auth()->user()->user_type === 'worker')
+                                <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Shifts</a>
+                            @elseif(auth()->user()->user_type === 'business')
+                                <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Staff</a>
+                            @else
+                                <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Shifts</a>
+                                <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Staff</a>
+                            @endif
+                        @endguest
+                        <a href="{{ route('about') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
+                        <a href="{{ route('contact') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Contact</a>
                     </nav>
 
                     <!-- Auth Links -->

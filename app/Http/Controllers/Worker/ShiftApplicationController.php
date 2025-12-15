@@ -262,6 +262,23 @@ class ShiftApplicationController extends Controller
     }
 
     /**
+     * View a specific assignment.
+     */
+    public function showAssignment($id)
+    {
+        // Check authorization
+        if (!Auth::user()->isWorker()) {
+            abort(403, 'Only workers can view assignments.');
+        }
+
+        $assignment = ShiftAssignment::with(['shift.business', 'payment', 'shift.attachments'])
+            ->where('worker_id', Auth::id())
+            ->findOrFail($id);
+
+        return view('worker.assignments.show', compact('assignment'));
+    }
+
+    /**
      * View all assignments.
      */
     public function myAssignments(Request $request)

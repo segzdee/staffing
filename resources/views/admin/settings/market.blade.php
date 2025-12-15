@@ -6,7 +6,8 @@
 <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold mb-6">Live Shift Market Settings</h1>
 
-    <form method="POST" action="{{ route('admin.settings.market.update') }}" class="bg-white rounded-lg shadow p-6">
+    {{-- TODO: admin.settings.market.update route needs to be created in routes/web.php --}}
+    <form method="POST" action="{{ url('panel/admin/settings/market') }}" class="bg-white rounded-lg shadow p-6">
         @csrf
         @method('PUT')
 

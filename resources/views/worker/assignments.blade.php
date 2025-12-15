@@ -4,7 +4,7 @@
 @section('page-title', 'My Shifts')
 
 @section('sidebar-nav')
-<a href="{{ route('worker.dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+<a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
     </svg>
@@ -40,19 +40,19 @@
                 <div class="border border-gray-200 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h3 class="font-semibold text-gray-900">{{ $assignment->shift->title }}</h3>
-                            <p class="text-sm text-gray-600">{{ $assignment->shift->business->name }}</p>
+                            <h3 class="font-semibold text-gray-900">{{ $assignment->shift->title ?? 'Untitled Shift' }}</h3>
+                            <p class="text-sm text-gray-600">{{ $assignment->shift->business->name ?? 'Unknown Business' }}</p>
                             <p class="text-sm text-gray-500 mt-1">
-                                {{ $assignment->shift->shift_date }} •
-                                {{ $assignment->shift->start_time }} - {{ $assignment->shift->end_time }}
+                                {{ $assignment->shift->shift_date ?? 'Date TBD' }} •
+                                {{ $assignment->shift->start_time ?? '--:--' }} - {{ $assignment->shift->end_time ?? '--:--' }}
                             </p>
                         </div>
                         <div class="text-right">
                             <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                {{ ucfirst($assignment->status) }}
+                                {{ ucfirst($assignment->status ?? 'pending') }}
                             </span>
                             <p class="text-lg font-bold text-gray-900 mt-2">
-                                ${{ number_format($assignment->shift->final_rate, 2) }}/hr
+                                ${{ number_format($assignment->shift->final_rate ?? 0, 2) }}/hr
                             </p>
                         </div>
                     </div>

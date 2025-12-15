@@ -115,7 +115,12 @@
           <li><a class="link-footer url-user" href="{{ url(Auth::User()->username) }}">{{ auth()->user()->verified_id == 'yes' ? trans('general.my_page') : trans('users.my_profile') }}</a></li><li>
           <li><a class="link-footer" href="{{ url('settings/page') }}">{{ auth()->user()->verified_id == 'yes' ? trans('general.edit_my_page') : trans('users.edit_profile')}}</a></li><li>
           <li><a class="link-footer" href="{{ url('my/subscriptions') }}">{{ trans('users.my_subscriptions') }}</a></li><li>
-          <li><a class="link-footer" href="{{ url('logout') }}">{{ trans('users.logout') }}</a></li><li>
+          <li>
+            <form method="POST" action="{{ route('logout') }}" class="d-inline">
+              @csrf
+              <button type="submit" class="link-footer btn btn-link p-0 border-0 align-baseline">{{ trans('users.logout') }}</button>
+            </form>
+          </li><li>
       @endguest
 
       @guest

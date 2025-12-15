@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Payment;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Traits\Functions;
 use Illuminate\Http\Request;
 use App\Models\AdminSettings;
 use App\Models\Notifications;
@@ -21,6 +20,7 @@ use Stripe\PaymentIntent as StripePaymentIntent;
 use App\Models\User;
 use App\Models\ShiftPayment;
 use App\Models\ShiftAssignment;
+use App\Http\Controllers\Traits\Functions;
 
 class StripeWebHookController extends WebhookController
 {
@@ -173,7 +173,7 @@ class StripeWebHookController extends WebhookController
     public function handleChargeRefunded($payload)
     {
         try {
-          $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+          $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
           $stripe->subscriptions->cancel($payload['data']['object']['subscription'], []);
 
           return new Response('Webhook Handled: {handleChargeRefunded}', 200);

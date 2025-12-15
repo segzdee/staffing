@@ -7,6 +7,7 @@ use App\Services\LiveMarketService;
 use App\Services\DemoShiftService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class LiveMarketController extends Controller
 {
@@ -22,14 +23,126 @@ class LiveMarketController extends Controller
     }
 
     /**
-     * Get market shifts (API endpoint).
+     * Display the live market view for workers.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function marketView()
+    {
+        $shifts = Shift::with(['business', 'applications'])
+            ->where('status', 'open')
+            ->where('shift_date', '>=', now())
+            ->orderByRaw("CASE
+                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 4 THEN 1
+                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 12 THEN 2
+                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 24 THEN 3
+                ELSE 4 END")
+            ->orderBy('base_rate', 'desc')
+            ->paginate(8);
+
+        $stats = [
+            'available' => Shift::where('status', 'open')->where('shift_date', '>=', now())->count(),
+            'urgent' => Shift::where('status', 'open')
+                ->where('shift_date', '>=', now())
+                ->whereRaw('TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, " ", start_time)) < 12')
+                ->count(),
+            'avg_rate' => Shift::where('status', 'open')->where('shift_date', '>=', now())->avg('base_rate') ?? 0,
+            'total_spots' => Shift::where('status', 'open')->where('shift_date', '>=', now())->sum('required_workers') ?? 0,
+            'premium' => Shift::where('status', 'open')
+                ->where('shift_date', '>=', now())
+                ->where(function($q) {
+                    $q->where('surge_multiplier', '>', 1.0)
+                      ->orWhere('instant_claim_enabled', true);
+                })
+                ->count(),
+        ];
+
+        $tickerShifts = Shift::with('business')
+            ->where('status', 'open')
+            ->where('shift_date', '>=', now())
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view('worker.market.index', compact('shifts', 'stats', 'tickerShifts'));
+    }
+
+    /**
+     * API endpoint for live market updates.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function apiIndex()
+    {
+        $shifts = Shift::with(['business', 'applications'])
+            ->where('status', 'open')
+            ->where('shift_date', '>=', now())
+            ->orderByRaw("CASE
+                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 4 THEN 1
+                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 12 THEN 2
+                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 24 THEN 3
+                ELSE 4 END")
+            ->orderBy('base_rate', 'desc')
+            ->limit(8)
+            ->get();
+
+        $stats = [
+            'available' => Shift::where('status', 'open')->where('shift_date', '>=', now())->count(),
+            'urgent' => Shift::where('status', 'open')
+                ->where('shift_date', '>=', now())
+                ->whereRaw('TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, " ", start_time)) < 12')
+                ->count(),
+            'avg_rate' => Shift::where('status', 'open')->where('shift_date', '>=', now())->avg('base_rate') ?? 0,
+            'total_spots' => Shift::where('status', 'open')->where('shift_date', '>=', now())->sum('required_workers') ?? 0,
+            'premium' => Shift::where('status', 'open')
+                ->where('shift_date', '>=', now())
+                ->where(function($q) {
+                    $q->where('surge_multiplier', '>', 1.0)
+                      ->orWhere('instant_claim_enabled', true);
+                })
+                ->count(),
+        ];
+
+        return response()->json([
+            'shifts' => $shifts->map(function($shift) {
+                return [
+                    'id' => $shift->id,
+                    'title' => $shift->title,
+                    'business_name' => $shift->business?->name ?? $shift->demo_business_name ?? 'Business',
+                    'location_city' => $shift->location_city,
+                    'shift_date' => $shift->shift_date?->format('Y-m-d'),
+                    'start_time' => is_string($shift->start_time) ? $shift->start_time : $shift->start_time?->format('H:i'),
+                    'end_time' => is_string($shift->end_time) ? $shift->end_time : $shift->end_time?->format('H:i'),
+                    'base_rate' => $shift->base_rate,
+                    'final_rate' => $shift->final_rate,
+                    'urgency' => $shift->urgency,
+                    'rate_color' => $shift->rate_color,
+                    'rate_change' => $shift->rate_change,
+                    'time_away' => $shift->time_away,
+                    'formatted_date' => $shift->formatted_date,
+                    'availability_color' => $shift->availability_color,
+                    'filled' => $shift->filled,
+                    'spots_remaining' => $shift->spots_remaining,
+                    'required_workers' => $shift->required_workers,
+                    'has_applied' => $shift->has_applied,
+                    'color' => $shift->color,
+                    'instant_claim_enabled' => $shift->instant_claim_enabled ?? false,
+                    'surge_multiplier' => $shift->surge_multiplier ?? 1.0,
+                ];
+            }),
+            'stats' => $stats,
+        ]);
+    }
+
+    /**
+     * Get market shifts (API endpoint - original method).
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
     {
-        $worker = Auth::check() && Auth::user()->role === 'worker' ? Auth::user() : null;
+        $worker = Auth::check() && Auth::user()->user_type === 'worker' ? Auth::user() : null;
 
         $filters = $request->only([
             'industry',
@@ -101,7 +214,7 @@ class LiveMarketController extends Controller
      */
     public function apply(Request $request, Shift $shift)
     {
-        if (!Auth::check() || Auth::user()->role !== 'worker') {
+        if (!Auth::check() || Auth::user()->user_type !== 'worker') {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can apply to shifts',
@@ -140,7 +253,7 @@ class LiveMarketController extends Controller
      */
     public function instantClaim(Shift $shift)
     {
-        if (!Auth::check() || Auth::user()->role !== 'worker') {
+        if (!Auth::check() || Auth::user()->user_type !== 'worker') {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can claim shifts',
@@ -172,7 +285,7 @@ class LiveMarketController extends Controller
      */
     public function agencyAssign(Request $request, Shift $shift)
     {
-        if (!Auth::check() || Auth::user()->role !== 'agency') {
+        if (!Auth::check() || Auth::user()->user_type !== 'agency') {
             return response()->json([
                 'success' => false,
                 'message' => 'Only agencies can assign workers',

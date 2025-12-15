@@ -1,572 +1,157 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <meta name="_token" content="{!! csrf_token() !!}"/>
-    <title>{{ trans('admin.admin') }}</title>
-    <!-- Tell the browser to be responsive to screen width -->
-    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    @include('includes.css_admin')
+    <title>@yield('title', 'Admin Panel') - {{ config('app.name', 'OvertimeStaff') }}</title>
 
-    <!-- IcoMoon CSS -->
-    <link href="{{ asset('css/icomoon.css') }}" rel="stylesheet">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- AdminLTE Skins. Choose a skin from the css/skins
-        folder instead of downloading all of them to reduce the load. -->
-    <link href="{{ asset('admin/css/skins/skin-black.min.css')}}" rel="stylesheet" type="text/css" />
+    <!-- Vite -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <link rel="shortcut icon" href="{{ url('img', $settings->favicon) }}" />
-
-    <link href='//fonts.googleapis.com/css?family=Montserrat:700' rel='stylesheet' type='text/css'>
-
-    <link href="{{ asset('plugins/sweetalert/sweetalert.css')}}" rel="stylesheet" type="text/css" />
-
+    <!-- Custom CSS -->
     @yield('css')
-
-  <script type="text/javascript">
-    var URL_BASE = "{{ url('/') }}";
-    var url_file_upload = "{{route('upload.image', ['_token' => csrf_token()])}}";
-    var delete_confirm = "{{trans('general.delete_confirm')}}";
-    var yes_confirm = "{{trans('general.yes_confirm')}}";
-    var yes = "{{trans('general.yes')}}";
-    var cancel_confirm = "{{trans('general.cancel_confirm')}}";
-    var timezone = "{{env('TIMEZONE')}}";
-    var add_tag = "{{ trans("general.add_tag") }}";
-    var choose_image = '{{trans('general.choose_image')}}';
-    var formats_available = "{{ trans('general.formats_available_verification_form_w9', ['formats' => 'JPG, PNG, GIF, SVG']) }}";
-    var cancel_payment = "{!!trans('general.confirm_cancel_payment')!!}";
-    var yes_cancel_payment = "{{trans('general.yes_cancel_payment')}}";
-    var approve_confirm_verification = "{{trans('admin.approve_confirm_verification')}}";
-    var yes_confirm_approve_verification = "{{trans('admin.yes_confirm_approve_verification')}}";
-    var yes_confirm_verification = "{{trans('admin.yes_confirm_verification')}}";
-    var delete_confirm_verification = "{{trans('admin.delete_confirm_verification')}}";
-    var login_as_user_warning = "{{trans('general.login_as_user_warning')}}";
-    var yes_confirm_reject_post = "{{trans('general.yes_confirm_reject_post')}}";
-    var delete_confirm_post = "{{trans('general.delete_confirm_post')}}";
-    var yes_confirm_approve_post = "{{trans('general.yes_confirm_approve_post')}}";
-    var approve_confirm_post = "{{trans('general.approve_confirm_post')}}";
-    var yes_confirm_refund = "{{trans('general.refund')}}";
-  </script>
-
-  </head>
-  <!--
-  BODY TAG OPTIONS:
-  =================
-  Apply one or more of the following classes to get the
-  desired effect
-  |---------------------------------------------------------|
-  | SKINS         | skin-blue                               |
-  |               | skin-black                              |
-  |               | skin-purple                             |
-  |               | skin-yellow                             |
-  |               | skin-red                                |
-  |               | skin-green                              |
-  |---------------------------------------------------------|
-  |LAYOUT OPTIONS | fixed                                   |
-  |               | layout-boxed                            |
-  |               | layout-top-nav                          |
-  |               | sidebar-collapse                        |
-  |               | sidebar-mini                            |
-  |---------------------------------------------------------|
-  -->
-  
-  <body class="skin-black sidebar-mini">
-    <div class="wrapper">
-
-      <!-- Main Header -->
-      <header class="main-header">
-
-        <!-- Logo -->
-        <a href="{{ url('panel/admin') }}" class="logo">
-          <!-- mini logo for sidebar mini 50x50 pixels -->
-          <span class="logo-mini"><b><i class="fas fa-bolt"></i></b></span>
-          <!-- logo for regular state and mobile devices -->
-          <span class="logo-lg"><b><i class="fas fa-bolt"></i> {{ trans('admin.admin') }}</b></span>
-        </a>
-
-        <!-- Header Navbar -->
-        <nav class="navbar navbar-static-top" role="navigation">
-          <!-- Sidebar toggle button-->
-          <a href="#" class="sidebar-toggle border-none" data-toggle="offcanvas" role="button">
-            <i class="fa fa-bars"></i>
-          </a>
-          <!-- Navbar Right Menu -->
-          <div class="navbar-custom-menu">
-            <ul class="nav navbar-nav">
-
-            	<li>
-            		<a href="{{ url('/') }}" class="border-none"><i class="glyphicon glyphicon-home myicon-right"></i> {{ trans('admin.view_site') }}</a>
-            	</li>
-
-          <li class="dropdown notifications-menu d-none">
-            <a href="#" class="dropdown-toggle border-none" data-toggle="dropdown" aria-expanded="false">
-              <i class="fa fa-bell"></i>
-              <span class="label label-danger">1</span>
-            </a>
-            <ul class="dropdown-menu">
-              <li class="header">Notifications</li>
-              <li>
-                <!-- inner menu: contains the actual data -->
-                <ul class="menu">
-                  <li>
-                    <a href="#">
-                      <i class="fa fa-users text-aqua"></i> 5 new members joined today
-                    </a>
-                  </li>
-                </ul>
-              </li>
-              <li class="footer"><a href="#">View all</a></li>
-            </ul>
-          </li>
-
-              <!-- User Account Menu -->
-              <li class="dropdown user user-menu">
-                <!-- Menu Toggle Button -->
-                <a href="#" class="dropdown-toggle border-none" data-toggle="dropdown">
-                  <!-- The user image in the navbar-->
-                  <img src="{{ Helper::getFile(config('path.avatar').auth()->user()->avatar) }}" class="user-image" alt="User Image" />
-                  <!-- hidden-xs hides the username on small devices so only the image appears. -->
-                  <span class="hidden-xs">{{ Auth::user()->name }}</span> <i class="fas fa-angle-down margin-left-5"></i>
+</head>
+<body class="font-sans antialiased bg-gray-50" x-data="{ sidebarOpen: false }">
+    <div class="min-h-screen">
+        <!-- Sidebar -->
+        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0"
+               :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+            <!-- Sidebar Header -->
+            <div class="h-16 flex items-center justify-between px-6 border-b border-gray-200">
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2 text-lg font-semibold text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    <span>Admin Panel</span>
                 </a>
-                <ul class="dropdown-menu">
-                  <!-- The user image in the menu -->
-                  <li class="user-header">
-                    <img src="{{ Helper::getFile(config('path.avatar').auth()->user()->avatar) }}" class="img-circle" alt="User Image" />
-                    <p>
-                      <small>{{ Auth::user()->name }}</small>
-                    </p>
-                  </li>
-
-                  <!-- Menu Footer-->
-                  <li class="user-footer">
-                    <div class="pull-left">
-                      <a href="{{ url('settings/page') }}" class="btn btn-default btn-flat">{{ trans('general.edit_my_page') }}</a>
-                    </div>
-                    <div class="pull-right">
-                      <a href="{{ url('logout') }}" class="btn btn-default btn-flat">{{ trans('users.logout') }}</a>
-                    </div>
-                  </li>
-                </ul>
-              </li>
-
-            </ul>
-          </div>
-        </nav>
-      </header>
-      <!-- Left side column. contains the logo and sidebar -->
-      <aside class="main-sidebar">
-
-        <!-- sidebar: style can be found in sidebar.less -->
-        <section class="sidebar">
-
-          <!-- Sidebar user panel (optional) -->
-          <div class="user-panel">
-            <div class="pull-left image">
-              <img src="{{ Helper::getFile(config('path.avatar').auth()->user()->avatar) }}" class="img-circle" alt="User Image" />
+                <button @click="sidebarOpen = false" class="lg:hidden text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
             </div>
-            <div class="pull-left info">
-              <p class="text-overflow">{{ Auth::user()->name }}</p>
-              <small class="btn-block text-overflow"><a href="javascript:void(0);"><i class="fa fa-circle text-success"></i> {{ trans('general.online') }}</a></small>
-            </div>
-          </div>
 
+            <!-- Admin Navigation -->
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                @php
+                    $adminNav = config('dashboard.navigation.admin', []);
+                @endphp
 
-          <!-- Sidebar Menu -->
-          <ul class="sidebar-menu">
+                @foreach($adminNav as $item)
+                    <a href="{{ route($item['route']) }}"
+                       class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                              {{ request()->routeIs($item['active']) ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}"/>
+                        </svg>
+                        <span>{{ $item['label'] }}</span>
+                        @if(isset($item['badge']) && $item['badge'] > 0)
+                            <span class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+                                {{ $item['badge'] }}
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            </nav>
+        </aside>
 
-            <li class="header">{{ trans('admin.main_menu') }}</li>
+        <!-- Mobile sidebar overlay -->
+        <div x-show="sidebarOpen"
+             @click="sidebarOpen = false"
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+             style="display: none;"></div>
 
-            @if (auth()->user()->hasPermission('dashboard'))
-              <!-- Links -->
-              <li @if (Request::is('panel/admin')) class="active" @endif>
-              	<a href="{{ url('panel/admin') }}"><i class="iconmoon icon-Speedometter myicon-right"></i> <span>{{ trans('admin.dashboard') }}</span></a>
-              </li><!-- ./Links -->
-            @endif
+        <!-- Main Content -->
+        <div class="lg:pl-64">
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-gray-200 sticky top-0 z-30">
+                <div class="h-full px-4 flex items-center justify-between">
+                    <!-- Mobile menu button -->
+                    <button @click="sidebarOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
 
-            @if (auth()->user()->hasPermission('shifts'))
-            <!-- Shift Management -->
-            <li class="treeview @if( Request::is('panel/admin/shifts*') ) active @endif">
-            	<a href="{{ url('panel/admin/shifts') }}"><i class="fa fa-calendar"></i> <span>Shift Management</span> <i class="fa fa-angle-left pull-right"></i></a>
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/shifts') && !Request::is('panel/admin/shifts/*')) class="active" @endif><a href="{{ url('panel/admin/shifts') }}"><i class="fas fa fa-angle-right"></i> All Shifts</a></li>
-                <li @if(Request::is('panel/admin/shifts/flagged/review')) class="active" @endif><a href="{{ url('panel/admin/shifts/flagged/review') }}"><i class="fas fa fa-angle-right"></i> Flagged Shifts</a></li>
-                <li @if(Request::is('panel/admin/shifts/statistics/view')) class="active" @endif><a href="{{ url('panel/admin/shifts/statistics/view') }}"><i class="fas fa fa-angle-right"></i> Statistics</a></li>
-              </ul>
-            </li><!-- ./Shift Management -->
-            @endif
+                    <!-- Page Title -->
+                    <div class="flex-1 lg:ml-0 ml-4">
+                        <h1 class="text-xl font-semibold text-gray-900">@yield('title', 'Admin Panel')</h1>
+                    </div>
 
-            @if (auth()->user()->hasPermission('payments'))
-            <!-- Payment Management -->
-            <li class="treeview @if( Request::is('panel/admin/payments*') && !Request::is('panel/admin/payments/settings*') ) active @endif">
-            	<a href="{{ url('panel/admin/payments') }}"><i class="fa fa-money-bill-wave"></i> <span>Payment Management</span> <i class="fa fa-angle-left pull-right"></i></a>
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/payments') && !Request::is('panel/admin/payments/*')) class="active" @endif><a href="{{ url('panel/admin/payments') }}"><i class="fas fa fa-angle-right"></i> All Payments</a></li>
-                <li @if(Request::is('panel/admin/payments/disputes')) class="active" @endif><a href="{{ url('panel/admin/payments/disputes') }}"><i class="fas fa fa-angle-right"></i> Disputes</a></li>
-                <li @if(Request::is('panel/admin/payments/statistics')) class="active" @endif><a href="{{ url('panel/admin/payments/statistics') }}"><i class="fas fa fa-angle-right"></i> Statistics</a></li>
-              </ul>
-            </li><!-- ./Payment Management -->
-            @endif
+                    <!-- User Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open"
+                                class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-100">
+                            <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center text-white text-sm font-semibold">
+                                {{ substr(auth()->user()->name ?? 'A', 0, 1) }}
+                            </div>
+                            <span class="hidden sm:block">{{ auth()->user()->name }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
 
-            @if (auth()->user()->hasPermission('workers'))
-            <!-- Worker Management -->
-            <li class="treeview @if( Request::is('panel/admin/workers*') ) active @endif">
-            	<a href="{{ url('panel/admin/workers') }}"><i class="fa fa-users"></i> <span>Worker Management</span> <i class="fa fa-angle-left pull-right"></i></a>
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/workers') && !Request::is('panel/admin/workers/*')) class="active" @endif><a href="{{ url('panel/admin/workers') }}"><i class="fas fa fa-angle-right"></i> All Workers</a></li>
-                <li @if(Request::is('panel/admin/workers/skills')) class="active" @endif><a href="{{ url('panel/admin/workers/skills') }}"><i class="fas fa fa-angle-right"></i> Skills Management</a></li>
-                <li @if(Request::is('panel/admin/workers/certifications')) class="active" @endif><a href="{{ url('panel/admin/workers/certifications') }}"><i class="fas fa fa-angle-right"></i> Certifications</a></li>
-              </ul>
-            </li><!-- ./Worker Management -->
-            @endif
+                        <!-- Dropdown Menu -->
+                        <div x-show="open"
+                             @click.away="open = false"
+                             x-transition:enter="transition ease-out duration-100"
+                             x-transition:enter-start="transform opacity-0 scale-95"
+                             x-transition:enter-end="transform opacity-100 scale-100"
+                             x-transition:leave="transition ease-in duration-75"
+                             x-transition:leave-start="transform opacity-100 scale-100"
+                             x-transition:leave-end="transform opacity-0 scale-95"
+                             class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1"
+                             style="display: none;">
 
-            @if (auth()->user()->hasPermission('businesses'))
-            <!-- Business Management -->
-            <li class="treeview @if( Request::is('panel/admin/businesses*') ) active @endif">
-            	<a href="{{ url('panel/admin/businesses') }}"><i class="fa fa-building"></i> <span>Business Management</span> <i class="fa fa-angle-left pull-right"></i></a>
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/businesses') && !Request::is('panel/admin/businesses/*')) class="active" @endif><a href="{{ url('panel/admin/businesses') }}"><i class="fas fa fa-angle-right"></i> All Businesses</a></li>
-              </ul>
-            </li><!-- ./Business Management -->
-            @endif
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->name }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ auth()->user()->email }}</p>
+                            </div>
 
-            @if (auth()->user()->hasPermission('general'))
-           <!-- Links -->
-            <li class="treeview @if( Request::is('panel/admin/settings') || Request::is('panel/admin/settings/limits') ) active @endif">
-            	<a href="{{ url('panel/admin/settings') }}"><i class="fa fa-cogs"></i> <span>{{ trans('admin.general_settings') }}</span> <i class="fa fa-angle-left pull-right"></i></a>
+                            <a href="{{ route('settings.index') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Settings
+                            </a>
 
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/settings')) class="active" @endif><a href="{{ url('panel/admin/settings') }}"><i class="fas fa fa-angle-right"></i> {{ trans('admin.general') }}</a></li>
-                <li @if(Request::is('panel/admin/settings/limits')) class="active" @endif><a href="{{ url('panel/admin/settings/limits') }}"><i class="fas fa fa-angle-right"></i> {{ trans('admin.limits') }}</a></li>
-              </ul>
-            </li><!-- ./Links -->
-          @endif
+                            <div class="border-t border-gray-100 my-1"></div>
 
-          @if (auth()->user()->hasPermission('announcements'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/announcements')) class="active" @endif>
-            	<a href="{{ url('panel/admin/announcements') }}"><i class="fa fa-bullhorn"></i> <span>{{ trans('general.announcements') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors text-left">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    Sign Out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-          @if (auth()->user()->hasPermission('maintenance'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/maintenance/mode')) class="active" @endif>
-            	<a href="{{ url('panel/admin/maintenance/mode') }}"><i class="fa fa-paint-roller"></i> <span>{{ trans('admin.maintenance_mode') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
+            <!-- Page Content -->
+            <main class="p-6">
+                @yield('content')
+            </main>
+        </div>
+    </div>
 
-          @if (auth()->user()->hasPermission('billing'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/billing')) class="active" @endif>
-            	<a href="{{ url('panel/admin/billing') }}"><i class="fa fa-file-invoice"></i> <span>{{ trans('general.billing_information') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('tax'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/tax-rates')) class="active" @endif>
-            	<a href="{{ url('panel/admin/tax-rates') }}"><i class="fa fa-receipt"></i> <span>{{ trans('general.tax_rates') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('countries_states'))
-            <!-- Links -->
-            <li class="treeview @if( Request::is('panel/admin/countries') || Request::is('panel/admin/states') ) active @endif">
-            	<a href="{{ url('panel/admin/countries') }}"><i class="fa fa-globe"></i> <span>{{ trans('general.countries_states') }}</span> <i class="fa fa-angle-left pull-right"></i></a>
-
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/countries')) class="active" @endif><a href="{{ url('panel/admin/countries') }}"><i class="fas fa fa-angle-right"></i> {{ trans('general.countries') }}</a></li>
-                <li @if(Request::is('panel/admin/states')) class="active" @endif><a href="{{ url('panel/admin/states') }}"><i class="fas fa fa-angle-right"></i> {{ trans('general.states') }}</a></li>
-              </ul>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('email'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/settings/email')) class="active" @endif>
-            	<a href="{{ url('panel/admin/settings/email') }}"><i class="fa fa-at"></i> <span>{{ trans('admin.email_settings') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('live_streaming'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/live-streaming')) class="active" @endif>
-            	<a href="{{ url('panel/admin/live-streaming') }}"><i class="fa fa-video"></i> <span>{{ trans('general.live_streaming') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('shop'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/shop')) class="active" @endif>
-            	<a href="{{ url('panel/admin/shop') }}"><i class="fa fa-store"></i> <span>{{ trans('general.shop') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('products'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/products')) class="active" @endif>
-            	<a href="{{ url('panel/admin/products') }}"><i class="fa fa-tag"></i> <span>{{ trans('general.products') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('sales'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/sales')) class="active" @endif>
-            	<a href="{{ url('panel/admin/sales') }}"><i class="fa fa-shopping-cart"></i> <span>{{ trans('general.sales') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('storage'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/storage')) class="active" @endif>
-            	<a href="{{ url('panel/admin/storage') }}"><i class="fa fa-database"></i> <span>{{ trans('admin.storage') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('theme'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/theme')) class="active" @endif>
-            	<a href="{{ url('panel/admin/theme') }}"><i class="fa fa-paint-brush"></i> <span>{{ trans('admin.theme') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('custom_css_js'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/custom-css-js')) class="active" @endif>
-            	<a href="{{ url('panel/admin/custom-css-js') }}"><i class="fa fa-code"></i> <span>{{ trans('general.custom_css_js') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('posts'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/posts')) class="active" @endif>
-            	<a href="{{ url('panel/admin/posts') }}"><i class="fa fa-user-edit"></i>
-                <span>Shifts</span>
-                @if (\App\Models\Shift::where('status','open')->count() != 0)
-                  <span class="label label-warning label-admin">{{\App\Models\Shift::where('status','open')->count()}}</span>
-                @endif
-              </a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('subscriptions'))
-            <!-- Links -->
-            <li class="@if( Request::is('panel/admin/subscriptions') ) active @endif">
-            	<a href="{{ url('panel/admin/subscriptions') }}"><i class="fa fa-dollar-sign"></i> <span>{{ trans('admin.subscriptions') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('transactions'))
-            <!-- Links -->
-            <li class="@if( Request::is('panel/admin/transactions') ) active @endif">
-            	<a href="{{ url('panel/admin/transactions') }}"><i class="fa fa-file-invoice-dollar"></i> <span>{{ trans('admin.transactions') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('deposits'))
-            <!-- Links -->
-           <li @if (Request::is('panel/admin/deposits')) class="active" @endif>
-             <a href="{{ url('panel/admin/deposits') }}"><i class="fa fa-money-bill-alt"></i>
-               <span>Payments</span>
-               @if(\App\Models\ShiftPayment::where('status','in_escrow')->count() != 0)
-                 <span class="label label-warning label-admin">{{\App\Models\ShiftPayment::where('status','in_escrow')->count()}}</span>
-               @endif
-             </a>
-           </li><!-- ./Links -->
-         @endif
-
-         @if (auth()->user()->hasPermission('members'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/members')) class="active" @endif>
-            	<a href="{{ url('panel/admin/members') }}"><i class="glyphicon glyphicon-user"></i> <span>{{ trans('admin.members') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('referrals'))
-             <!-- Links -->
-             <li @if(Request::is('panel/admin/referrals')) class="active" @endif>
-             	<a href="{{ url('panel/admin/referrals') }}"><i class="fa fa-user-plus"></i> <span>{{ trans('general.referrals') }}</span></a>
-             </li><!-- ./Links -->
-           @endif
-
-          @if (auth()->user()->hasPermission('languages'))
-            <!-- Links -->
-           <li @if(Request::is('panel/admin/languages')) class="active" @endif>
-             <a href="{{ url('panel/admin/languages') }}"><i class="fa fa-language"></i> <span>{{ trans('admin.languages') }}</span></a>
-           </li><!-- ./Links -->
-         @endif
-
-         @if (auth()->user()->hasPermission('categories'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/categories')) class="active" @endif>
-            	<a href="{{ url('panel/admin/categories') }}"><i class="fa fa-list-ul"></i> <span>{{ trans('admin.categories') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('reports'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/reports')) class="active" @endif>
-            	<a href="{{ url('panel/admin/reports') }}"><i class="glyphicon glyphicon-ban-circle"></i> <span>
-                Disputes
-                @if(\App\Models\AdminDisputeQueue::where('status','pending')->count() != 0)
-                  <span class="label label-danger label-admin">{{\App\Models\AdminDisputeQueue::where('status','pending')->count()}}</span>
-                @endif
-              </span>
-            </a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('withdrawals'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/withdrawals')) class="active" @endif>
-            	<a href="{{ url('panel/admin/withdrawals') }}"><i class="fa fa-university"></i> <span>
-                Payouts
-                @if(\App\Models\ShiftPayment::where('status','pending_payout')->count() != 0)
-                  <span class="label label-warning label-admin">{{\App\Models\ShiftPayment::where('status','pending_payout')->count()}}</span>
-                @endif
-              </span>
-            </a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('verification_requests'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/verification/members')) class="active" @endif>
-            	<a href="{{ url('panel/admin/verification/members') }}"><i class="far fa-check-circle myicon-right"></i>
-                <span>Verifications
-                  @if (\App\Models\VerificationQueue::where('status','pending')->count() != 0)
-                    <span class="label label-warning label-admin">{{\App\Models\VerificationQueue::where('status','pending')->count()}}</span>
-                  @endif
-                </span>
-              </a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('pages'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/pages')) class="active" @endif>
-            	<a href="{{ url('panel/admin/pages') }}"><i class="glyphicon glyphicon-file"></i> <span>{{ trans('admin.pages') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('blog'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/blog')) class="active" @endif>
-            	<a href="{{ url('panel/admin/blog') }}"><i class="fa fa-pencil-alt"></i> <span>{{ trans('general.blog') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('payments'))
-            <!-- Links -->
-            <li class="treeview @if(Request::is('panel/admin/payments') || Request::is('panel/admin/payments/*')) active @endif">
-            	<a href="{{ url('panel/admin/payments') }}"><i class="fa fa-credit-card"></i> <span>{{ trans('admin.payment_settings') }}</span> <i class="fa fa-angle-left pull-right"></i></a>
-
-           		<ul class="treeview-menu">
-                <li @if(Request::is('panel/admin/payments')) class="active" @endif><a href="{{ url('panel/admin/payments') }}"><i class="fas fa fa-angle-right"></i> {{ trans('admin.general') }}</a></li>
-
-                  {{-- TODO: Replace with OvertimeStaff payment gateway settings --}}
-                  {{-- <?php
-                  foreach (PaymentGateways::all() as $key) {
-                    ?>
-                    <li @if(Request::is('panel/admin/payments/'.$key->id)) class="active" @endif>
-                      <a href="{{ url('panel/admin/payments/'.$key->id) }}"><i class="fas fa fa-angle-right"></i> {{ $key->type == 'bank' ? trans('general.bank_transfer') : $key->name }}</a>
-                    </li>
-                <?php
-                  } --}}
-                  <li><a href="{{ url('panel/admin/payments/stripe') }}"><i class="fas fa fa-angle-right"></i> Stripe Connect</a></li>
-                ?>
-              </ul>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('profiles_social'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/profiles-social')) class="active" @endif>
-            	<a href="{{ url('panel/admin/profiles-social') }}"><i class="fa fa-share-alt"></i> <span>{{ trans('admin.profiles_social') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('social_login'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/social-login')) class="active" @endif>
-            	<a href="{{ url('panel/admin/social-login') }}"><i class="fab fa-facebook myicon-right"></i> <span>{{ trans('admin.social_login') }}</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('google'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/google')) class="active" @endif>
-            	<a href="{{ url('panel/admin/google') }}"><i class="fab fa-google myicon-right"></i> <span>Google</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          @if (auth()->user()->hasPermission('pwa'))
-            <!-- Links -->
-            <li @if(Request::is('panel/admin/pwa')) class="active" @endif>
-            	<a href="{{ url('panel/admin/pwa') }}"><i class="fa fa-mobile-alt myicon-right"></i> <span>PWA</span></a>
-            </li><!-- ./Links -->
-          @endif
-
-          
-          {{-- LOGS @if (auth()->user()->hasPermission('pwa')) --}}
-          <!-- Links -->
-          <li @if(Request::is('panel/admin/pwa')) class="active" @endif>
-            <a href="{{ url('panel/admin/pwa') }}"><i class="fa fa-mobile-alt myicon-right"></i> <span>PWA</span></a>
-          </li><!-- ./Links -->
-          <li><a href="{{url('/panel/admin/creator-report')}}"><i class="fa fa-bug"></i>Creator report</a></li>
-        {{-- @endif --}}
-
-          </ul><!-- /.sidebar-menu -->
-        </section>
-        <!-- /.sidebar -->
-      </aside>
-
-      @yield('content')
-
-      <!-- Main Footer -->
-      <footer class="main-footer">
-        <!-- Default to the left -->
-       &copy; <strong>{{ $settings->title }} v{{$settings->version}}</strong> - <?php echo date('Y'); ?>
-      </footer>
-
-    </div><!-- ./wrapper -->
-
-    <!-- REQUIRED JS SCRIPTS -->
-
-    <script src="{{ asset('plugins/jQuery/jQuery-2.1.4.min.js')}}" type="text/javascript"></script>
-    <script src="{{ asset('bootstrap/js/bootstrap.min.js')}}" type="text/javascript"></script>
-    <script src="{{ asset('plugins/fastclick/fastclick.min.js')}}" type="text/javascript"></script>
-    <script src="{{ asset('admin/js/app.min.js')}}" type="text/javascript"></script>
-    <script src="{{ asset('plugins/sweetalert/sweetalert.min.js')}}" type="text/javascript"></script>
-    <script src="{{ asset('plugins/iCheck/icheck.min.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('js/ckeditor/ckeditor.js')}}"></script>
-    <script src="{{ asset('plugins/select2/select2.full.min.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('plugins/tagsinput/jquery.tagsinput.min.js') }}" type="text/javascript"></script>
-    <script src="{{{ asset('plugins/colorpicker/bootstrap-colorpicker.min.js') }}}" type="text/javascript"></script>
-    <script src="{{ asset('admin/js/functions.js')}}?v={{$settings->version}}" type="text/javascript"></script>
-
+    <!-- Custom JavaScript -->
     @yield('javascript')
-
-    @if (session('success_update'))
-      <script type="text/javascript">
-          swal({
-            title: "{{ session('success_update') }}",
-            type: "success",
-            confirmButtonText: "{{ trans('users.ok') }}"
-            });
-        </script>
-    	 @endif
-
-		 @if (session('unauthorized'))
-       <script type="text/javascript">
-    		swal({
-    			title: "{{ trans('general.error_oops') }}",
-    			text: "{{ session('unauthorized') }}",
-    			type: "error",
-    			confirmButtonText: "{{ trans('users.ok') }}"
-    			});
-          </script>
-   		 @endif
-  </body>
+</body>
 </html>

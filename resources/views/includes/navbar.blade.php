@@ -275,12 +275,15 @@
 				</li>
 
 				<li class="nav-item dropdown d-lg-none mb-2">
-					<a href="{{ url('logout') }}" class="nav-link px-2 link-menu-mobile py-1">
-						<div>
-							<i class="feather icon-log-out mr-2"></i>
-							<span class="d-lg-none">{{ trans('auth.logout') }}</span>
-						</div>
-					</a>
+					<form method="POST" action="{{ route('logout') }}" class="m-0">
+						@csrf
+						<button type="submit" class="nav-link px-2 link-menu-mobile py-1 btn btn-link text-left w-100 border-0">
+							<div>
+								<i class="feather icon-log-out mr-2"></i>
+								<span class="d-lg-none">{{ trans('auth.logout') }}</span>
+							</div>
+						</button>
+					</form>
 				</li>
 				<!-- =========== End Menu Mobile ============-->
 
@@ -397,7 +400,10 @@
 						@endif
 
 						<div class="dropdown-divider dropdown-navbar"></div>
-						<a class="dropdown-item dropdown-navbar" href="{{url('logout')}}"><i class="feather icon-log-out mr-2"></i> {{trans('auth.logout')}}</a>
+						<form method="POST" action="{{ route('logout') }}" class="m-0">
+							@csrf
+							<button type="submit" class="dropdown-item dropdown-navbar btn btn-link text-left w-100 border-0"><i class="feather icon-log-out mr-2"></i> {{trans('auth.logout')}}</button>
+						</form>
 					</div>
 				</li>
 

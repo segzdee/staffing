@@ -291,19 +291,14 @@ class LoginController extends Controller
         }
 
         // Route based on user type
-        if ($user->isWorker()) {
-            return redirect()->route('worker.dashboard');
-        } elseif ($user->isBusiness()) {
-            return redirect()->route('business.dashboard');
-        } elseif ($user->isAgency()) {
-            return redirect()->route('agency.dashboard');
-        } elseif ($user->isAiAgent()) {
+        if ($user->isAiAgent()) {
             return redirect()->route('agent.dashboard');
         } elseif ($user->isAdmin()) {
             return redirect()->route('admin.dashboard');
         }
 
-        // Default fallback
+        // All other user types (worker, business, agency) use generic dashboard
+        // which automatically routes to correct dashboard based on user type
         return redirect()->route('dashboard');
     }
 

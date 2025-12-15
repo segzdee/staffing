@@ -4,7 +4,7 @@
 @section('page-title', 'My Applications')
 
 @section('sidebar-nav')
-<a href="{{ route('worker.dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+<a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
     </svg>
@@ -49,7 +49,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Total Applications</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $applications->count() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ ($applications ?? collect())->count() }}</p>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-lg">
                     <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +62,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Pending</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $applications->where('status', 'pending')->count() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ ($applications ?? collect())->where('status', 'pending')->count() }}</p>
                 </div>
                 <div class="p-3 bg-yellow-100 rounded-lg">
                     <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Accepted</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $applications->where('status', 'accepted')->count() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ ($applications ?? collect())->where('status', 'accepted')->count() }}</p>
                 </div>
                 <div class="p-3 bg-green-100 rounded-lg">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600">Rejected</p>
-                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $applications->where('status', 'rejected')->count() }}</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ ($applications ?? collect())->where('status', 'rejected')->count() }}</p>
                 </div>
                 <div class="p-3 bg-red-100 rounded-lg">
                     <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,26 +132,26 @@
                                     </svg>
                                 </div>
                                 <div class="flex-1">
-                                    <h3 class="text-lg font-semibold text-gray-900">{{ $application->shift->title }}</h3>
-                                    <p class="text-sm text-gray-600 mt-1">{{ $application->shift->business->name }}</p>
+                                    <h3 class="text-lg font-semibold text-gray-900">{{ $application->shift->title ?? 'Untitled Shift' }}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">{{ $application->shift->business->name ?? 'Unknown Business' }}</p>
                                     <div class="flex items-center space-x-4 mt-2 text-sm text-gray-500">
                                         <span class="flex items-center">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                             </svg>
-                                            {{ \Carbon\Carbon::parse($application->shift->shift_date)->format('M j, Y') }}
+                                            {{ $application->shift?->shift_date ? \Carbon\Carbon::parse($application->shift->shift_date)->format('M j, Y') : 'Date TBD' }}
                                         </span>
                                         <span class="flex items-center">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            {{ \Carbon\Carbon::parse($application->shift->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($application->shift->end_time)->format('g:i A') }}
+                                            {{ $application->shift?->start_time ? \Carbon\Carbon::parse($application->shift->start_time)->format('g:i A') : '--:--' }} - {{ $application->shift?->end_time ? \Carbon\Carbon::parse($application->shift->end_time)->format('g:i A') : '--:--' }}
                                         </span>
                                         <span class="flex items-center">
                                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                             </svg>
-                                            {{ $application->shift->location_city }}, {{ $application->shift->location_state }}
+                                            {{ $application->shift->location_city ?? 'City' }}, {{ $application->shift->location_state ?? 'State' }}
                                         </span>
                                     </div>
                                     <p class="text-xs text-gray-400 mt-2">
@@ -161,7 +161,7 @@
                             </div>
                         </div>
                         <div class="text-right ml-4">
-                            <p class="text-2xl font-bold text-gray-900 mb-2">${{ number_format($application->shift->final_rate, 2) }}/hr</p>
+                            <p class="text-2xl font-bold text-gray-900 mb-2">${{ number_format($application->shift->final_rate ?? 0, 2) }}/hr</p>
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                 {{ $application->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                 {{ $application->status === 'accepted' ? 'bg-green-100 text-green-800' : '' }}

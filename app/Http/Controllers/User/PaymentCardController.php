@@ -9,8 +9,6 @@ use App\Models\PaymentGateways;
 
 class PaymentCardController extends Controller
 {
-    use \App\Http\Controllers\Traits\Functions;
-
     protected $request;
     protected $settings;
 

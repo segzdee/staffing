@@ -14,8 +14,6 @@ use DB;
 
 class SettingsController extends Controller
 {
-    use \App\Http\Controllers\Traits\Functions;
-
     protected $request;
     protected $settings;
 

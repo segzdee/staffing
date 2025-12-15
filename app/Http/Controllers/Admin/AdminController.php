@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Traits\UserDelete;
 use Illuminate\Support\Facades\Auth;
 
 use App\Models\User;
@@ -28,7 +27,7 @@ use App\Models\Blogs;
 use App\Models\Updates;
 use App\Models\Referrals;
 use App\Models\Reports;
-use App\Models\VerificationRequests;
+use App\Models\VerificationQueue;
 use App\Helper;
 use Carbon\Carbon;
 use App\Models\Deposits;
@@ -47,8 +46,6 @@ use Session;
 
 class AdminController extends Controller
 {
-	use UserDelete;
-
 	public function __construct(AdminSettings $settings)
 	{
 		$this->settings = $settings::first();
@@ -131,8 +128,45 @@ class AdminController extends Controller
 		// Active users (last 24 hours)
 		$active_users_today = User::where('updated_at', '>=', Carbon::now()->subDay())->count();
 
-		// Pending verifications
-		$pending_verifications = \DB::table('verification_requests')->where('status', 'pending')->count();
+		// Pending verifications (OvertimeStaff verification queue)
+		$pending_verifications = VerificationQueue::pending()->count();
+
+		// Get notification and message counts for unified dashboard layout
+		// Note: Custom notifications() relationship overrides Laravel's Notifiable trait
+		// Using placeholder until notification system is properly implemented
+		$unreadNotifications = 0; // Placeholder - custom notification system in use
+		$unreadMessages = 0; // Placeholder until Messages model is ready
+
+		// Profile completeness for onboarding progress (admin always 100%)
+		$onboardingProgress = 100;
+
+		// Prepare metrics array for unified dashboard layout
+		$metrics = [
+			[
+				'label' => 'Total Users',
+				'value' => $total_users,
+				'subtitle' => 'All user types',
+				'icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+			],
+			[
+				'label' => 'Open Shifts',
+				'value' => $shifts_open,
+				'subtitle' => 'Currently available',
+				'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+			],
+			[
+				'label' => 'Revenue Today',
+				'value' => '$' . number_format($revenue_today, 2),
+				'subtitle' => 'Platform fees',
+				'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+			],
+			[
+				'label' => 'Pending',
+				'value' => $pending_verifications,
+				'subtitle' => 'Verifications',
+				'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+			],
+		];
 
 		return view('admin.dashboard', [
 			// Users
@@ -159,9 +193,73 @@ class AdminController extends Controller
 
 			// Other
 			'pending_verifications' => $pending_verifications,
+
+			// Unified dashboard layout data
+			'metrics' => $metrics,
+			'onboardingProgress' => $onboardingProgress,
+			'unreadNotifications' => $unreadNotifications,
+			'unreadMessages' => $unreadMessages,
 		]);
 
 	}//<--- END METHOD
+
+	/**
+	 * Show Users section - alias for index (route compatibility)
+	 *
+	 * @return Response
+	 */
+	public function users(Request $request)
+	{
+		return $this->index($request);
+	}
+
+	/**
+	 * Verify a worker (admin action).
+	 * Routes to WorkerManagementController if available.
+	 *
+	 * @param int $id
+	 * @return \Illuminate\Http\RedirectResponse
+	 */
+	public function verifyWorker($id)
+	{
+		$user = User::findOrFail($id);
+
+		if ($user->user_type !== 'worker') {
+			return redirect()->back()->with('error', 'User is not a worker.');
+		}
+
+		$user->update(['is_verified_worker' => true]);
+
+		if ($user->workerProfile) {
+			$user->workerProfile->update(['is_verified' => true]);
+		}
+
+		return redirect()->back()->with('success', 'Worker verified successfully.');
+	}
+
+	/**
+	 * Verify a business (admin action).
+	 * Routes to BusinessManagementController if available.
+	 *
+	 * @param int $id
+	 * @return \Illuminate\Http\RedirectResponse
+	 */
+	public function verifyBusiness($id)
+	{
+		$user = User::findOrFail($id);
+
+		if ($user->user_type !== 'business') {
+			return redirect()->back()->with('error', 'User is not a business.');
+		}
+
+		$user->update(['is_verified_business' => true]);
+
+		if ($user->businessProfile) {
+			$user->businessProfile->update(['is_verified' => true]);
+		}
+
+		return redirect()->back()->with('success', 'Business verified successfully.');
+	}
 
 	/**
 	 * Show Members section - OvertimeStaff User Management

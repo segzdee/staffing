@@ -12,8 +12,6 @@ use App\Notifications\AdminWithdrawalPending;
 
 class WithdrawalController extends Controller
 {
-    use \App\Http\Controllers\Traits\Functions;
-
     protected $request;
     protected $settings;
 

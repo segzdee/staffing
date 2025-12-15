@@ -14,12 +14,14 @@
         "php": "^8.2",
         "cloudinary-labs/cloudinary-laravel": "^2.0",
         "doctrine/dbal": "^4.0",
+        "filament/filament": "^3.0",
         "guzzlehttp/guzzle": "^7.8",
         "intervention/image": "^3.0",
         "intervention/image-laravel": "^1.0",
         "laravel/cashier": "^15.0",
         "laravel/framework": "^11.0",
         "laravel/helpers": "^1.7",
+        "laravel/horizon": "^5.40",
         "laravel/reverb": "^1.6",
         "laravel/socialite": "^5.15",
         "laravel/tinker": "^2.9",
@@ -27,6 +29,7 @@
         "league/flysystem-aws-s3-v3": "^3.0",
         "mercadopago/dx-php": "^2.4",
         "mollie/laravel-mollie": "^3.0",
+        "moneyphp/money": "^4.8",
         "pbmedia/laravel-ffmpeg": "^8.0",
         "razorpay/razorpay": "^2.8",
         "srmklive/paypal": "~3.0",
@@ -34,19 +37,25 @@
         "unicodeveloper/laravel-paystack": "^1.0"
     },
     "require-dev": {
-        "spatie/laravel-ignition": "^2.4",
+        "barryvdh/laravel-ide-helper": "^3.6",
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.8",
         "laravel/pint": "^1.13",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.1",
-        "phpunit/phpunit": "^11.0"
+        "pestphp/pest": "^3.8",
+        "pestphp/pest-plugin-laravel": "^3.2",
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.0",
+        "spatie/laravel-ignition": "^2.4"
     },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
         }
     },
     "extra": {
@@ -75,13 +84,38 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "test": [
+            "@php vendor/bin/pest"
+        ],
+        "test:coverage": [
+            "@php vendor/bin/pest --coverage"
+        ],
+        "test:watch": [
+            "@php vendor/bin/pest --watch"
+        ],
+        "analyse": [
+            "@php vendor/bin/phpstan analyse --memory-limit=512M"
+        ],
+        "format": [
+            "@php vendor/bin/pint"
+        ],
+        "format:test": [
+            "@php vendor/bin/pint --test"
+        ],
+        "horizon": [
+            "@php artisan horizon"
+        ],
+        "horizon:terminate": [
+            "@php artisan horizon:terminate"
         ]
     }
 }

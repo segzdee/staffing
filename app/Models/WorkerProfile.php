@@ -5,6 +5,160 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property bool $onboarding_completed
+ * @property int|null $onboarding_step
+ * @property \Illuminate\Support\Carbon|null $onboarding_completed_at
+ * @property bool $identity_verified
+ * @property \Illuminate\Support\Carbon|null $identity_verified_at
+ * @property string|null $identity_verification_method
+ * @property string $subscription_tier
+ * @property \Illuminate\Support\Carbon|null $tier_expires_at
+ * @property \Illuminate\Support\Carbon|null $tier_upgraded_at
+ * @property string|null $bio
+ * @property numeric|null $hourly_rate_min
+ * @property numeric|null $hourly_rate_max
+ * @property array<array-key, mixed>|null $industries
+ * @property array<array-key, mixed>|null $preferred_industries
+ * @property string|null $profile_photo_url
+ * @property string|null $resume_url
+ * @property string|null $linkedin_url
+ * @property array<array-key, mixed>|null $availability_schedule
+ * @property string $transportation
+ * @property int $max_commute_distance
+ * @property int $years_experience
+ * @property numeric $rating_average
+ * @property int $total_shifts_completed
+ * @property numeric $reliability_score
+ * @property int $total_no_shows
+ * @property int $total_cancellations
+ * @property int $total_late_arrivals
+ * @property int $total_early_departures
+ * @property int $total_no_acknowledgments
+ * @property int $average_response_time_minutes
+ * @property numeric $total_earnings
+ * @property numeric $pending_earnings
+ * @property numeric $withdrawn_earnings
+ * @property numeric|null $average_hourly_earned
+ * @property string|null $referral_code
+ * @property string|null $referred_by
+ * @property int $total_referrals
+ * @property numeric $referral_earnings
+ * @property string|null $location_city
+ * @property string|null $location_state
+ * @property string|null $location_country
+ * @property string $background_check_status
+ * @property \Illuminate\Support\Carbon|null $background_check_date
+ * @property string|null $background_check_notes
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $phone
+ * @property string|null $date_of_birth
+ * @property string|null $address
+ * @property string|null $city
+ * @property string|null $state
+ * @property string|null $zip_code
+ * @property string|null $country
+ * @property string|null $emergency_contact_name
+ * @property string|null $emergency_contact_phone
+ * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Skill> $skills
+ * @property \Illuminate\Database\Eloquent\Collection<int, \App\Models\Certification> $certifications
+ * @property numeric|null $hourly_rate
+ * @property numeric $rating
+ * @property int $completed_shifts
+ * @property int $is_available
+ * @property int $is_complete
+ * @property numeric|null $location_lat
+ * @property numeric|null $location_lng
+ * @property int $preferred_radius
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkerBadge> $badges
+ * @property-read int|null $badges_count
+ * @property-read int|null $certifications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftPayment> $payments
+ * @property-read int|null $payments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Rating> $ratingsReceived
+ * @property-read int|null $ratings_received_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftApplication> $shiftApplications
+ * @property-read int|null $shift_applications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftAssignment> $shiftAssignments
+ * @property-read int|null $shift_assignments_count
+ * @property-read int|null $skills_count
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\WorkerProfileFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereAvailabilitySchedule($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereAverageHourlyEarned($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereAverageResponseTimeMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereBackgroundCheckDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereBackgroundCheckNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereBackgroundCheckStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereBio($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereCertifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereCompletedShifts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereDateOfBirth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereEmergencyContactName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereEmergencyContactPhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereHourlyRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereHourlyRateMax($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereHourlyRateMin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereIdentityVerificationMethod($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereIdentityVerified($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereIdentityVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereIndustries($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereIsAvailable($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereIsComplete($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereLinkedinUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereLocationCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereLocationCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereLocationLat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereLocationLng($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereLocationState($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereMaxCommuteDistance($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereOnboardingCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereOnboardingCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereOnboardingStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile wherePendingEarnings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile wherePreferredIndustries($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile wherePreferredRadius($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereProfilePhotoUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereRatingAverage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereReferralCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereReferralEarnings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereReferredBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereReliabilityScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereResumeUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereSkills($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereState($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereSubscriptionTier($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTierExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTierUpgradedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalCancellations($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalEarlyDepartures($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalEarnings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalLateArrivals($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalNoAcknowledgments($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalNoShows($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalReferrals($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTotalShiftsCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereTransportation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereWithdrawnEarnings($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereYearsExperience($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereZipCode($value)
+ * @mixin \Eloquent
+ */
 class WorkerProfile extends Model
 {
     use HasFactory;
@@ -145,6 +299,47 @@ class WorkerProfile extends Model
         return $this->belongsToMany(Certification::class, 'worker_certifications', 'worker_id', 'certification_id')
             ->withPivot('certification_number', 'issue_date', 'expiry_date', 'document_url', 'verified', 'verified_at')
             ->withTimestamps();
+    }
+
+    /**
+     * Get the worker's shift assignments.
+     */
+    public function shiftAssignments()
+    {
+        return $this->hasMany(ShiftAssignment::class, 'worker_id', 'user_id');
+    }
+
+    /**
+     * Get the worker's shift applications.
+     */
+    public function shiftApplications()
+    {
+        return $this->hasMany(ShiftApplication::class, 'worker_id', 'user_id');
+    }
+
+    /**
+     * Get the worker's badges.
+     */
+    public function badges()
+    {
+        return $this->hasMany(WorkerBadge::class, 'worker_id', 'user_id');
+    }
+
+    /**
+     * Get ratings received by this worker.
+     */
+    public function ratingsReceived()
+    {
+        return $this->hasMany(Rating::class, 'rated_id', 'user_id')
+            ->where('rater_type', 'business');
+    }
+
+    /**
+     * Get the worker's payments received.
+     */
+    public function payments()
+    {
+        return $this->hasMany(ShiftPayment::class, 'worker_id', 'user_id');
     }
 
     /**
@@ -437,5 +632,84 @@ class WorkerProfile extends Model
         return array_keys(array_filter($this->availability_schedule, function($day) {
             return isset($day['available']) && $day['available'];
         }));
+    }
+
+    // ===== WKR-010: Portfolio & Showcase Methods =====
+
+    /**
+     * Get the worker's portfolio items.
+     */
+    public function portfolioItems()
+    {
+        return $this->hasMany(WorkerPortfolioItem::class, 'worker_id', 'user_id');
+    }
+
+    /**
+     * Get the worker's featured statuses.
+     */
+    public function featuredStatuses()
+    {
+        return $this->hasMany(WorkerFeaturedStatus::class, 'worker_id', 'user_id');
+    }
+
+    /**
+     * Get active featured status.
+     */
+    public function activeFeaturedStatus()
+    {
+        return $this->hasOne(WorkerFeaturedStatus::class, 'worker_id', 'user_id')
+            ->where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now());
+    }
+
+    /**
+     * Get profile views.
+     */
+    public function profileViews()
+    {
+        return $this->hasMany(WorkerProfileView::class, 'worker_id', 'user_id');
+    }
+
+    /**
+     * Check if worker has public profile enabled.
+     */
+    public function hasPublicProfile(): bool
+    {
+        return $this->public_profile_enabled && $this->public_profile_slug;
+    }
+
+    /**
+     * Get public profile URL.
+     */
+    public function getPublicProfileUrlAttribute(): ?string
+    {
+        if (!$this->hasPublicProfile()) {
+            return null;
+        }
+
+        return route('profile.public', $this->public_profile_slug);
+    }
+
+    /**
+     * Check if worker is currently featured.
+     */
+    public function isFeatured(): bool
+    {
+        return $this->activeFeaturedStatus()->exists();
+    }
+
+    /**
+     * Get featured search boost multiplier.
+     */
+    public function getFeaturedBoost(): float
+    {
+        $status = $this->activeFeaturedStatus;
+
+        if (!$status) {
+            return 1.0;
+        }
+
+        return $status->search_boost ?? 1.0;
     }
 }

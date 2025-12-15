@@ -1,17 +1,11 @@
 <svg viewBox="0 0 200 32" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="timeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#14B8A6"/>
-      <stop offset="100%" style="stop-color:#8B5CF6"/>
-    </linearGradient>
-  </defs>
   <!-- Icon: Calendar/building hybrid -->
   <rect x="0" y="4" width="24" height="24" rx="6" fill="#18181B"/>
   <rect x="4" y="8" width="6" height="6" rx="1" fill="white"/>
   <rect x="14" y="8" width="6" height="6" rx="1" fill="white"/>
   <rect x="4" y="18" width="6" height="6" rx="1" fill="white"/>
-  <!-- Text: OVER (black) TIME (gradient) STAFF (black) -->
+  <!-- Text: OVER (black) TIME (blue) STAFF (black) -->
   <text x="32" y="24" font-family="Inter, sans-serif" font-weight="700" font-size="18">
-    <tspan fill="#18181B">OVER</tspan><tspan fill="url(#timeGradient)">TIME</tspan><tspan fill="#18181B">STAFF</tspan>
+    <tspan fill="#18181B">OVER</tspan><tspan fill="#3B82F6">TIME</tspan><tspan fill="#18181B">STAFF</tspan>
   </text>
 </svg>

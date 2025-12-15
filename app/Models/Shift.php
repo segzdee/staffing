@@ -2,10 +2,240 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property int $id
+ * @property int $business_id
+ * @property int|null $venue_id
+ * @property bool $posted_by_agent
+ * @property int|null $agent_id
+ * @property int|null $agency_client_id
+ * @property int|null $posted_by_agency_id
+ * @property bool $allow_agencies
+ * @property int|null $template_id
+ * @property string $title
+ * @property string $description
+ * @property string|null $role_type
+ * @property string $industry
+ * @property string $location_address
+ * @property string $location_city
+ * @property string $location_state
+ * @property string $location_country
+ * @property numeric|null $location_lat
+ * @property numeric|null $location_lng
+ * @property int $geofence_radius
+ * @property int $early_clockin_minutes
+ * @property int $late_grace_minutes
+ * @property \Illuminate\Support\Carbon $shift_date
+ * @property \Illuminate\Support\Carbon $start_time
+ * @property \Illuminate\Support\Carbon $end_time
+ * @property string|null $start_datetime
+ * @property string|null $end_datetime
+ * @property numeric $duration_hours
+ * @property numeric $minimum_shift_duration
+ * @property numeric $maximum_shift_duration
+ * @property numeric $required_rest_hours
+ * @property \Money\Money|null $base_rate
+ * @property numeric|null $dynamic_rate
+ * @property \Money\Money|null $final_rate
+ * @property \Money\Money|null $minimum_wage
+ * @property \Money\Money|null $base_worker_pay
+ * @property numeric $platform_fee_rate
+ * @property \Money\Money|null $platform_fee_amount
+ * @property numeric $vat_rate
+ * @property \Money\Money|null $vat_amount
+ * @property \Money\Money|null $total_business_cost
+ * @property \Money\Money|null $escrow_amount
+ * @property numeric $contingency_buffer_rate
+ * @property numeric $surge_multiplier
+ * @property numeric $time_surge
+ * @property numeric $demand_surge
+ * @property numeric $event_surge
+ * @property bool $is_public_holiday
+ * @property bool $is_night_shift
+ * @property bool $is_weekend
+ * @property string $status
+ * @property string $urgency_level
+ * @property bool $requires_overtime_approval
+ * @property bool $has_disputes
+ * @property bool $auto_approval_eligible
+ * @property \Illuminate\Support\Carbon|null $confirmed_at
+ * @property \Illuminate\Support\Carbon|null $priority_notification_sent_at
+ * @property \Illuminate\Support\Carbon|null $started_at
+ * @property \Illuminate\Support\Carbon|null $first_worker_clocked_in_at
+ * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $last_worker_clocked_out_at
+ * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property int|null $verified_by
+ * @property \Illuminate\Support\Carbon|null $auto_approved_at
+ * @property int|null $cancelled_by
+ * @property \Illuminate\Support\Carbon|null $cancelled_at
+ * @property string|null $cancellation_reason
+ * @property string|null $cancellation_type
+ * @property \Money\Money|null $cancellation_penalty_amount
+ * @property \Money\Money|null $worker_compensation_amount
+ * @property int $required_workers
+ * @property int $filled_workers
+ * @property array<array-key, mixed>|null $requirements
+ * @property array<array-key, mixed>|null $required_skills
+ * @property array<array-key, mixed>|null $required_certifications
+ * @property string|null $dress_code
+ * @property string|null $parking_info
+ * @property string|null $break_info
+ * @property string|null $special_instructions
+ * @property bool $in_market
+ * @property bool $is_demo
+ * @property \Illuminate\Support\Carbon|null $market_posted_at
+ * @property bool $instant_claim_enabled
+ * @property int $market_views
+ * @property int $market_applications
+ * @property string|null $demo_business_name
+ * @property int $application_count
+ * @property int $view_count
+ * @property \Illuminate\Support\Carbon|null $first_application_at
+ * @property \Illuminate\Support\Carbon|null $last_application_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\AgencyClient|null $agencyClient
+ * @property-read \App\Models\User|null $agent
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftApplication> $applications
+ * @property-read int|null $applications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $assignedWorkers
+ * @property-read int|null $assigned_workers_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftAssignment> $assignments
+ * @property-read int|null $assignments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftAttachment> $attachments
+ * @property-read int|null $attachments_count
+ * @property-read \App\Models\User $business
+ * @property-read \App\Models\BusinessProfile|null $businessProfile
+ * @property-read mixed $effective_rate
+ * @property-read mixed $fill_percentage
+ * @property-read mixed $spots_remaining
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftInvitation> $invitations
+ * @property-read int|null $invitations_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftPayment> $payments
+ * @property-read int|null $payments_count
+ * @property-read \App\Models\User|null $postedByAgency
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Rating> $ratings
+ * @property-read int|null $ratings_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftSwap> $swapRequests
+ * @property-read int|null $swap_requests_count
+ * @property-read \App\Models\ShiftTemplate|null $template
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift byIndustry($industry)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift demoShifts()
+ * @method static \Database\Factories\ShiftFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift inMarket()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift nearby($lat, $lng, $radius = 25)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift open()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift realShifts()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift upcoming()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereAgencyClientId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereAgentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereAllowAgencies($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereApplicationCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereAutoApprovalEligible($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereAutoApprovedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereBaseRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereBaseWorkerPay($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereBreakInfo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereBusinessId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCancellationPenaltyAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCancellationReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCancellationType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCancelledAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCancelledBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereConfirmedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereContingencyBufferRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDemandSurge($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDemoBusinessName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDressCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDurationHours($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereDynamicRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereEarlyClockinMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereEndDatetime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereEndTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereEscrowAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereEventSurge($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereFilledWorkers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereFinalRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereFirstApplicationAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereFirstWorkerClockedInAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereGeofenceRadius($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereHasDisputes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereInMarket($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereIndustry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereInstantClaimEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereIsDemo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereIsNightShift($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereIsPublicHoliday($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereIsWeekend($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLastApplicationAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLastWorkerClockedOutAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLateGraceMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLocationAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLocationCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLocationCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLocationLat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLocationLng($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereLocationState($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereMarketApplications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereMarketPostedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereMarketViews($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereMaximumShiftDuration($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereMinimumShiftDuration($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereMinimumWage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereParkingInfo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift wherePlatformFeeAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift wherePlatformFeeRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift wherePostedByAgencyId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift wherePostedByAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift wherePriorityNotificationSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRequiredCertifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRequiredRestHours($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRequiredSkills($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRequiredWorkers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRequirements($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRequiresOvertimeApproval($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereRoleType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereShiftDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereSpecialInstructions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereStartDatetime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereStartTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereStartedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereSurgeMultiplier($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereTemplateId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereTimeSurge($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereTotalBusinessCost($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereUrgencyLevel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereVatAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereVatRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereVenueId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereVerifiedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereViewCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereWorkerCompensationAmount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift withoutTrashed()
+ * @mixin \Eloquent
+ */
 class Shift extends Model
 {
     use HasFactory, SoftDeletes;
@@ -145,21 +375,27 @@ class Shift extends Model
         'minimum_shift_duration' => 'decimal:2',
         'maximum_shift_duration' => 'decimal:2',
         'required_rest_hours' => 'decimal:2',
-        'minimum_wage' => 'decimal:2',
-        'base_worker_pay' => 'decimal:2',
+
+        // Money casts (stored as cents in database)
+        'base_rate' => MoneyCast::class,
+        'final_rate' => MoneyCast::class,
+        'minimum_wage' => MoneyCast::class,
+        'base_worker_pay' => MoneyCast::class,
+        'platform_fee_amount' => MoneyCast::class,
+        'vat_amount' => MoneyCast::class,
+        'total_business_cost' => MoneyCast::class,
+        'escrow_amount' => MoneyCast::class,
+        'cancellation_penalty_amount' => MoneyCast::class,
+        'worker_compensation_amount' => MoneyCast::class,
+
+        // Rates (still decimal)
         'platform_fee_rate' => 'decimal:2',
-        'platform_fee_amount' => 'decimal:2',
         'vat_rate' => 'decimal:2',
-        'vat_amount' => 'decimal:2',
-        'total_business_cost' => 'decimal:2',
-        'escrow_amount' => 'decimal:2',
         'contingency_buffer_rate' => 'decimal:2',
         'surge_multiplier' => 'decimal:2',
         'time_surge' => 'decimal:2',
         'demand_surge' => 'decimal:2',
         'event_surge' => 'decimal:2',
-        'cancellation_penalty_amount' => 'decimal:2',
-        'worker_compensation_amount' => 'decimal:2',
 
         // Boolean casts
         'is_public_holiday' => 'boolean',
@@ -288,6 +524,7 @@ class Shift extends Model
     public function scopeOpen($query)
     {
         return $query->where('status', 'open')
+            ->where('start_datetime', '>', now())
             ->whereColumn('filled_workers', '<', 'required_workers');
     }
 
@@ -296,7 +533,8 @@ class Shift extends Model
      */
     public function scopeUpcoming($query)
     {
-        return $query->where('shift_date', '>=', now()->toDateString());
+        return $query->where('shift_date', '>=', now()->toDateString())
+            ->orderBy('start_datetime', 'asc');
     }
 
     /**
@@ -313,6 +551,7 @@ class Shift extends Model
     public function scopeNearby($query, $lat, $lng, $radius = 25)
     {
         // Haversine formula for nearby locations (radius in miles)
+        // Using whereRaw instead of havingRaw for SQLite compatibility
         return $query->selectRaw("
             *,
             ( 3959 * acos( cos( radians(?) ) *
@@ -322,7 +561,14 @@ class Shift extends Model
               sin( radians( location_lat ) ) )
             ) AS distance
         ", [$lat, $lng, $lat])
-        ->havingRaw('distance < ?', [$radius])
+        ->whereRaw("
+            ( 3959 * acos( cos( radians(?) ) *
+              cos( radians( location_lat ) ) *
+              cos( radians( location_lng ) - radians(?) ) +
+              sin( radians(?) ) *
+              sin( radians( location_lat ) ) )
+            ) < ?
+        ", [$lat, $lng, $lat, $radius])
         ->orderBy('distance');
     }
 
@@ -519,6 +765,20 @@ class Shift extends Model
         return $this;
     }
 
+    /**
+     * Cancel shift by worker with reliability impact.
+     * SL-010: Worker Cancellation Logic
+     *
+     * @param ShiftAssignment $assignment
+     * @param array $cancellationData
+     * @return array
+     */
+    public function cancelByWorker(ShiftAssignment $assignment, array $cancellationData = []): array
+    {
+        $service = app(\App\Services\WorkerCancellationService::class);
+        return $service->cancelByWorker($assignment, $cancellationData);
+    }
+
     // =========================================
     // Lifecycle Status Methods
     // =========================================
@@ -664,5 +924,426 @@ class Shift extends Model
             return 0;
         }
         return round(($this->filled_workers / $this->required_workers) * 100);
+    }
+
+    // =========================================
+    // Live Market Accessors
+    // =========================================
+
+    /**
+     * Get urgency based on time until shift.
+     */
+    public function getUrgencyAttribute(): string
+    {
+        $startDatetime = $this->getStartDatetimeCarbon();
+        if (!$startDatetime) {
+            return 'open';
+        }
+
+        $hoursUntil = now()->diffInHours($startDatetime, false);
+
+        if ($hoursUntil < 0) {
+            return 'expired';
+        }
+        if ($hoursUntil < 4) {
+            return 'asap';
+        }
+        if ($hoursUntil < 12) {
+            return 'urgent';
+        }
+        if ($hoursUntil < 24) {
+            return 'soon';
+        }
+        return 'open';
+    }
+
+    /**
+     * Get rate color based on market comparison.
+     */
+    public function getRateColorAttribute(): string
+    {
+        $avgRate = Cache::remember('market_avg_rate', 300, function () {
+            return Shift::where('status', 'open')
+                ->where('shift_date', '>=', now())
+                ->avg('base_rate') ?? 25;
+        });
+
+        $rate = $this->base_rate ?? 0;
+        if (!$rate || $avgRate == 0) {
+            return 'gray';
+        }
+
+        $diff = (($rate - $avgRate) / $avgRate) * 100;
+
+        if ($diff >= 15) {
+            return 'green';
+        }
+        if ($diff >= 5) {
+            return 'blue';
+        }
+        if ($diff >= -5) {
+            return 'gray';
+        }
+        return 'orange';
+    }
+
+    /**
+     * Get rate change percentage compared to market average.
+     */
+    public function getRateChangeAttribute(): float
+    {
+        $avgRate = Cache::remember('market_avg_rate', 300, function () {
+            return Shift::where('status', 'open')
+                ->where('shift_date', '>=', now())
+                ->avg('base_rate') ?? 25;
+        });
+
+        $rate = $this->base_rate ?? 0;
+        if (!$rate || $avgRate == 0) {
+            return 0;
+        }
+
+        return round((($rate - $avgRate) / $avgRate) * 100, 1);
+    }
+
+    /**
+     * Get time away formatted for display.
+     */
+    public function getTimeAwayAttribute(): string
+    {
+        $startDatetime = $this->getStartDatetimeCarbon();
+        if (!$startDatetime) {
+            return 'TBD';
+        }
+
+        return $startDatetime->diffForHumans(['parts' => 1, 'short' => true]);
+    }
+
+    /**
+     * Get formatted date for display.
+     */
+    public function getFormattedDateAttribute(): string
+    {
+        $startDatetime = $this->getStartDatetimeCarbon();
+        if (!$startDatetime) {
+            return 'TBD';
+        }
+
+        return $startDatetime->format('D, M j \u{2022} g:ia');
+    }
+
+    /**
+     * Get availability color based on spots remaining.
+     */
+    public function getAvailabilityColorAttribute(): string
+    {
+        $remaining = $this->required_workers - ($this->filled_workers ?? 0);
+
+        if ($remaining <= 0) {
+            return 'red';
+        }
+        if ($remaining == 1) {
+            return 'red';
+        }
+
+        $percent = ($remaining / $this->required_workers) * 100;
+
+        if ($percent <= 25) {
+            return 'orange';
+        }
+        if ($percent <= 50) {
+            return 'yellow';
+        }
+        return 'green';
+    }
+
+    /**
+     * Get filled spots count.
+     */
+    public function getFilledAttribute(): int
+    {
+        return $this->filled_workers ?? 0;
+    }
+
+    /**
+     * Get business color for avatar display.
+     */
+    public function getColorAttribute(): string
+    {
+        $colors = ['blue', 'green', 'purple', 'pink', 'orange'];
+        return $colors[($this->business_id ?? 0) % count($colors)];
+    }
+
+    /**
+     * Check if current user has applied to this shift.
+     */
+    public function getHasAppliedAttribute(): bool
+    {
+        if (!auth()->check()) {
+            return false;
+        }
+
+        return $this->applications()
+            ->where('worker_id', auth()->id())
+            ->exists();
+    }
+
+    /**
+     * Helper method to get start datetime as Carbon instance.
+     */
+    protected function getStartDatetimeCarbon(): ?\Carbon\Carbon
+    {
+        if ($this->start_datetime) {
+            return \Carbon\Carbon::parse($this->start_datetime);
+        }
+
+        if ($this->shift_date && $this->start_time) {
+            $date = $this->shift_date instanceof \Carbon\Carbon
+                ? $this->shift_date->format('Y-m-d')
+                : $this->shift_date;
+            $time = $this->start_time instanceof \Carbon\Carbon
+                ? $this->start_time->format('H:i:s')
+                : $this->start_time;
+
+            return \Carbon\Carbon::parse("{$date} {$time}");
+        }
+
+        return null;
+    }
+
+    // =========================================
+    // Additional Relationships
+    // =========================================
+
+    /**
+     * Get all payments for this shift (through assignments).
+     */
+    public function payments()
+    {
+        return $this->hasManyThrough(
+            ShiftPayment::class,
+            ShiftAssignment::class,
+            'shift_id',           // Foreign key on shift_assignments
+            'shift_assignment_id', // Foreign key on shift_payments
+            'id',                 // Local key on shifts
+            'id'                  // Local key on shift_assignments
+        );
+    }
+
+    /**
+     * Get the template this shift was created from (if any).
+     */
+    public function template()
+    {
+        return $this->belongsTo(ShiftTemplate::class, 'template_id');
+    }
+
+    /**
+     * Get all swap requests for this shift (through assignments).
+     */
+    public function swapRequests()
+    {
+        return $this->hasManyThrough(
+            ShiftSwap::class,
+            ShiftAssignment::class,
+            'shift_id',           // Foreign key on shift_assignments
+            'shift_assignment_id', // Foreign key on shift_swaps
+            'id',                 // Local key on shifts
+            'id'                  // Local key on shift_assignments
+        );
+    }
+
+    /**
+     * Get all ratings for this shift (through assignments).
+     */
+    public function ratings()
+    {
+        return $this->hasManyThrough(
+            Rating::class,
+            ShiftAssignment::class,
+            'shift_id',           // Foreign key on shift_assignments
+            'shift_assignment_id', // Foreign key on ratings
+            'id',                 // Local key on shifts
+            'id'                  // Local key on shift_assignments
+        );
+    }
+
+    /**
+     * Get the business profile for this shift.
+     */
+    public function businessProfile()
+    {
+        return $this->hasOneThrough(
+            BusinessProfile::class,
+            User::class,
+            'id',           // Foreign key on users
+            'user_id',      // Foreign key on business_profiles
+            'business_id',  // Local key on shifts
+            'id'            // Local key on users
+        );
+    }
+
+    // =========================================
+    // SL-006: Break Enforcement Methods
+    // =========================================
+
+    /**
+     * Check if shift requires a mandatory break based on jurisdiction and duration.
+     *
+     * Break requirements by jurisdiction:
+     * - EU/Malta: 30-minute break after 6 hours
+     * - US: Varies by state
+     * - Default: 30-minute break after 6 hours
+     *
+     * @return bool
+     */
+    public function requiresBreak(): bool
+    {
+        // Check if shift duration is 6 hours or more
+        if ($this->duration_hours < 6) {
+            return false;
+        }
+
+        // Get jurisdiction from shift location
+        $jurisdiction = $this->getJurisdiction();
+
+        // EU/Malta rules: 30-minute break after 6 hours
+        if (in_array($jurisdiction, ['MT', 'EU'])) {
+            return $this->duration_hours >= 6;
+        }
+
+        // Default rule: 30-minute break after 6 hours
+        return $this->duration_hours >= 6;
+    }
+
+    /**
+     * Get the minimum break duration required (in minutes).
+     *
+     * @return int
+     */
+    public function getRequiredBreakMinutes(): int
+    {
+        if (!$this->requiresBreak()) {
+            return 0;
+        }
+
+        $jurisdiction = $this->getJurisdiction();
+
+        // EU/Malta: 30 minutes minimum
+        if (in_array($jurisdiction, ['MT', 'EU'])) {
+            return 30;
+        }
+
+        // Default: 30 minutes
+        return 30;
+    }
+
+    /**
+     * Get jurisdiction code from shift location.
+     *
+     * @return string
+     */
+    protected function getJurisdiction(): string
+    {
+        // Map country codes to jurisdiction
+        $jurisdictionMap = [
+            'Malta' => 'MT',
+            'MT' => 'MT',
+            // EU countries
+            'Austria' => 'EU',
+            'Belgium' => 'EU',
+            'Bulgaria' => 'EU',
+            'Croatia' => 'EU',
+            'Cyprus' => 'EU',
+            'Czech Republic' => 'EU',
+            'Denmark' => 'EU',
+            'Estonia' => 'EU',
+            'Finland' => 'EU',
+            'France' => 'EU',
+            'Germany' => 'EU',
+            'Greece' => 'EU',
+            'Hungary' => 'EU',
+            'Ireland' => 'EU',
+            'Italy' => 'EU',
+            'Latvia' => 'EU',
+            'Lithuania' => 'EU',
+            'Luxembourg' => 'EU',
+            'Netherlands' => 'EU',
+            'Poland' => 'EU',
+            'Portugal' => 'EU',
+            'Romania' => 'EU',
+            'Slovakia' => 'EU',
+            'Slovenia' => 'EU',
+            'Spain' => 'EU',
+            'Sweden' => 'EU',
+        ];
+
+        return $jurisdictionMap[$this->location_country] ?? 'DEFAULT';
+    }
+
+    /**
+     * Check break compliance for all assignments in this shift.
+     *
+     * @return array
+     */
+    public function checkBreakCompliance(): array
+    {
+        if (!$this->requiresBreak()) {
+            return [
+                'requires_break' => false,
+                'compliant' => true,
+                'assignments' => [],
+            ];
+        }
+
+        $requiredMinutes = $this->getRequiredBreakMinutes();
+        $assignments = $this->assignments()->where('status', 'checked_in')->get();
+
+        $result = [
+            'requires_break' => true,
+            'required_minutes' => $requiredMinutes,
+            'compliant' => true,
+            'assignments' => [],
+        ];
+
+        foreach ($assignments as $assignment) {
+            $assignmentCompliance = $assignment->checkBreakCompliance();
+            $result['assignments'][] = [
+                'assignment_id' => $assignment->id,
+                'worker_id' => $assignment->worker_id,
+                'worker_name' => $assignment->worker->name ?? 'Unknown',
+                'hours_worked' => $assignment->getHoursWorkedSinceClockIn(),
+                'break_taken' => $assignmentCompliance['break_taken'],
+                'break_minutes' => $assignmentCompliance['break_minutes'],
+                'compliant' => $assignmentCompliance['compliant'],
+                'needs_reminder' => $assignmentCompliance['needs_reminder'],
+            ];
+
+            if (!$assignmentCompliance['compliant']) {
+                $result['compliant'] = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get all assignments that need break reminders.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAssignmentsNeedingBreakReminder()
+    {
+        if (!$this->requiresBreak()) {
+            return collect();
+        }
+
+        return $this->assignments()
+            ->where('status', 'checked_in')
+            ->get()
+            ->filter(function ($assignment) {
+                $compliance = $assignment->checkBreakCompliance();
+                return $compliance['needs_reminder'];
+            });
     }
 }

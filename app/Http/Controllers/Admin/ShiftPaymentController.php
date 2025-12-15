@@ -27,7 +27,7 @@ class ShiftPaymentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ShiftPayment::with(['shift.business', 'worker']);
+        $query = ShiftPayment::with(['assignment.shift.business', 'worker']);
 
         // Status filter
         if ($request->has('status') && $request->status != '') {
@@ -83,9 +83,8 @@ class ShiftPaymentController extends Controller
     public function show($id)
     {
         $payment = ShiftPayment::with([
-            'shift.business',
-            'worker',
-            'assignment'
+            'assignment.shift.business',
+            'worker'
         ])->findOrFail($id);
 
         // Get payment timeline
@@ -147,7 +146,7 @@ class ShiftPaymentController extends Controller
 
         try {
             // Call Stripe refund API
-            $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
+            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
             $refund = $stripe->refunds->create([
                 'payment_intent' => $payment->stripe_payment_intent_id,
                 'amount' => $request->refund_amount * 100, // Convert to cents
@@ -240,7 +239,7 @@ class ShiftPaymentController extends Controller
      */
     public function disputes()
     {
-        $payments = ShiftPayment::with(['shift.business', 'worker'])
+        $payments = ShiftPayment::with(['assignment.shift.business', 'worker'])
             ->where('status', 'disputed')
             ->orderBy('disputed_at', 'desc')
             ->paginate(30);

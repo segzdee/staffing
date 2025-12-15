@@ -17,6 +17,9 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+    <!-- CSRF Token for AJAX requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <!-- Custom Tailwind Config - shadcn/ui style -->
     <script>
         tailwind.config = {
@@ -146,18 +149,51 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Logo -->
-                <a href="/" class="flex items-center">
-                    <img src="/images/logo.svg" alt="OvertimeStaff" class="h-8">
+                <a href="/" class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="3" y="3" width="7" height="7" rx="1"/>
+                            <rect x="14" y="3" width="7" height="7" rx="1"/>
+                            <rect x="3" y="14" width="7" height="7" rx="1"/>
+                            <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">
+                        OVER<span class="text-blue-600">TIME</span>STAFF
+                    </span>
                 </a>
 
                 <!-- Desktop Navigation -->
                 <div class="hidden lg:flex items-center space-x-8">
-                    <a href="{{ route('register', ['type' => 'worker']) }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">
-                        Find Shifts
-                    </a>
-                    <a href="{{ route('register', ['type' => 'business']) }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">
-                        Find Staff
-                    </a>
+                    @guest
+                        {{-- Guest users see registration links --}}
+                        <a href="{{ route('register', ['type' => 'worker']) }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
+                            Find Shifts
+                        </a>
+                        <a href="{{ route('register', ['type' => 'business']) }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
+                            Find Staff
+                        </a>
+                    @else
+                        @if(auth()->user()->user_type === 'worker')
+                            {{-- Workers see link to browse shifts --}}
+                            <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
+                                Find Shifts
+                            </a>
+                        @elseif(auth()->user()->user_type === 'business')
+                            {{-- Businesses see link to create shifts --}}
+                            <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
+                                Find Staff
+                            </a>
+                        @else
+                            {{-- Agencies and Admins see both links --}}
+                            <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
+                                Find Shifts
+                            </a>
+                            <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
+                                Find Staff
+                            </a>
+                        @endif
+                    @endguest
                 </div>
 
                 <!-- Right Side -->
@@ -187,12 +223,35 @@
 
             <!-- Mobile Menu -->
             <div x-show="mobileMenuOpen" x-cloak class="lg:hidden py-4 space-y-2">
-                <a href="{{ route('register', ['type' => 'worker']) }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                    Find Shifts
-                </a>
-                <a href="{{ route('register', ['type' => 'business']) }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                    Find Staff
-                </a>
+                @guest
+                    {{-- Guest users see registration links --}}
+                    <a href="{{ route('register', ['type' => 'worker']) }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
+                        Find Shifts
+                    </a>
+                    <a href="{{ route('register', ['type' => 'business']) }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
+                        Find Staff
+                    </a>
+                @else
+                    @if(auth()->user()->user_type === 'worker')
+                        {{-- Workers see link to browse shifts --}}
+                        <a href="{{ route('shifts.index') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
+                            Find Shifts
+                        </a>
+                    @elseif(auth()->user()->user_type === 'business')
+                        {{-- Businesses see link to create shifts --}}
+                        <a href="{{ route('shifts.create') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
+                            Find Staff
+                        </a>
+                    @else
+                        {{-- Agencies and Admins see both links --}}
+                        <a href="{{ route('shifts.index') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
+                            Find Shifts
+                        </a>
+                        <a href="{{ route('shifts.create') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
+                            Find Staff
+                        </a>
+                    @endif
+                @endguest
                 <div class="border-t pt-2" style="border-color: hsl(240 5.9% 90%);">
                     @guest
                         <a href="{{ route('login') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
@@ -592,8 +651,8 @@
                     <ul class="space-y-2 text-sm opacity-60">
                         <li><a href="{{ route('register', ['type' => 'business']) }}" class="hover:opacity-100 transition-opacity">Post Shifts</a></li>
                         <li><a href="{{ route('register', ['type' => 'business']) }}" class="hover:opacity-100 transition-opacity">Find Workers</a></li>
-                        <li><a href="/pricing" class="hover:opacity-100 transition-opacity">Pricing</a></li>
-                        <li><a href="/enterprise" class="hover:opacity-100 transition-opacity">Enterprise</a></li>
+                        <li><a href="{{ route('pricing') }}" class="hover:opacity-100 transition-opacity">Pricing</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:opacity-100 transition-opacity">Enterprise</a></li>
                     </ul>
                 </div>
 
@@ -603,8 +662,8 @@
                     <ul class="space-y-2 text-sm opacity-60">
                         <li><a href="{{ route('register', ['type' => 'worker']) }}" class="hover:opacity-100 transition-opacity">Find Shifts</a></li>
                         <li><a href="{{ route('register', ['type' => 'worker']) }}" class="hover:opacity-100 transition-opacity">Get Verified</a></li>
-                        <li><a href="/features#payouts" class="hover:opacity-100 transition-opacity">Instant Payouts</a></li>
-                        <li><a href="/app" class="hover:opacity-100 transition-opacity">Mobile App</a></li>
+                        <li><a href="{{ route('features') }}" class="hover:opacity-100 transition-opacity">Instant Payouts</a></li>
+                        <li><a href="{{ route('register', ['type' => 'worker']) }}" class="hover:opacity-100 transition-opacity">Get Started</a></li>
                     </ul>
                 </div>
 
@@ -612,10 +671,10 @@
                 <div>
                     <h3 class="font-semibold mb-4 text-sm">Company</h3>
                     <ul class="space-y-2 text-sm opacity-60">
-                        <li><a href="/about" class="hover:opacity-100 transition-opacity">About Us</a></li>
-                        <li><a href="/contact" class="hover:opacity-100 transition-opacity">Contact</a></li>
-                        <li><a href="/careers" class="hover:opacity-100 transition-opacity">Careers</a></li>
-                        <li><a href="/security" class="hover:opacity-100 transition-opacity">Security</a></li>
+                        <li><a href="{{ route('about') }}" class="hover:opacity-100 transition-opacity">About Us</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:opacity-100 transition-opacity">Contact</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:opacity-100 transition-opacity">Careers</a></li>
+                        <li><a href="{{ route('features') }}" class="hover:opacity-100 transition-opacity">Security</a></li>
                     </ul>
                 </div>
             </div>
@@ -624,11 +683,196 @@
             <div class="border-t pt-8 flex flex-col md:flex-row justify-between items-center text-sm opacity-60" style="border-color: rgba(255,255,255,0.1);">
                 <p>&copy; {{ date('Y') }} OvertimeStaff. All rights reserved.</p>
                 <div class="flex gap-6 mt-4 md:mt-0">
-                    <a href="/terms" class="hover:opacity-100">Terms</a>
-                    <a href="/privacy" class="hover:opacity-100">Privacy</a>
+                    <a href="{{ route('terms') }}" class="hover:opacity-100">Terms</a>
+                    <a href="{{ route('privacy') }}" class="hover:opacity-100">Privacy</a>
                 </div>
             </div>
         </div>
     </footer>
+
+    <!-- Live Shift Market Alpine.js Component -->
+    <script>
+        // User role detection (for guests on landing page)
+        window.userRole = @json(auth()->check() ? auth()->user()->user_type : 'guest');
+
+        // Live Shift Market Component
+        window.liveShiftMarket = function(config = {}) {
+            return {
+                // Configuration
+                variant: config.variant || 'full',
+                limit: config.limit || 20,
+
+                // State
+                shifts: [],
+                statistics: {
+                    shifts_live: 247,
+                    total_value: 42500,
+                    avg_hourly_rate: 32,
+                    rate_change_percent: 3.2,
+                    filled_today: 89,
+                    workers_online: 1247
+                },
+                activityFeed: [],
+                loading: true,
+                isWorker: window.userRole === 'worker',
+                isAgency: window.userRole === 'agency',
+
+                // Modal state
+                showAssignModal: false,
+                selectedShift: null,
+                selectedWorkerId: '',
+
+                // Polling
+                pollInterval: null,
+                activityInterval: null,
+
+                /**
+                 * Initialize the component
+                 */
+                init() {
+                    this.fetchShifts();
+                    this.startPolling();
+                },
+
+                /**
+                 * Fetch shifts from API
+                 */
+                async fetchShifts() {
+                    this.loading = true;
+                    try {
+                        const response = await fetch(`/api/market?limit=${this.limit}`);
+                        const data = await response.json();
+
+                        if (data.success) {
+                            this.shifts = data.shifts || [];
+                            if (data.statistics) {
+                                this.statistics = { ...this.statistics, ...data.statistics };
+                            }
+                        }
+                    } catch (error) {
+                        console.debug('Market fetch error (demo mode):', error);
+                        // Use demo data on error
+                        this.generateDemoShifts();
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                /**
+                 * Generate demo shifts for landing page display
+                 */
+                generateDemoShifts() {
+                    const industries = ['Hospitality', 'Healthcare', 'Retail', 'Logistics'];
+                    const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
+                    const states = ['NY', 'CA', 'IL', 'TX', 'AZ'];
+                    const titles = ['Event Server', 'Warehouse Associate', 'Retail Associate', 'Healthcare Aide', 'Kitchen Staff'];
+                    const businesses = ['Grand Hotel', 'City Hospital', 'Metro Warehouse', 'Downtown Store', 'Premier Events'];
+
+                    this.shifts = Array.from({ length: this.limit }, (_, i) => ({
+                        id: i + 1,
+                        title: titles[i % titles.length],
+                        business_name: businesses[i % businesses.length],
+                        industry: industries[i % industries.length].toLowerCase(),
+                        location_city: cities[i % cities.length],
+                        location_state: states[i % states.length],
+                        shift_date: new Date(Date.now() + (i + 1) * 86400000).toISOString().split('T')[0],
+                        start_time: `${8 + (i % 8)}:00`,
+                        duration_hours: 4 + (i % 5),
+                        base_rate: 18 + (i % 15),
+                        effective_rate: 18 + (i % 15) + (i % 3 === 0 ? 5 : 0),
+                        surge_multiplier: i % 3 === 0 ? 1.25 : 1.0,
+                        required_workers: 3 + (i % 5),
+                        spots_remaining: 1 + (i % 3),
+                        fill_percentage: 30 + (i % 60),
+                        is_urgent: i % 4 === 0,
+                        instant_claim_enabled: i % 3 === 0,
+                        is_new: i < 3,
+                        is_demo: true,
+                        match_score: null,
+                        market_posted_at: '2 hours ago',
+                        market_views: 45 + (i * 12)
+                    }));
+                },
+
+                /**
+                 * Start polling for updates
+                 */
+                startPolling() {
+                    // Poll every 60 seconds (reduced frequency for landing)
+                    this.pollInterval = setInterval(() => {
+                        this.fetchShifts();
+                    }, 60000);
+                },
+
+                /**
+                 * Apply to a shift
+                 */
+                async applyToShift(shift) {
+                    if (shift.is_demo) {
+                        window.location.href = '{{ route("register") }}';
+                        return;
+                    }
+                    // Redirect to login if not authenticated
+                    if (window.userRole === 'guest') {
+                        window.location.href = '{{ route("login") }}';
+                        return;
+                    }
+                },
+
+                /**
+                 * Instant claim a shift
+                 */
+                async instantClaim(shift) {
+                    if (shift.is_demo) {
+                        window.location.href = '{{ route("register") }}';
+                        return;
+                    }
+                    if (window.userRole === 'guest') {
+                        window.location.href = '{{ route("login") }}';
+                        return;
+                    }
+                },
+
+                /**
+                 * Open agency assign modal
+                 */
+                openAgencyAssignModal(shift) {
+                    if (shift.is_demo) {
+                        window.location.href = '{{ route("register") }}';
+                        return;
+                    }
+                },
+
+                /**
+                 * Format shift time for display
+                 */
+                formatShiftTime(shift) {
+                    try {
+                        const date = new Date(shift.shift_date);
+                        const options = { month: 'short', day: 'numeric' };
+                        return date.toLocaleDateString('en-US', options) + ' ' + shift.start_time;
+                    } catch (e) {
+                        return shift.shift_date;
+                    }
+                },
+
+                /**
+                 * Calculate total earnings for a shift
+                 */
+                calculateEarnings(shift) {
+                    const total = shift.effective_rate * shift.duration_hours;
+                    return '$' + total.toFixed(2);
+                },
+
+                /**
+                 * Cleanup on destroy
+                 */
+                destroy() {
+                    if (this.pollInterval) clearInterval(this.pollInterval);
+                    if (this.activityInterval) clearInterval(this.activityInterval);
+                }
+            };
+        };
+    </script>
 </body>
 </html>

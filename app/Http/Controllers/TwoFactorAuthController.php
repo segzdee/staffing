@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Validator;
 
 class TwoFactorAuthController extends Controller
 {
-	use Traits\Functions;
-
     /**
      * Check if the code is correct, and log in
      */

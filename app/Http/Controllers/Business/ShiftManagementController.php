@@ -38,7 +38,7 @@ class ShiftManagementController extends Controller
         $status = $request->get('status', 'all');
 
         $query = Shift::where('business_id', Auth::id())
-            ->with(['assignments.worker', 'applications'])
+            ->with(['assignments.worker', 'applications.worker'])
             ->orderBy('shift_date', 'desc')
             ->orderBy('start_time', 'desc');
 
@@ -47,7 +47,7 @@ class ShiftManagementController extends Controller
             $query->where('status', $status);
         }
 
-        $shifts = $query->get();
+        $shifts = $query->paginate(20);
 
         // Calculate statistics
         $stats = [
@@ -64,13 +64,40 @@ class ShiftManagementController extends Controller
     }
 
     /**
+     * View a specific shift.
+     */
+    public function show($shiftId)
+    {
+        // Check authorization
+        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
+            abort(403, 'Only businesses and agencies can access this page.');
+        }
+
+        $shift = Shift::with(['assignments.worker', 'applications.worker', 'business'])
+            ->findOrFail($shiftId);
+
+        // Check ownership
+        if ($shift->business_id !== Auth::id()) {
+            abort(403, 'You can only view your own shifts.');
+        }
+
+        return view('business.shifts.show', compact('shift'));
+    }
+
+    /**
      * View applications for a specific shift.
      */
     public function viewApplications($shiftId)
     {
+        // Eager load relationships and use withCount to prevent N+1 queries for completed shifts count
         $shift = Shift::with([
-            'applications.worker.workerProfile',
-            'applications.worker.badges',
+            'applications.worker' => function($query) {
+                // Use withCount to eager load completed shifts count
+                $query->with(['workerProfile', 'badges'])
+                      ->withCount(['shiftAssignments as completed_shifts_count' => function($q) {
+                          $q->where('status', 'completed');
+                      }]);
+            },
             'assignments.worker'
         ])->findOrFail($shiftId);
 

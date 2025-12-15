@@ -8,7 +8,6 @@ use Validator;
 use App\Helper;
 use App\Models\User;
 use App\Models\Countries;
-use App\Models\Referrals;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\AdminSettings;
@@ -80,19 +79,30 @@ class RegisterController extends Controller
         return Validator::make($data, [
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|min:6',
+            'password' => 'required|min:8|confirmed',
             'user_type' => 'required|in:worker,business,agency',
-            'agree_gdpr' => 'required',
+            'agree_terms' => 'required|accepted',
             'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha'
         ], $messages);
     }
 
     /**
      * Show registration form.
+     * Accepts optional 'type' query parameter to pre-select user type.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\View\View
      */
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
-        return view('auth.register');
+        $type = $request->query('type', 'worker');
+
+        // Validate type - only allow valid user types
+        if (!in_array($type, ['worker', 'business', 'agency'])) {
+            $type = 'worker';
+        }
+
+        return view('auth.register', compact('type'));
     }
 
 

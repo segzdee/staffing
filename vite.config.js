@@ -7,7 +7,6 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/sass/app.scss',
                 'resources/js/app.js',
             ],
             refresh: true,
@@ -15,7 +14,6 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
-            '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
             '@': path.resolve(__dirname, 'resources/js'),
         },
     },
@@ -49,15 +47,6 @@ export default defineConfig({
         // Hot Module Replacement
         hmr: {
             host: '127.0.0.1',
-        },
-    },
-    // CSS configuration
-    css: {
-        preprocessorOptions: {
-            scss: {
-                // Modern API for Sass
-                api: 'modern-compiler',
-            },
         },
     },
 });

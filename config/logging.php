@@ -113,6 +113,14 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => 90,
         ],
+
+        // ADM-002: Dispute Resolution Logging
+        'disputes' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/disputes.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => 180, // Keep dispute logs for 6 months for compliance
+        ],
     ],
 
 ];

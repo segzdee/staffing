@@ -114,6 +114,41 @@ class DashboardController extends Controller
             $averageFillRate = round($totalFillRate / $allShifts->count());
         }
 
+        // Calculate profile completeness for onboarding progress
+        $onboardingProgress = $this->calculateProfileCompleteness($user);
+
+        // Get notification and message counts for unified dashboard layout
+        $unreadNotifications = 0; // Placeholder - custom notification system
+        $unreadMessages = $user->unreadMessages ?? 0; // Placeholder until Messages model is ready
+
+        // Prepare metrics array for unified dashboard layout
+        $metrics = [
+            [
+                'label' => 'Active Shifts',
+                'value' => $activeShifts,
+                'subtitle' => 'Currently open',
+                'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+            ],
+            [
+                'label' => 'Pending',
+                'value' => $pendingApplications,
+                'subtitle' => 'Applications',
+                'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+            ],
+            [
+                'label' => 'Completed',
+                'value' => $completedShifts,
+                'subtitle' => 'Total shifts',
+                'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+            ],
+            [
+                'label' => 'Total Spent',
+                'value' => '$' . number_format($totalSpent, 2),
+                'subtitle' => 'All time',
+                'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+            ],
+        ];
+
         return view('business.dashboard', compact(
             'totalShifts',
             'activeShifts',
@@ -124,14 +159,18 @@ class DashboardController extends Controller
             'recentApplications',
             'shiftsNeedingAttention',
             'weekStats',
-            'averageFillRate'
+            'averageFillRate',
+            'metrics',
+            'onboardingProgress',
+            'unreadNotifications',
+            'unreadMessages'
         ));
         } catch (\Exception $e) {
             \Log::error('Business Dashboard Error: ' . $e->getMessage(), [
                 'user_id' => Auth::id(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return view('business.dashboard', [
                 'totalShifts' => 0,
                 'activeShifts' => 0,
@@ -142,8 +181,65 @@ class DashboardController extends Controller
                 'recentApplications' => collect(),
                 'shiftsNeedingAttention' => collect(),
                 'weekStats' => ['scheduled' => 0, 'workers' => 0, 'spending' => 0],
-                'averageFillRate' => 0
+                'averageFillRate' => 0,
+                'metrics' => [
+                    ['label' => 'Active Shifts', 'value' => 0, 'subtitle' => 'Currently open', 'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                    ['label' => 'Pending', 'value' => 0, 'subtitle' => 'Applications', 'icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['label' => 'Completed', 'value' => 0, 'subtitle' => 'Total shifts', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['label' => 'Total Spent', 'value' => '$0.00', 'subtitle' => 'All time', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                ],
+                'onboardingProgress' => 0,
+                'unreadNotifications' => 0,
+                'unreadMessages' => 0
             ])->with('error', 'Unable to load dashboard data. Please refresh the page.');
         }
+    }
+
+    /**
+     * Show the business profile page
+     *
+     * @return \Illuminate\View\View
+     */
+    public function profile()
+    {
+        $user = Auth::user();
+        $user->load('businessProfile');
+
+        // Get profile data
+        $profile = $user->businessProfile;
+
+        // Calculate profile completeness
+        $profileCompleteness = $this->calculateProfileCompleteness($user);
+
+        return view('business.profile', compact('user', 'profile', 'profileCompleteness'));
+    }
+
+    /**
+     * Calculate profile completeness percentage
+     *
+     * @param  \App\Models\User  $user
+     * @return int
+     */
+    private function calculateProfileCompleteness($user)
+    {
+        $completeness = 0;
+
+        // Base user fields
+        if ($user->name) $completeness += 15;
+        if ($user->email) $completeness += 15;
+        if ($user->avatar && $user->avatar != 'avatar.jpg') $completeness += 10;
+
+        // Business profile fields
+        if ($user->businessProfile) {
+            $profile = $user->businessProfile;
+            if ($profile->company_name) $completeness += 15;
+            if ($profile->business_type) $completeness += 10;
+            if ($profile->address) $completeness += 10;
+            if ($profile->city && $profile->state) $completeness += 10;
+            if ($profile->phone) $completeness += 10;
+            if ($profile->description) $completeness += 5;
+        }
+
+        return min($completeness, 100);
     }
 }

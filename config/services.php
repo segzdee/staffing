@@ -34,6 +34,11 @@ return [
         'model' => App\Models\User::class,
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
+        // Stripe Connect Configuration (AGY-003)
+        'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'webhook_secret_connect' => env('STRIPE_WEBHOOK_SECRET_CONNECT'),
+        'api_version' => '2023-10-16',
     ],
 
     'facebook' => [

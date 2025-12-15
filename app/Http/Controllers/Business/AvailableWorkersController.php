@@ -7,6 +7,7 @@ use App\Models\AvailabilityBroadcast;
 use App\Models\User;
 use App\Models\ShiftInvitation;
 use App\Models\Shift;
+use App\Models\WorkerFeaturedStatus;
 use App\Services\ShiftMatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,10 +26,24 @@ class AvailableWorkersController extends Controller
 
     /**
      * Show currently available workers broadcasting their availability
+     * WKR-010: Enhanced with featured worker boost and portfolio data
      */
     public function index(Request $request)
     {
-        $query = AvailabilityBroadcast::with(['worker.workerProfile', 'worker.skills', 'worker.certifications'])
+        $query = AvailabilityBroadcast::with([
+                'worker.workerProfile',
+                'worker.skills',
+                'worker.certifications',
+                'worker.portfolioItems' => function($q) {
+                    $q->where('is_visible', true)
+                        ->where(function($query) {
+                            $query->where('is_featured', true)
+                                ->orWhere('display_order', 0);
+                        })
+                        ->limit(1);
+                },
+                'worker.activeFeaturedStatus'
+            ])
             ->where('status', 'active')
             ->where('available_from', '<=', now())
             ->where('available_to', '>=', now());
@@ -63,19 +78,50 @@ class AvailableWorkersController extends Controller
             $broadcasts = $query->get();
         }
 
-        // Sort by match score if specific shift provided
+        // Sort by match score if specific shift provided, with featured worker boost
+        // WKR-010: Featured workers get priority in search results
         if ($request->has('shift_id')) {
             $shift = Shift::find($request->shift_id);
             if ($shift && $shift->business_id === Auth::id()) {
                 $broadcasts = $broadcasts->map(function($broadcast) use ($shift) {
-                    $matchScore = $this->matchingService->calculateWorkerShiftMatch(
+                    $baseScore = $this->matchingService->calculateWorkerShiftMatch(
                         $broadcast->worker,
                         $shift
                     );
-                    $broadcast->match_score = $matchScore;
+
+                    // Apply featured boost
+                    $featuredBoost = 1.0;
+                    if ($broadcast->worker->activeFeaturedStatus) {
+                        $featuredBoost = $broadcast->worker->activeFeaturedStatus->search_boost ?? 1.0;
+                    }
+
+                    $broadcast->match_score = $baseScore * $featuredBoost;
+                    $broadcast->is_featured = $broadcast->worker->activeFeaturedStatus !== null;
+                    $broadcast->featured_tier = $broadcast->worker->activeFeaturedStatus?->tier;
+
+                    // Get portfolio thumbnail
+                    $broadcast->portfolio_thumbnail = $broadcast->worker->portfolioItems->first()?->thumbnail_url;
+
                     return $broadcast;
                 })->sortByDesc('match_score');
             }
+        } else {
+            // Even without shift matching, boost featured workers to the top
+            $broadcasts = $broadcasts->map(function($broadcast) {
+                $broadcast->is_featured = $broadcast->worker->activeFeaturedStatus !== null;
+                $broadcast->featured_tier = $broadcast->worker->activeFeaturedStatus?->tier;
+                $broadcast->portfolio_thumbnail = $broadcast->worker->portfolioItems->first()?->thumbnail_url;
+
+                // Featured score for sorting
+                $broadcast->featured_score = match($broadcast->featured_tier) {
+                    'gold' => 3,
+                    'silver' => 2,
+                    'bronze' => 1,
+                    default => 0,
+                };
+
+                return $broadcast;
+            })->sortByDesc('featured_score');
         }
 
         // Paginate manually

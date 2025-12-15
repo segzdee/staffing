@@ -2,20 +2,6 @@ import _ from 'lodash';
 window._ = _;
 
 /**
- * We'll load jQuery and Bootstrap which provides support
- * for JavaScript based Bootstrap features such as modals and tabs.
- */
-
-import * as Popper from '@popperjs/core';
-window.Popper = Popper;
-
-import jQuery from 'jquery';
-window.$ = window.jQuery = jQuery;
-
-import * as bootstrap from 'bootstrap';
-window.bootstrap = bootstrap;
-
-/**
  * We'll load the axios HTTP library which allows us to easily issue requests
  * to our Laravel back-end. This library automatically handles sending the
  * CSRF token as a header based on the value of the "XSRF" token cookie.

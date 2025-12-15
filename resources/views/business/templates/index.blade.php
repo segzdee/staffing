@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('title') Shift Templates - @endsection
 
@@ -135,22 +135,35 @@
                                     <i class="fa fa-ellipsis-v"></i>
                                 </button>
                                 <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="{{ route('business.templates.duplicate', $template->id) }}">
-                                        <i class="fa fa-copy"></i> Duplicate
-                                    </a>
+                                    <form action="{{ route('business.templates.duplicate', $template->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="fa fa-copy"></i> Duplicate
+                                        </button>
+                                    </form>
                                     @if($template->is_active)
-                                        <a class="dropdown-item" href="{{ route('business.templates.deactivate', $template->id) }}">
-                                            <i class="fa fa-pause"></i> Deactivate
-                                        </a>
+                                        <form action="{{ route('business.templates.deactivate', $template->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fa fa-pause"></i> Deactivate
+                                            </button>
+                                        </form>
                                     @else
-                                        <a class="dropdown-item" href="{{ route('business.templates.activate', $template->id) }}">
-                                            <i class="fa fa-play"></i> Activate
-                                        </a>
+                                        <form action="{{ route('business.templates.activate', $template->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fa fa-play"></i> Activate
+                                            </button>
+                                        </form>
                                     @endif
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item text-danger" href="{{ route('business.templates.delete', $template->id) }}" onclick="return confirm('Delete this template?')">
-                                        <i class="fa fa-trash"></i> Delete
-                                    </a>
+                                    <form action="{{ route('business.templates.delete', $template->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this template?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fa fa-trash"></i> Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>

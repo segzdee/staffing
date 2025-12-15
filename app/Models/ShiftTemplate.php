@@ -6,6 +6,84 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property int $business_id
+ * @property string $template_name
+ * @property string|null $description
+ * @property string $title
+ * @property string $shift_description
+ * @property string $industry
+ * @property string $location_address
+ * @property string $location_city
+ * @property string $location_state
+ * @property string $location_country
+ * @property float|null $location_lat
+ * @property float|null $location_lng
+ * @property string $start_time
+ * @property string $end_time
+ * @property float $duration_hours
+ * @property float $base_rate
+ * @property string $urgency_level
+ * @property int $required_workers
+ * @property array<array-key, mixed>|null $requirements
+ * @property string|null $dress_code
+ * @property string|null $parking_info
+ * @property string|null $break_info
+ * @property string|null $special_instructions
+ * @property bool $auto_renew
+ * @property string|null $recurrence_pattern
+ * @property array<array-key, mixed>|null $recurrence_days
+ * @property \Illuminate\Support\Carbon|null $recurrence_start_date
+ * @property \Illuminate\Support\Carbon|null $recurrence_end_date
+ * @property int $times_used
+ * @property \Illuminate\Support\Carbon|null $last_used_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $business
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate autoRenew()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate forIndustry($industry)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereAutoRenew($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereBaseRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereBreakInfo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereBusinessId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereDressCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereDurationHours($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereEndTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereIndustry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLastUsedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLocationAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLocationCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLocationCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLocationLat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLocationLng($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereLocationState($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereParkingInfo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereRecurrenceDays($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereRecurrenceEndDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereRecurrencePattern($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereRecurrenceStartDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereRequiredWorkers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereRequirements($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereShiftDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereSpecialInstructions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereStartTime($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereTemplateName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereTimesUsed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftTemplate whereUrgencyLevel($value)
+ * @mixin \Eloquent
+ */
 class ShiftTemplate extends Model
 {
     use HasFactory;

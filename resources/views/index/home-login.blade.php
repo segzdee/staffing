@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('content')
   <div class="jumbotron m-0 bg-gradient">

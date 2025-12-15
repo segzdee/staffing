@@ -36,7 +36,9 @@ class LiveShiftMarket extends Component
 
     public function loadShifts()
     {
+        // Use withCount to eager load applications count and prevent N+1 queries
         $query = Shift::with(['business', 'location'])
+            ->withCount('applications')
             ->where('status', 'open')
             ->where('start_datetime', '>', now())
             ->orderBy('start_datetime', 'asc')
@@ -47,6 +49,8 @@ class LiveShiftMarket extends Component
         }
 
         $this->shifts = $query->get()->map(function ($shift) {
+            // Use the eager loaded applications_count instead of calling count() again
+            $applicationsCount = $shift->applications_count;
             return [
                 'id' => $shift->id,
                 'title' => $shift->title,
@@ -58,11 +62,11 @@ class LiveShiftMarket extends Component
                 'end_time' => Carbon::parse($shift->end_datetime)->format('g:i A'),
                 'duration' => $this->calculateDuration($shift->start_datetime, $shift->end_datetime),
                 'skills' => $shift->required_skills ? json_decode($shift->required_skills, true) : [],
-                'demand_level' => $this->calculateDemandLevel($shift),
+                'demand_level' => $this->calculateDemandLevelFromCount($applicationsCount, $shift->max_workers ?? 1),
                 'urgency' => $this->calculateUrgency($shift),
                 'countdown' => $this->calculateCountdown($shift->start_datetime),
                 'viewers' => rand(3, 24),
-                'applications_count' => $shift->applications()->count(),
+                'applications_count' => $applicationsCount,
                 'max_workers' => $shift->max_workers ?? 1,
             ];
         })->toArray();
@@ -88,21 +92,32 @@ class LiveShiftMarket extends Component
         return $hours . 'h';
     }
 
-    private function calculateDemandLevel($shift)
+    /**
+     * Calculate demand level from pre-loaded count to prevent N+1 queries.
+     */
+    private function calculateDemandLevelFromCount($applicationsCount, $maxWorkers)
     {
-        $applicationsCount = $shift->applications()->count();
-        $maxWorkers = $shift->max_workers ?? 1;
-
         if ($applicationsCount === 0) {
             return 'Low';
         }
 
-        $ratio = $applicationsCount / $maxWorkers;
+        $ratio = $applicationsCount / max(1, $maxWorkers);
 
         if ($ratio >= 5) return 'Very High';
         if ($ratio >= 3) return 'High';
         if ($ratio >= 1) return 'Medium';
         return 'Low';
+    }
+
+    /**
+     * @deprecated Use calculateDemandLevelFromCount() to avoid N+1 queries
+     */
+    private function calculateDemandLevel($shift)
+    {
+        return $this->calculateDemandLevelFromCount(
+            $shift->applications_count ?? $shift->applications()->count(),
+            $shift->max_workers ?? 1
+        );
     }
 
     private function calculateUrgency($shift)

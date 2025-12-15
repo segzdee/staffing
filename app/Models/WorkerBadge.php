@@ -5,6 +5,42 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property int $worker_id
+ * @property string $badge_type
+ * @property string $badge_name
+ * @property string $description
+ * @property string|null $icon
+ * @property array<array-key, mixed>|null $criteria
+ * @property int $level
+ * @property \Illuminate\Support\Carbon $earned_at
+ * @property bool $is_active
+ * @property bool $display_on_profile
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $worker
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge displayable()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge ofType($type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereBadgeName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereBadgeType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereCriteria($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereDisplayOnProfile($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereEarnedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereIcon($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereLevel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBadge whereWorkerId($value)
+ * @mixin \Eloquent
+ */
 class WorkerBadge extends Model
 {
     use HasFactory;

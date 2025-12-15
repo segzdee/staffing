@@ -69,10 +69,10 @@ class DevLoginController extends Controller
         }
 
         $redirectMap = [
-            'worker' => route('worker.dashboard'),
-            'business' => route('business.dashboard'),
-            'agency' => route('agency.dashboard'),
-            'admin' => route('admin.dashboard'), // This is /panel/admin
+            'worker' => route('dashboard'),
+            'business' => route('dashboard'),
+            'agency' => route('dashboard'),
+            'admin' => route('admin.dashboard'), // Admin uses separate route: /panel/admin
         ];
 
         return redirect($redirectMap[$type] ?? route('home'))
@@ -103,25 +103,25 @@ class DevLoginController extends Controller
                 'email' => 'dev.worker@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Worker',
-                'dashboard' => route('worker.dashboard'),
+                'dashboard' => route('dashboard'),
             ],
             'business' => [
                 'email' => 'dev.business@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Business',
-                'dashboard' => route('business.dashboard'),
+                'dashboard' => route('dashboard'),
             ],
             'agency' => [
                 'email' => 'dev.agency@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Agency',
-                'dashboard' => route('agency.dashboard'),
+                'dashboard' => route('dashboard'),
             ],
             'agent' => [
                 'email' => 'dev.agent@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev AI Agent',
-                'dashboard' => route('home'), // AI Agents use API, not web dashboard
+                'dashboard' => route('agent.dashboard'),
                 'api_info' => 'Use API endpoints at /api/agent/* with X-Agent-API-Key header',
             ],
             'admin' => [

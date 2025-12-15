@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('content')
 <div class="container">
@@ -15,7 +15,11 @@
                     @endif
 
                     {{ __('Before proceeding, please check your email for a verification link.') }}
-                    {{ __('If you did not receive the email') }}, <a href="{{ route('verification.resend') }}">{{ __('click here to request another') }}</a>.
+                    @if(Route::has('verification.resend'))
+                        {{ __('If you did not receive the email') }}, <a href="{{ route('verification.resend') }}">{{ __('click here to request another') }}</a>.
+                    @else
+                        {{ __('If you did not receive the email') }}, please contact support.
+                    @endif
                 </div>
             </div>
         </div>

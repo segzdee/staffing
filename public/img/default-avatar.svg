@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <!-- Professional gradient using OvertimeStaff brand colors -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6574cd;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3490dc;stop-opacity:1" />
+    </linearGradient>
+    <!-- Subtle inner shadow for depth -->
+    <radialGradient id="innerShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" style="stop-color:transparent;stop-opacity:0" />
+      <stop offset="100%" style="stop-color:#000;stop-opacity:0.1" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background circle with gradient -->
+  <circle cx="200" cy="200" r="200" fill="url(#bgGradient)"/>
+
+  <!-- Subtle inner shadow overlay -->
+  <circle cx="200" cy="200" r="200" fill="url(#innerShadow)"/>
+
+  <!-- User silhouette icon - professional and gender-neutral -->
+  <g fill="#ffffff" opacity="0.95">
+    <!-- Head -->
+    <circle cx="200" cy="145" r="55"/>
+    <!-- Body/shoulders -->
+    <path d="M200 215
+             C130 215 85 265 85 320
+             L85 400
+             L315 400
+             L315 320
+             C315 265 270 215 200 215 Z"/>
+  </g>
+</svg>

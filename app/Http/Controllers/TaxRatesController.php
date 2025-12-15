@@ -10,8 +10,6 @@ use App\Models\AdminSettings;
 
 class TaxRatesController extends Controller
 {
-  use Traits\Functions;
-
   public function __construct(AdminSettings $settings)
 	{
 		$this->settings = $settings::first();

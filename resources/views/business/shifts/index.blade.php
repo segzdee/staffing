@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('title') My Shifts - Business Dashboard - @endsection
 
@@ -96,25 +96,25 @@
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-number">{{ $stats['active_shifts'] }}</div>
+                <div class="stat-number">{{ $stats['active_shifts'] ?? 0 }}</div>
                 <div class="stat-label">Active Shifts</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-number">{{ $stats['pending_applications'] }}</div>
+                <div class="stat-number">{{ $stats['pending_applications'] ?? 0 }}</div>
                 <div class="stat-label">Pending Applications</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-number">{{ $stats['workers_today'] }}</div>
+                <div class="stat-number">{{ $stats['workers_today'] ?? 0 }}</div>
                 <div class="stat-label">Workers Today</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-number">${{ number_format($stats['total_cost_month'], 0) }}</div>
+                <div class="stat-number">${{ number_format($stats['total_cost_month'] ?? 0, 0) }}</div>
                 <div class="stat-label">This Month's Cost</div>
             </div>
         </div>
@@ -127,8 +127,8 @@
                 <div class="col-md-8">
                     <h5 class="mb-2">
                         <i class="fa fa-bolt text-warning"></i>
-                        @if($urgentShifts->count() > 0)
-                            You have {{ $urgentShifts->count() }} urgent shifts needing attention
+                        @if(($urgentShifts ?? collect())->count() > 0)
+                            You have {{ ($urgentShifts ?? collect())->count() }} urgent shifts needing attention
                         @else
                             All shifts are on track!
                         @endif
@@ -150,36 +150,26 @@
     </div>
 
     <!-- Tabs -->
-    <ul class="nav nav-pills shift-tabs mb-3">
-        <li class="nav-item">
-            <a class="nav-link {{ $activeTab == 'all' ? 'active' : '' }}" href="{{ route('business.shifts.index', ['tab' => 'all']) }}">
-                All Shifts ({{ $allShifts->total() }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ $activeTab == 'open' ? 'active' : '' }}" href="{{ route('business.shifts.index', ['tab' => 'open']) }}">
-                Open ({{ $stats['open_count'] }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ $activeTab == 'upcoming' ? 'active' : '' }}" href="{{ route('business.shifts.index', ['tab' => 'upcoming']) }}">
-                Upcoming ({{ $stats['upcoming_count'] }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ $activeTab == 'in_progress' ? 'active' : '' }}" href="{{ route('business.shifts.index', ['tab' => 'in_progress']) }}">
-                In Progress ({{ $stats['in_progress_count'] }})
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ $activeTab == 'completed' ? 'active' : '' }}" href="{{ route('business.shifts.index', ['tab' => 'completed']) }}">
-                Completed ({{ $stats['completed_count'] }})
-            </a>
-        </li>
-    </ul>
+    <div class="filter-tabs">
+        <a href="{{ route('business.shifts.index', ['tab' => 'all']) }}" class="filter-tab {{ ($activeTab ?? 'all') == 'all' ? 'active' : '' }}">
+            All Shifts ({{ ($allShifts ?? collect())->total() ?? 0 }})
+        </a>
+        <a href="{{ route('business.shifts.index', ['tab' => 'open']) }}" class="filter-tab {{ ($activeTab ?? '') == 'open' ? 'active' : '' }}">
+            Open ({{ $stats['open_count'] ?? 0 }})
+        </a>
+        <a href="{{ route('business.shifts.index', ['tab' => 'upcoming']) }}" class="filter-tab {{ ($activeTab ?? '') == 'upcoming' ? 'active' : '' }}">
+            Upcoming ({{ $stats['upcoming_count'] ?? 0 }})
+        </a>
+        <a href="{{ route('business.shifts.index', ['tab' => 'in_progress']) }}" class="filter-tab {{ ($activeTab ?? '') == 'in_progress' ? 'active' : '' }}">
+            In Progress ({{ $stats['in_progress_count'] ?? 0 }})
+        </a>
+        <a href="{{ route('business.shifts.index', ['tab' => 'completed']) }}" class="filter-tab {{ ($activeTab ?? '') == 'completed' ? 'active' : '' }}">
+            Completed ({{ $stats['completed_count'] ?? 0 }})
+        </a>
+    </div>
 
     <!-- Shifts List -->
-    @forelse($allShifts as $shift)
+    @forelse($allShifts ?? [] as $shift)
     <div class="shift-list-item">
         <div class="row align-items-center">
             <div class="col-md-6">
@@ -245,14 +235,21 @@
                         <a class="dropdown-item" href="{{ route('business.shifts.edit', $shift->id) }}">
                             <i class="fa fa-edit"></i> Edit
                         </a>
-                        <a class="dropdown-item" href="{{ route('business.shifts.duplicate', $shift->id) }}">
-                            <i class="fa fa-copy"></i> Duplicate
-                        </a>
+                        <form action="{{ route('business.shifts.duplicate', $shift->id) }}" method="POST" class="d-inline">
+                            @csrf
+                            <button type="submit" class="dropdown-item">
+                                <i class="fa fa-copy"></i> Duplicate
+                            </button>
+                        </form>
                         @if($shift->status != 'completed' && $shift->status != 'cancelled')
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item text-danger" href="{{ route('business.shifts.cancel', $shift->id) }}" onclick="return confirm('Are you sure you want to cancel this shift?')">
-                                <i class="fa fa-times"></i> Cancel Shift
-                            </a>
+                            <form action="{{ route('business.shifts.cancel', $shift->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to cancel this shift?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fa fa-times"></i> Cancel Shift
+                                </button>
+                            </form>
                         @endif
                     </div>
                 </div>
@@ -279,7 +276,7 @@
     @endforelse
 
     <!-- Pagination -->
-    @if($allShifts->hasPages())
+    @if(($allShifts ?? collect())->hasPages())
     <div class="d-flex justify-content-center mt-4">
         {{ $allShifts->appends(request()->all())->links() }}
     </div>

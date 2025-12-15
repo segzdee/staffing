@@ -449,6 +449,41 @@ public static function resizeImageFixed($image,$width,$height,$imageNew = null)
 		return substr(strtolower(md5(time() . mt_rand(1000, 9999))), 0, 8);
 	}// End method
 
+	/**
+	 * Format currency amount from cents to dollars
+	 * 
+	 * @param int $cents Amount in cents
+	 * @param bool $includeSymbol Whether to include currency symbol
+	 * @return string Formatted currency string
+	 */
+	public static function formatCurrency($cents, $includeSymbol = true)
+	{
+		$settings = AdminSettings::first();
+		$dollars = $cents / 100;
+		
+		if ($settings->currency_code == 'JPY') {
+			$formatted = number_format($dollars, 0);
+		} else {
+			if ($settings->decimal_format == 'dot') {
+				$formatted = number_format($dollars, 2, '.', ',');
+			} else {
+				$formatted = number_format($dollars, 2, ',', '.');
+			}
+		}
+		
+		if (!$includeSymbol) {
+			return $formatted;
+		}
+		
+		if ($settings->currency_position == 'left') {
+			return $settings->currency_symbol . $formatted;
+		} elseif ($settings->currency_position == 'right') {
+			return $formatted . $settings->currency_symbol;
+		} else {
+			return $settings->currency_symbol . $formatted;
+		}
+	}
+
 	public static function amountFormatDecimal($value, $appyTax = null)
   {
  	 $settings = AdminSettings::first();

@@ -8,8 +8,6 @@ use App\Models\AdminSettings;
 
 class AccountController extends Controller
 {
-  use \App\Http\Controllers\Traits\UserDelete;
-
   public function __construct(
     public Request $request,
     public AdminSettings $settings

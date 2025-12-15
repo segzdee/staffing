@@ -14,8 +14,6 @@ use Illuminate\Support\Str;
 
 class VerificationController extends Controller
 {
-    use \App\Http\Controllers\Traits\Functions;
-
     protected $request;
     protected $settings;
 

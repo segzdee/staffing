@@ -6,6 +6,7 @@
     <title>Pricing | OvertimeStaff</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -29,31 +30,15 @@
         }
     </script>
 </head>
-<body class="font-sans">
+<body class="font-sans" x-data="{ mobileMenuOpen: false }">
     <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="text-2xl font-bold text-gray-900">OvertimeStaff</a>
-                </div>
-                <div class="flex items-center space-x-8">
-                    <a href="/" class="text-gray-600 hover:text-gray-900">Home</a>
-                    <a href="/features" class="text-gray-600 hover:text-gray-900">Features</a>
-                    <a href="/pricing" class="text-gray-900 font-medium">Pricing</a>
-                    <a href="/about" class="text-gray-600 hover:text-gray-900">About</a>
-                    <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900">Sign In</a>
-                    <a href="{{ route('register') }}" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">Get Started</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    @include('partials.public-navbar')
 
     <!-- Hero -->
-    <div class="bg-gradient-to-br from-brand-500 to-brand-600 text-white py-20">
+    <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-5xl font-bold mb-6">Simple, Transparent Pricing</h1>
-            <p class="text-xl text-brand-100 max-w-3xl mx-auto">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">Simple, Transparent Pricing</h1>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
                 Pay only for what you use. No hidden fees, no long-term contracts.
             </p>
         </div>
@@ -110,14 +95,14 @@
                         <span class="text-gray-700">24/7 support</span>
                     </li>
                 </ul>
-                <a href="{{ route('register') }}" class="block w-full text-center px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-semibold">
+                <a href="{{ route('register', ['type' => 'worker']) }}" class="block w-full text-center px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold">
                     Sign Up as Worker
                 </a>
             </div>
 
             <!-- Businesses -->
-            <div class="bg-white rounded-xl border-2 border-brand-600 p-8 relative">
-                <div class="absolute top-0 right-0 bg-brand-600 text-white px-4 py-1 rounded-bl-lg rounded-tr-lg text-sm font-semibold">
+            <div class="bg-white rounded-xl border-2 border-gray-900 p-8 relative">
+                <div class="absolute top-0 right-0 bg-gray-900 text-white px-4 py-1 rounded-bl-lg rounded-tr-lg text-sm font-semibold">
                     Most Popular
                 </div>
                 <div class="text-center mb-8">
@@ -172,7 +157,7 @@
                         <span class="text-gray-700">Priority support</span>
                     </li>
                 </ul>
-                <a href="{{ route('register') }}" class="block w-full text-center px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-semibold">
+                <a href="{{ route('register', ['type' => 'business']) }}" class="block w-full text-center px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-semibold">
                     Sign Up as Business
                 </a>
             </div>
@@ -207,17 +192,49 @@
         <div class="max-w-4xl mx-auto text-center px-4">
             <h2 class="text-4xl font-bold mb-4">Ready to Get Started?</h2>
             <p class="text-xl text-gray-400 mb-8">Join thousands of businesses and workers on OvertimeStaff.</p>
-            <a href="{{ route('register') }}" class="inline-block px-8 py-4 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-lg font-semibold">
+            <a href="{{ route('register') }}" class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 text-lg font-semibold">
                 Create Free Account
             </a>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-8">
-        <div class="max-w-7xl mx-auto px-4 text-center text-gray-600">
-            <p>&copy; 2025 OvertimeStaff. All rights reserved.</p>
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h3 class="font-bold text-lg mb-4"><span class="text-white">Over</span><span class="text-blue-500">TIME</span><span class="text-white">Staff</span></h3>
+                    <p class="text-gray-400 text-sm">Enterprise shift marketplace connecting businesses with verified workers worldwide.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Product</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="{{ route('features') }}" class="hover:text-white">Features</a></li>
+                        <li><a href="{{ route('pricing') }}" class="hover:text-white">Pricing</a></li>
+                        <li><a href="{{ route('register') }}" class="hover:text-white">Get Started</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Company</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="{{ route('about') }}" class="hover:text-white">About</a></li>
+                        <li><a href="{{ route('contact') }}" class="hover:text-white">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Legal</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="{{ route('terms') }}" class="hover:text-white">Terms</a></li>
+                        <li><a href="{{ route('privacy') }}" class="hover:text-white">Privacy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+                <p>&copy; {{ date('Y') }} OvertimeStaff. All rights reserved.</p>
+            </div>
         </div>
     </footer>
+
+    <style>[x-cloak] { display: none !important; }</style>
 </body>
 </html>

@@ -38,3 +38,8 @@ console.log('OvertimeStaff assets loaded via Vite');
  * Live Shift Market Component
  */
 import './components/live-shift-market.js';
+
+/**
+ * Form Validation Library
+ */
+import './form-validation.js';

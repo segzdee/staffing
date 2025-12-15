@@ -6,6 +6,34 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property int $worker_id
+ * @property \Illuminate\Support\Carbon $start_date
+ * @property \Illuminate\Support\Carbon $end_date
+ * @property string|null $reason
+ * @property string|null $notes
+ * @property string $type
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $worker
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate forDateRange($startDate, $endDate)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate upcoming()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereEndDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereStartDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerBlackoutDate whereWorkerId($value)
+ * @mixin \Eloquent
+ */
 class WorkerBlackoutDate extends Model
 {
     use HasFactory;

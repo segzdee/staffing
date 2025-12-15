@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Cashier\Billable;
@@ -14,9 +15,127 @@ use App\Models\Notifications;
 use App\Models\AgencyClient;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property \Illuminate\Support\Carbon|null $dev_expires_at
+ * @property bool $is_dev_account
+ * @property string $password
+ * @property string|null $remember_token
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $username
+ * @property string $role
+ * @property string $status
+ * @property int $mfa_enabled
+ * @property string $user_type
+ * @property int $is_verified_worker
+ * @property int $is_verified_business
+ * @property string|null $onboarding_step
+ * @property int $onboarding_completed
+ * @property string|null $notification_preferences
+ * @property string|null $availability_schedule
+ * @property int|null $max_commute_distance
+ * @property numeric $rating_as_worker
+ * @property numeric $rating_as_business
+ * @property int $total_shifts_completed
+ * @property int $total_shifts_posted
+ * @property numeric $reliability_score
+ * @property string|null $bio
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, AgencyClient> $agencyClients
+ * @property-read int|null $agency_clients_count
+ * @property-read \App\Models\AgencyProfile|null $agencyProfile
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $agencyWorkers
+ * @property-read int|null $agency_workers_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $appliedShifts
+ * @property-read int|null $applied_shifts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $assignedShifts
+ * @property-read int|null $assigned_shifts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AvailabilityBroadcast> $availabilityBroadcasts
+ * @property-read int|null $availability_broadcasts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\WorkerBadge> $badges
+ * @property-read int|null $badges_count
+ * @property-read \App\Models\BusinessProfile|null $businessProfile
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Certification> $certifications
+ * @property-read int|null $certifications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Conversation> $conversationsAsBusiness
+ * @property-read int|null $conversations_as_business_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Conversation> $conversationsAsWorker
+ * @property-read int|null $conversations_as_worker_count
+ * @property-read mixed $balance
+ * @property-read string $dashboard_route
+ * @property-read mixed $first_name
+ * @property-read mixed $last_name
+ * @property-read string $profile_route
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Notifications> $notifications
+ * @property-read int|null $notifications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $postedShifts
+ * @property-read int|null $posted_shifts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Rating> $ratingsGiven
+ * @property-read int|null $ratings_given_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Rating> $ratingsReceived
+ * @property-read int|null $ratings_received_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $receivedMessages
+ * @property-read int|null $received_messages_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $sentMessages
+ * @property-read int|null $sent_messages_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftApplication> $shiftApplications
+ * @property-read int|null $shift_applications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftAssignment> $shiftAssignments
+ * @property-read int|null $shift_assignments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftInvitation> $shiftInvitations
+ * @property-read int|null $shift_invitations_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftPayment> $shiftPaymentsMade
+ * @property-read int|null $shift_payments_made_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftPayment> $shiftPaymentsReceived
+ * @property-read int|null $shift_payments_received_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Skill> $skills
+ * @property-read int|null $skills_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Cashier\Subscription> $subscriptions
+ * @property-read int|null $subscriptions_count
+ * @property-read \App\Models\VerificationQueue|null $verificationRequest
+ * @property-read \App\Models\WorkerProfile|null $workerProfile
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User hasExpiredGenericTrial()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User onGenericTrial()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAvailabilitySchedule($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereBio($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDevExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsDevAccount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsVerifiedBusiness($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereIsVerifiedWorker($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereMaxCommuteDistance($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereMfaEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereNotificationPreferences($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereOnboardingCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereOnboardingStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRatingAsBusiness($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRatingAsWorker($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereReliabilityScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRole($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTotalShiftsCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTotalShiftsPosted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUserType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUsername($value)
+ * @mixin \Eloquent
+ */
 class User extends Authenticatable implements HasLocalePreference
 {
-    use Notifiable, Billable;
+    use HasFactory, Notifiable, Billable;
 
     // Use standard Laravel timestamps for OvertimeStaff
     // const CREATED_AT = 'date';
@@ -63,6 +182,11 @@ class User extends Authenticatable implements HasLocalePreference
         'total_shifts_completed',
         'total_shifts_posted',
         'reliability_score',
+        // Suspension fields
+        'suspended_until',
+        'suspension_reason',
+        'suspension_count',
+        'last_suspended_at',
         // Dev account fields
         'is_dev_account',
         'dev_expires_at',
@@ -86,6 +210,8 @@ class User extends Authenticatable implements HasLocalePreference
         'email_verified_at' => 'datetime',
         'dev_expires_at' => 'datetime',
         'is_dev_account' => 'boolean',
+        'suspended_until' => 'datetime',
+        'last_suspended_at' => 'datetime',
     ];
 
     /**
@@ -237,11 +363,6 @@ class User extends Authenticatable implements HasLocalePreference
           return $this->user_type === 'agency';
       }
 
-      public function isAiAgent()
-      {
-          return $this->user_type === 'ai_agent';
-      }
-
       public function isAdmin()
       {
           return $this->role === 'admin';
@@ -256,13 +377,51 @@ class User extends Authenticatable implements HasLocalePreference
               return route('admin.dashboard');
           }
 
-          return match($this->user_type) {
-              'worker' => route('worker.dashboard'),
-              'business' => route('business.dashboard'),
-              'agency' => route('agency.dashboard'),
-              'ai_agent' => route('dashboard'),
-              default => route('dashboard'),
-          };
+          // All other user types use the generic dashboard route
+          // which automatically routes to the correct dashboard
+          return route('dashboard');
+      }
+
+      /**
+       * Get the profile route for this user with safe fallback
+       * Used as an accessor: $user->profile_route
+       *
+       * @return string
+       */
+      public function getProfileRouteAttribute()
+      {
+          // Admin users go to settings
+          if ($this->isAdmin()) {
+              return \Route::has('admin.profile') ? route('admin.profile') : route('settings.index');
+          }
+
+          // Build the route name based on user type
+          $routeName = $this->user_type . '.profile';
+
+          // Check if the route exists, otherwise fallback to dashboard or home
+          if (\Route::has($routeName)) {
+              return route($routeName);
+          }
+
+          // Fallback to dashboard
+          $dashboardRoute = $this->user_type . '.dashboard';
+          if (\Route::has($dashboardRoute)) {
+              return route($dashboardRoute);
+          }
+
+          // Ultimate fallback
+          return route('home');
+      }
+
+      /**
+       * Get the dashboard route for this user with safe fallback
+       * Used as an accessor: $user->dashboard_route
+       *
+       * @return string
+       */
+      public function getDashboardRouteAttribute()
+      {
+          return $this->getDashboardRoute();
       }
 
       /**
@@ -283,10 +442,6 @@ class User extends Authenticatable implements HasLocalePreference
           return $this->hasOne(AgencyProfile::class);
       }
 
-      public function aiAgentProfile()
-      {
-          return $this->hasOne(AiAgentProfile::class);
-      }
 
       /**
        * Agency Relationships
@@ -315,8 +470,6 @@ class User extends Authenticatable implements HasLocalePreference
                   return $this->businessProfile;
               case 'agency':
                   return $this->agencyProfile;
-              case 'ai_agent':
-                  return $this->aiAgentProfile;
               default:
                   return null;
           }
@@ -385,6 +538,15 @@ class User extends Authenticatable implements HasLocalePreference
       }
 
       /**
+       * Alias for shiftPaymentsMade() - used in views/controllers.
+       * Returns all shift payments made by this user (as a business).
+       */
+      public function shiftPayments()
+      {
+          return $this->shiftPaymentsMade();
+      }
+
+      /**
        * Skills - For Workers
        */
       public function skills()
@@ -421,6 +583,32 @@ class User extends Authenticatable implements HasLocalePreference
       }
 
       /**
+       * Alias for ratingsReceived() - used by admin controllers.
+       * Returns all ratings where this user was rated.
+       */
+      public function ratings()
+      {
+          return $this->ratingsReceived();
+      }
+
+      /**
+       * Assignments - Alias for shiftAssignments() for use in analytics.
+       */
+      public function assignments()
+      {
+          return $this->shiftAssignments();
+      }
+
+      /**
+       * Verification Request - For pending verifications.
+       * Returns the user's pending verification request if any.
+       */
+      public function verificationRequest()
+      {
+          return $this->hasOne(VerificationQueue::class, 'user_id')->where('status', 'pending');
+      }
+
+      /**
        * Shift Invitations - For Workers
        */
       public function shiftInvitations()
@@ -442,6 +630,49 @@ class User extends Authenticatable implements HasLocalePreference
       public function badges()
       {
           return $this->hasMany(WorkerBadge::class, 'worker_id');
+      }
+
+      /**
+       * WKR-010: Portfolio Items - For Workers
+       */
+      public function portfolioItems()
+      {
+          return $this->hasMany(WorkerPortfolioItem::class, 'worker_id');
+      }
+
+      /**
+       * WKR-010: Featured Statuses - For Workers
+       */
+      public function featuredStatuses()
+      {
+          return $this->hasMany(WorkerFeaturedStatus::class, 'worker_id');
+      }
+
+      /**
+       * WKR-010: Profile Views - For Workers
+       */
+      public function profileViews()
+      {
+          return $this->hasMany(WorkerProfileView::class, 'worker_id');
+      }
+
+      /**
+       * WKR-010: Endorsements Received - For Workers
+       */
+      public function endorsementsReceived()
+      {
+          return $this->hasMany(WorkerEndorsement::class, 'worker_id');
+      }
+
+      /**
+       * WKR-010: Active Featured Status - For Workers
+       */
+      public function activeFeaturedStatus()
+      {
+          return $this->hasOne(WorkerFeaturedStatus::class, 'worker_id')
+              ->where('status', 'active')
+              ->where('start_date', '<=', now())
+              ->where('end_date', '>=', now());
       }
 
       /**
@@ -597,5 +828,185 @@ class User extends Authenticatable implements HasLocalePreference
       public function getBalanceAttribute()
       {
           return 0.00;
+      }
+
+      /**
+       * Profile Completeness Accessor
+       * WKR-010: Enhanced Profile Marketing
+       *
+       * @return array
+       */
+      public function getProfileCompletenessAttribute()
+      {
+          if ($this->user_type !== 'worker' || !$this->workerProfile) {
+              return [
+                  'score' => 0,
+                  'percentage' => 0,
+                  'sections' => [],
+                  'tips' => [],
+              ];
+          }
+
+          $service = app(\App\Services\ProfileCompletionService::class);
+          return $service->calculateCompletion($this);
+      }
+
+      // ==================== SUSPENSION METHODS ====================
+
+      /**
+       * Check if user is currently suspended
+       *
+       * @return bool
+       */
+      public function isSuspended()
+      {
+          if ($this->status !== 'suspended') {
+              return false;
+          }
+
+          if (!$this->suspended_until) {
+              return true; // Indefinite suspension
+          }
+
+          return Carbon::now()->lt($this->suspended_until);
+      }
+
+      /**
+       * Suspend the user
+       *
+       * @param int $days
+       * @param string $reason
+       * @return void
+       */
+      public function suspend(int $days, string $reason)
+      {
+          $this->update([
+              'status' => 'suspended',
+              'suspended_until' => Carbon::now()->addDays($days),
+              'suspension_reason' => $reason,
+              'suspension_count' => $this->suspension_count + 1,
+              'last_suspended_at' => Carbon::now()
+          ]);
+      }
+
+      /**
+       * Reinstate the user from suspension
+       *
+       * @return void
+       */
+      public function reinstate()
+      {
+          $this->update([
+              'status' => 'active',
+              'suspended_until' => null,
+              'suspension_reason' => null
+          ]);
+      }
+
+      /**
+       * Get days remaining in suspension
+       *
+       * @return int|null
+       */
+      public function suspensionDaysRemaining()
+      {
+          if (!$this->isSuspended() || !$this->suspended_until) {
+              return null;
+          }
+
+          return Carbon::now()->diffInDays($this->suspended_until, false);
+      }
+
+      // ==================== RELIABILITY SCORE METHODS ====================
+
+      /**
+       * Reliability score history relationship
+       */
+      public function reliabilityScoreHistory()
+      {
+          return $this->hasMany(ReliabilityScoreHistory::class)->orderBy('created_at', 'desc');
+      }
+
+      /**
+       * Get current reliability score (latest from history or default)
+       *
+       * @return float
+       */
+      public function getReliabilityScoreAttribute()
+      {
+          // If we have a cached score in the user table, use it
+          if (isset($this->attributes['reliability_score']) && $this->attributes['reliability_score'] > 0) {
+              return (float) $this->attributes['reliability_score'];
+          }
+
+          // Otherwise get the latest from history
+          $latestScore = $this->reliabilityScoreHistory()->first();
+
+          if ($latestScore) {
+              return (float) $latestScore->score;
+          }
+
+          // Default score for new workers
+          return 70.0;
+      }
+
+      /**
+       * Get reliability grade (A-F)
+       *
+       * @return string
+       */
+      public function getReliabilityGrade()
+      {
+          $score = $this->reliability_score;
+
+          return match (true) {
+              $score >= 90 => 'A',
+              $score >= 80 => 'B',
+              $score >= 70 => 'C',
+              $score >= 60 => 'D',
+              default => 'F'
+          };
+      }
+
+      /**
+       * Update cached reliability score
+       *
+       * @param float $score
+       * @return void
+       */
+      public function updateReliabilityScore(float $score)
+      {
+          $this->update(['reliability_score' => $score]);
+      }
+
+      /**
+       * ADM-002: Disputes assigned to this admin.
+       * Used for workload balancing in dispute assignment.
+       *
+       * @return \Illuminate\Database\Eloquent\Relations\HasMany
+       */
+      public function assignedDisputes()
+      {
+          return $this->hasMany(AdminDisputeQueue::class, 'assigned_to_admin');
+      }
+
+      /**
+       * ADM-002: Disputes filed by this user (as worker).
+       *
+       * @return \Illuminate\Database\Eloquent\Relations\HasMany
+       */
+      public function disputesAsWorker()
+      {
+          return $this->hasMany(AdminDisputeQueue::class, 'worker_id');
+      }
+
+      /**
+       * ADM-002: Disputes filed by this user (as business).
+       *
+       * @return \Illuminate\Database\Eloquent\Relations\HasMany
+       */
+      public function disputesAsBusiness()
+      {
+          return $this->hasMany(AdminDisputeQueue::class, 'business_id');
       }
 }

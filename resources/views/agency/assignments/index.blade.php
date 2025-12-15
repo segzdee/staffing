@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('css')
 <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">

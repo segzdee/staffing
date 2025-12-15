@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('title') {{ $response->title }} | {{ trans('general.blog') }} @endsection
   @section('description_custom'){{strip_tags($response->content)}}@endsection

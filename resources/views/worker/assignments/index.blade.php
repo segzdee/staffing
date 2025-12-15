@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('css')
 <style>
@@ -52,23 +52,13 @@
     </div>
 
     <!-- Filter Tabs -->
-    <ul class="nav nav-tabs" style="margin-bottom: 20px;">
-        <li class="{{ $status == 'all' ? 'active' : '' }}">
-            <a href="{{ url('worker/assignments?status=all') }}">All Assignments</a>
-        </li>
-        <li class="{{ $status == 'assigned' ? 'active' : '' }}">
-            <a href="{{ url('worker/assignments?status=assigned') }}">Upcoming</a>
-        </li>
-        <li class="{{ $status == 'in_progress' ? 'active' : '' }}">
-            <a href="{{ url('worker/assignments?status=in_progress') }}">In Progress</a>
-        </li>
-        <li class="{{ $status == 'completed' ? 'active' : '' }}">
-            <a href="{{ url('worker/assignments?status=completed') }}">Completed</a>
-        </li>
-        <li class="{{ $status == 'cancelled' ? 'active' : '' }}">
-            <a href="{{ url('worker/assignments?status=cancelled') }}">Cancelled</a>
-        </li>
-    </ul>
+    <div class="filter-tabs">
+        <a href="{{ url('worker/assignments?status=all') }}" class="filter-tab {{ $status == 'all' ? 'active' : '' }}">All Assignments</a>
+        <a href="{{ url('worker/assignments?status=assigned') }}" class="filter-tab {{ $status == 'assigned' ? 'active' : '' }}">Upcoming</a>
+        <a href="{{ url('worker/assignments?status=in_progress') }}" class="filter-tab {{ $status == 'in_progress' ? 'active' : '' }}">In Progress</a>
+        <a href="{{ url('worker/assignments?status=completed') }}" class="filter-tab {{ $status == 'completed' ? 'active' : '' }}">Completed</a>
+        <a href="{{ url('worker/assignments?status=cancelled') }}" class="filter-tab {{ $status == 'cancelled' ? 'active' : '' }}">Cancelled</a>
+    </div>
 
     @if($assignments->count() > 0)
         @foreach($assignments as $assignment)

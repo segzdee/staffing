@@ -1,0 +1,754 @@
+/**
+ * Dashboard Styles
+ *
+ * Shared styles for Business, Agency, and Worker dashboards.
+ * Uses modern CSS with Grid, Flexbox, and responsive breakpoints.
+ * Designed to complement Tailwind utilities and match the design system.
+ */
+
+/* ==========================================================================
+   CSS Custom Properties (Design Tokens)
+   ========================================================================== */
+
+:root {
+  /* Colors - matches Tailwind/shadcn design system */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(240 10% 3.9%);
+  --color-muted: hsl(240 4.8% 95.9%);
+  --color-muted-foreground: hsl(240 3.8% 46.1%);
+  --color-border: hsl(240 5.9% 90%);
+  --color-input: hsl(240 5.9% 90%);
+  --color-ring: hsl(240 5.9% 10%);
+  --color-primary: hsl(240 5.9% 10%);
+  --color-primary-foreground: hsl(0 0% 98%);
+  --color-secondary: hsl(240 4.8% 95.9%);
+  --color-secondary-foreground: hsl(240 5.9% 10%);
+  --color-accent: hsl(240 4.8% 95.9%);
+  --color-accent-foreground: hsl(240 5.9% 10%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+
+  /* Brand colors */
+  --color-brand-50: hsl(240 100% 98%);
+  --color-brand-100: hsl(240 100% 96%);
+  --color-brand-500: #667eea;
+  --color-brand-600: #5a67d8;
+  --color-brand-700: #4c51bf;
+
+  /* Status colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* ==========================================================================
+   Dashboard Header
+   ========================================================================== */
+
+.dashboard-header {
+  background: linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-700) 100%);
+  color: white;
+  padding: var(--spacing-xl) 0;
+  margin-bottom: var(--spacing-xl);
+}
+
+.dashboard-header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin: 0 0 var(--spacing-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.dashboard-header h1 i {
+  opacity: 0.9;
+}
+
+.dashboard-header p {
+  font-size: var(--font-size-base);
+  opacity: 0.9;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .dashboard-header {
+    padding: var(--spacing-xl) 0 calc(var(--spacing-xl) * 1.5);
+  }
+
+  .dashboard-header h1 {
+    font-size: var(--font-size-3xl);
+  }
+}
+
+/* ==========================================================================
+   Stat Grid - Responsive CSS Grid Layout
+   ========================================================================== */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* 2 columns at 640px */
+@media (min-width: 640px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 4 columns at 1024px */
+@media (min-width: 1024px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ==========================================================================
+   Stat Card
+   ========================================================================== */
+
+.stat-card {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card.text-center {
+  text-align: center;
+}
+
+/* Stat Card Icon */
+.stat-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-lg);
+  background: var(--color-muted);
+  color: var(--color-brand-600);
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-md);
+}
+
+.stat-card-icon i {
+  font-size: 1.25rem;
+}
+
+/* Colored icon variants */
+.stat-card-icon.icon-primary {
+  background: hsl(221 83% 95%);
+  color: hsl(221 83% 53%);
+}
+
+.stat-card-icon.icon-success {
+  background: hsl(142 76% 95%);
+  color: var(--color-success);
+}
+
+.stat-card-icon.icon-warning {
+  background: hsl(38 92% 95%);
+  color: var(--color-warning);
+}
+
+.stat-card-icon.icon-danger {
+  background: hsl(0 84% 95%);
+  color: var(--color-error);
+}
+
+.stat-card-icon.icon-purple {
+  background: hsl(262 83% 95%);
+  color: hsl(262 83% 58%);
+}
+
+/* Stat Card Value */
+.stat-card-value {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  color: var(--color-foreground);
+  line-height: 1.2;
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Stat Card Label */
+.stat-card-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Stat Card Sublabel (optional secondary text) */
+.stat-card-sublabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-muted-foreground);
+  opacity: 0.8;
+}
+
+/* ==========================================================================
+   Card Component
+   ========================================================================== */
+
+.card {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.card-header h3,
+.card-header h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.card-header h3 i,
+.card-header h4 i {
+  color: var(--color-muted-foreground);
+}
+
+.card-content {
+  padding: var(--spacing-lg);
+}
+
+.card-footer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-muted);
+}
+
+/* Legacy panel support (for Bootstrap compatibility) */
+.panel {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  margin-bottom: var(--spacing-lg);
+}
+
+.panel-default {
+  border-color: var(--color-border);
+}
+
+.panel-heading {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.panel-heading h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.panel-heading h4 i {
+  color: var(--color-muted-foreground);
+}
+
+.panel-body {
+  padding: var(--spacing-lg);
+}
+
+/* ==========================================================================
+   Button Styles
+   ========================================================================== */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-primary-foreground);
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-primary:hover {
+  background: hsl(240 5.9% 10% / 0.9);
+  color: var(--color-primary-foreground);
+  text-decoration: none;
+}
+
+.btn-primary:focus {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-secondary-foreground);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+  text-decoration: none;
+}
+
+.btn-secondary:focus {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Button size variants */
+.btn-sm {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+}
+
+.btn-lg {
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* Legacy Bootstrap btn-default mapping */
+.btn-default {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-secondary-foreground);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-default:hover {
+  background: var(--color-secondary);
+  color: var(--color-secondary-foreground);
+  text-decoration: none;
+}
+
+/* ==========================================================================
+   Width Utilities
+   ========================================================================== */
+
+.w-100 {
+  width: 100%;
+}
+
+.w-auto {
+  width: auto;
+}
+
+@media (min-width: 768px) {
+  .w-md-auto {
+    width: auto;
+  }
+
+  .w-md-100 {
+    width: 100%;
+  }
+
+  .w-md-50 {
+    width: 50%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .w-lg-auto {
+    width: auto;
+  }
+
+  .w-lg-100 {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Additional Dashboard Utilities
+   ========================================================================== */
+
+/* Flex utilities */
+.d-flex {
+  display: flex;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.justify-content-between {
+  justify-content: space-between;
+}
+
+.justify-content-center {
+  justify-content: center;
+}
+
+.gap-1 {
+  gap: var(--spacing-xs);
+}
+
+.gap-2 {
+  gap: var(--spacing-sm);
+}
+
+.gap-3 {
+  gap: var(--spacing-md);
+}
+
+.gap-4 {
+  gap: var(--spacing-lg);
+}
+
+/* Text utilities */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-muted {
+  color: var(--color-muted-foreground);
+}
+
+.text-success {
+  color: var(--color-success);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.text-danger {
+  color: var(--color-error);
+}
+
+.text-primary {
+  color: var(--color-brand-600);
+}
+
+/* Spacing utilities */
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--spacing-xs); }
+.mb-2 { margin-bottom: var(--spacing-sm); }
+.mb-3 { margin-bottom: var(--spacing-md); }
+.mb-4 { margin-bottom: var(--spacing-lg); }
+.mb-5 { margin-bottom: var(--spacing-xl); }
+
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: var(--spacing-xs); }
+.mt-2 { margin-top: var(--spacing-sm); }
+.mt-3 { margin-top: var(--spacing-md); }
+.mt-4 { margin-top: var(--spacing-lg); }
+.mt-5 { margin-top: var(--spacing-xl); }
+
+.p-0 { padding: 0; }
+.p-1 { padding: var(--spacing-xs); }
+.p-2 { padding: var(--spacing-sm); }
+.p-3 { padding: var(--spacing-md); }
+.p-4 { padding: var(--spacing-lg); }
+.p-5 { padding: var(--spacing-xl); }
+
+/* ==========================================================================
+   Progress Bar
+   ========================================================================== */
+
+.progress {
+  height: 0.5rem;
+  background: var(--color-muted);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--color-brand-600);
+  border-radius: var(--radius-md);
+  transition: width var(--transition-slow);
+}
+
+.progress-bar-success {
+  background: var(--color-success);
+}
+
+.progress-bar-info {
+  background: var(--color-info);
+}
+
+.progress-bar-warning {
+  background: var(--color-warning);
+}
+
+.progress-bar-danger {
+  background: var(--color-error);
+}
+
+/* ==========================================================================
+   Badge Styles
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+
+.badge-primary {
+  background: var(--color-brand-100);
+  color: var(--color-brand-700);
+}
+
+.badge-success {
+  background: hsl(142 76% 95%);
+  color: hsl(142 76% 36%);
+}
+
+.badge-warning {
+  background: hsl(38 92% 95%);
+  color: hsl(38 92% 40%);
+}
+
+.badge-danger {
+  background: hsl(0 84% 95%);
+  color: hsl(0 84% 50%);
+}
+
+.badge-info {
+  background: hsl(221 83% 95%);
+  color: hsl(221 83% 53%);
+}
+
+.badge-large {
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* Label styles (Bootstrap legacy) */
+.label {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.label-primary {
+  background: var(--color-brand-600);
+  color: white;
+}
+
+.label-danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.label-success {
+  background: var(--color-success);
+  color: white;
+}
+
+.label-warning {
+  background: var(--color-warning);
+  color: white;
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  color: var(--color-muted-foreground);
+  opacity: 0.5;
+  margin-bottom: var(--spacing-md);
+}
+
+.empty-state h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin-bottom: var(--spacing-sm);
+}
+
+.empty-state p {
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ==========================================================================
+   Quick Action Button (Agency Dashboard)
+   ========================================================================== */
+
+.quick-action-btn {
+  width: 100%;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.quick-action-btn i {
+  width: 1.25rem;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Responsive Container Adjustments
+   ========================================================================== */
+
+@media (max-width: 639px) {
+  .stat-card {
+    padding: var(--spacing-md);
+  }
+
+  .stat-card-value {
+    font-size: var(--font-size-2xl);
+  }
+
+  .card-header,
+  .card-content,
+  .panel-heading,
+  .panel-body {
+    padding: var(--spacing-md);
+  }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+  .stat-card,
+  .card,
+  .panel {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-default {
+    border: 1px solid #333;
+  }
+}

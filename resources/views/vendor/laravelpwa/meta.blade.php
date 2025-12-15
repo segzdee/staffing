@@ -1,5 +1,7 @@
 <!-- Web Application Manifest -->
-<link rel="manifest" href="{{ route('laravelpwa.manifest') }}">
+{{-- TODO: PWA manifest route requires laravelpwa package to be properly configured --}}
+{{-- Original: <link rel="manifest" href="{{ route('laravelpwa.manifest') }}"> --}}
+<link rel="manifest" href="{{ url('manifest.json') }}">
 <!-- Add to homescreen for Chrome on Android -->
 <meta name="mobile-web-app-capable" content="{{ $config['display'] == 'standalone' ? 'yes' : 'no' }}">
 <meta name="application-name" content="{{ $config['short_name'] }}">

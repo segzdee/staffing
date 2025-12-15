@@ -5,6 +5,176 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property bool $onboarding_completed
+ * @property int|null $onboarding_step
+ * @property \Illuminate\Support\Carbon|null $onboarding_completed_at
+ * @property string $business_name
+ * @property string $business_type
+ * @property string|null $industry
+ * @property string|null $business_address
+ * @property string|null $business_city
+ * @property string|null $business_state
+ * @property string|null $business_country
+ * @property string|null $business_phone
+ * @property string|null $ein_tax_id
+ * @property numeric $rating_average
+ * @property int $total_reviews
+ * @property numeric $communication_rating
+ * @property numeric $punctuality_rating
+ * @property numeric $professionalism_rating
+ * @property int $total_shifts_posted
+ * @property int $total_shifts_completed
+ * @property int $total_shifts_cancelled
+ * @property numeric $average_shift_cost
+ * @property numeric $total_spent
+ * @property numeric $pending_payment
+ * @property int $unique_workers_hired
+ * @property int $repeat_workers
+ * @property string $subscription_plan
+ * @property \Illuminate\Support\Carbon|null $subscription_expires_at
+ * @property numeric|null $monthly_credit_limit
+ * @property numeric $monthly_credit_used
+ * @property numeric $fill_rate
+ * @property numeric $cancellation_rate
+ * @property int $late_cancellations
+ * @property numeric $total_cancellation_penalties
+ * @property int $open_support_tickets
+ * @property \Illuminate\Support\Carbon|null $last_support_contact
+ * @property bool $priority_support
+ * @property bool $account_in_good_standing
+ * @property string|null $account_warning_message
+ * @property \Illuminate\Support\Carbon|null $last_shift_posted_at
+ * @property bool $can_post_shifts
+ * @property bool $is_verified
+ * @property string $verification_status
+ * @property string|null $verification_notes
+ * @property string|null $business_license_url
+ * @property string|null $insurance_certificate_url
+ * @property string|null $tax_document_url
+ * @property \Illuminate\Support\Carbon|null $documents_submitted_at
+ * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $business_registration_number
+ * @property string|null $phone
+ * @property string|null $website
+ * @property string|null $address
+ * @property string|null $city
+ * @property string|null $state
+ * @property string|null $zip_code
+ * @property string|null $country
+ * @property string|null $description
+ * @property int $total_locations
+ * @property bool $multi_location_enabled
+ * @property int $active_venues
+ * @property int $total_templates
+ * @property int $active_templates
+ * @property string|null $employee_count
+ * @property numeric $rating
+ * @property int $has_payment_method
+ * @property bool $autopay_enabled
+ * @property string|null $default_payment_method_id
+ * @property array<array-key, mixed>|null $preferred_worker_ids
+ * @property array<array-key, mixed>|null $blacklisted_worker_ids
+ * @property bool $allow_new_workers
+ * @property numeric $minimum_worker_rating
+ * @property int $minimum_shifts_completed
+ * @property int $is_complete
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Rating> $ratingsReceived
+ * @property-read int|null $ratings_received_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftPayment> $shiftPayments
+ * @property-read int|null $shift_payments_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Shift> $shifts
+ * @property-read int|null $shifts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftTemplate> $templates
+ * @property-read int|null $templates_count
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\BusinessProfileFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereAccountInGoodStanding($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereAccountWarningMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereActiveTemplates($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereActiveVenues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereAllowNewWorkers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereAutopayEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereAverageShiftCost($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBlacklistedWorkerIds($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessLicenseUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessPhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessRegistrationNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessState($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereBusinessType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereCanPostShifts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereCancellationRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereCommunicationRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereDefaultPaymentMethodId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereDocumentsSubmittedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereEinTaxId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereEmployeeCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereFillRate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereHasPaymentMethod($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereIndustry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereInsuranceCertificateUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereIsComplete($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereIsVerified($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereLastShiftPostedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereLastSupportContact($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereLateCancellations($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereMinimumShiftsCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereMinimumWorkerRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereMonthlyCreditLimit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereMonthlyCreditUsed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereMultiLocationEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereOnboardingCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereOnboardingCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereOnboardingStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereOpenSupportTickets($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile wherePendingPayment($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile wherePreferredWorkerIds($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile wherePrioritySupport($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereProfessionalismRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile wherePunctualityRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereRating($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereRatingAverage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereRepeatWorkers($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereState($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereSubscriptionExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereSubscriptionPlan($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTaxDocumentUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalCancellationPenalties($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalLocations($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalReviews($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalShiftsCancelled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalShiftsCompleted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalShiftsPosted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalSpent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereTotalTemplates($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereUniqueWorkersHired($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereVerificationNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereVerificationStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereWebsite($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereZipCode($value)
+ * @mixin \Eloquent
+ */
 class BusinessProfile extends Model
 {
     use HasFactory;
@@ -136,6 +306,31 @@ class BusinessProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get all shifts posted by this business.
+     */
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class, 'business_id', 'user_id');
+    }
+
+    /**
+     * Get all shift payments made by this business.
+     */
+    public function shiftPayments()
+    {
+        return $this->hasMany(ShiftPayment::class, 'business_id', 'user_id');
+    }
+
+    /**
+     * Get all ratings received by this business.
+     */
+    public function ratingsReceived()
+    {
+        return $this->hasMany(Rating::class, 'rated_id', 'user_id')
+            ->where('rater_type', 'worker');
     }
 
     public function isVerified()

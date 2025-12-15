@@ -19,7 +19,8 @@ class ShiftPaymentService
 
     public function __construct()
     {
-        $this->stripe = new StripeClient(config('services.stripe.secret'));
+        $stripeSecret = config('services.stripe.secret');
+        $this->stripe = $stripeSecret ? new StripeClient($stripeSecret) : null;
     }
 
     /**

@@ -25,3 +25,4 @@ storage/*
 # Large archive files
 public/*.zip
 *.zip
+.DS_Store

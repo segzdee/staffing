@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('title') Applications for {{ $shift->title }} - @endsection
 
@@ -182,7 +182,7 @@
                         </div>
                         <div class="col">
                             <div class="stat-item">
-                                <div class="stat-value">{{ $application->worker->completedShifts()->count() }}</div>
+                                <div class="stat-value">{{ $application->worker->completed_shifts_count ?? 0 }}</div>
                                 <div class="stat-label">Shifts</div>
                             </div>
                         </div>
@@ -244,7 +244,7 @@
             <div class="text-right" style="min-width: 200px;">
                 @if($activeTab == 'pending')
                     @if($shift->filled_workers < $shift->required_workers)
-                        <form action="{{ route('business.shifts.assignWorker', ['shift' => $shift->id, 'application' => $application->id]) }}" method="POST" class="mb-2">
+                        <form action="{{ route('business.shifts.assignWorker', $application->id) }}" method="POST" class="mb-2">
                             @csrf
                             <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Assign {{ $application->worker->name }} to this shift?')">
                                 <i class="fa fa-check"></i> Accept & Assign
@@ -258,13 +258,12 @@
 
                     <form action="{{ route('business.applications.reject', $application->id) }}" method="POST">
                         @csrf
-                        @method('PUT')
                         <button type="submit" class="btn btn-outline-danger btn-block">
                             <i class="fa fa-times"></i> Reject
                         </button>
                     </form>
 
-                    <a href="{{ route('worker.profile', $application->worker->id) }}" class="btn btn-outline-primary btn-block mt-2" target="_blank">
+                    <a href="{{ url('profiles/' . ($application->worker->username ?? $application->worker->id)) }}" class="btn btn-outline-primary btn-block mt-2" target="_blank">
                         <i class="fa fa-user"></i> View Profile
                     </a>
 
@@ -273,7 +272,7 @@
                         <i class="fa fa-check-circle"></i> Assigned
                     </div>
 
-                    <form action="{{ route('business.shifts.unassignWorker', ['shift' => $shift->id, 'application' => $application->id]) }}" method="POST">
+                    <form action="{{ route('business.shifts.unassignWorker', $application->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline-danger btn-block" onclick="return confirm('Remove {{ $application->worker->name }} from this shift?')">
@@ -281,7 +280,7 @@
                         </button>
                     </form>
 
-                    <a href="{{ route('worker.profile', $application->worker->id) }}" class="btn btn-outline-primary btn-block mt-2" target="_blank">
+                    <a href="{{ url('profiles/' . ($application->worker->username ?? $application->worker->id)) }}" class="btn btn-outline-primary btn-block mt-2" target="_blank">
                         <i class="fa fa-user"></i> View Profile
                     </a>
 

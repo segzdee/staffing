@@ -1,0 +1,3073 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Console/Commands/ProcessNoShows.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Controllers\\Admin\\AdminController\:\:\$settings\.$#'
+			identifier: property.notFound
+			count: 93
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$custom_fee\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$featured\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$featured_date\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$permission\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$permissions\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$wallet\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$description on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$image on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$keywords on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$mode on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$name on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$slug on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to property \$subscription on an unknown class Yabacon\\Paystack\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Admin\\AdminController\:\:deleteUser\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to method save\(\) on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method find\(\) on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Deposits\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\PaymentGateways\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Products\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Purchases\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Reports\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Updates\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Categories\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Deposits\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Products\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Purchases\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Referrals\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Reports\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Subscriptions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Transactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Updates\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method orderBy\(\) on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Like\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Reports\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Transactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereId\(\) on an unknown class App\\Models\\PaymentGateways\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereId\(\) on an unknown class App\\Models\\Transactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereId\(\) on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereStatus\(\) on an unknown class App\\Models\\Updates\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereTransactionsId\(\) on an unknown class App\\Models\\ReferralTransactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereUpdatesId\(\) on an unknown class App\\Models\\Media\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Call to static method whereUserId\(\) on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 3
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 11
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Instantiated class App\\Models\\Categories not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Instantiated class Yabacon\\Paystack not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\AdminController\:\:admin\(\) has invalid return type App\\Http\\Controllers\\Admin\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\AdminController\:\:admin\(\) should return App\\Http\\Controllers\\Admin\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\AdminController\:\:index\(\) has invalid return type App\\Http\\Controllers\\Admin\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\AdminController\:\:index\(\) should return App\\Http\\Controllers\\Admin\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Admin\\AdminController\:\:users\(\) has invalid return type App\\Http\\Controllers\\Admin\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Parameter \#1 \$key of function env expects string, int given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Static method Illuminate\\Filesystem\\FilesystemAdapter\:\:download\(\) invoked with 4 parameters, 1\-3 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Variable \$genders might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Variable \$permissions might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Variable \$thumbnail might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspended_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspended_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspension_ends_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspension_reason\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unsuspended_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unsuspended_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unverification_reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Property App\\Models\\User\:\:\$is_verified_business \(int\) does not accept false\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Property App\\Models\\User\:\:\$is_verified_business \(int\) does not accept true\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Admin/BusinessManagementController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 2
+			path: app/Http/Controllers/Admin/MatchingAnalyticsController.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 2
+			path: app/Http/Controllers/Admin/MatchingAnalyticsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$flag_reason\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$flagged_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$flagged_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$is_flagged\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$removal_reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$removed_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$amount\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$dispute_resolution\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$dispute_resolved_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$disputed_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$escrowed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$payout_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$refunded_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$resolved_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Property App\\Models\\ShiftPayment\:\:\$disputed_at \(Illuminate\\Support\\Carbon\|null\) does not accept Carbon\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Admin/ShiftPaymentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspended_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspended_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspension_ends_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$suspension_reason\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unsuspended_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unsuspended_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$unverification_reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_by_admin_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\WorkerBadge\:\:\$badge_level\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Property App\\Models\\User\:\:\$is_verified_worker \(int\) does not accept false\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Property App\\Models\\User\:\:\$is_verified_worker \(int\) does not accept true\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Property App\\Models\\WorkerBadge\:\:\$updated_at \(Illuminate\\Support\\Carbon\|null\) does not accept Carbon\\Carbon\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Admin/WorkerManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AgencyProfile\:\:\$contact_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agency/ProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$avatar\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Agency/ProfileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AgencyWorker\:\:\$current_assignments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agency/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AgencyWorker\:\:\$is_available\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agency/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AgencyWorker\:\:\$match_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agency/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AgencyWorker\:\:\$shifts_completed\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agency/ShiftManagementController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AiAgentProfile\:\:\$api_key_expires_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agent/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AiAgentProfile\:\:\$last_api_call_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Agent/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Agent\\DashboardController\:\:index\(\) should return Illuminate\\View\\View but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/Agent/DashboardController.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/AgentController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Controllers\\Auth\\LoginController\:\:\$auth\.$#'
+			identifier: property.notFound
+			count: 15
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\Auth\\LoginController\:\:generateTwofaCode\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\LoginController\:\:login\(\) should return Illuminate\\Http\\JsonResponse\|Illuminate\\Http\\RedirectResponse\|Illuminate\\Http\\Response but returns Symfony\\Component\\HttpFoundation\\Response\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\LoginController\:\:login\(\) should return Illuminate\\Http\\JsonResponse\|Illuminate\\Http\\RedirectResponse\|Illuminate\\Http\\Response but returns null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Result of method App\\Http\\Controllers\\Auth\\LoginController\:\:sendLockoutResponse\(\) \(void\) is used\.$#'
+			identifier: method.void
+			count: 1
+			path: app/Http/Controllers/Auth/LoginController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Controllers\\Auth\\RegisterController\:\:\$settings\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Auth\\RegisterController\:\:register\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/Auth/RegisterController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Controllers\\Auth\\ResetPasswordController\:\:\$subject\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Auth/ResetPasswordController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AvailabilityBroadcast\:\:\$match_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Business/AvailableWorkersController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$location_lat\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Business/AvailableWorkersController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$location_lng\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Business/AvailableWorkersController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\BusinessProfile\:\:\$company_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Business/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$avatar\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Business/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$businessProfile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Business/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 12
+			path: app/Http/Controllers/Business/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Http\\Controllers\\Business\\DashboardController\:\:calculateProfileCompleteness\(\) expects App\\Models\\User, Illuminate\\Contracts\\Auth\\Authenticatable\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Business/DashboardController.php
+
+		-
+			message: '#^Trait App\\Http\\Controllers\\Concerns\\StandardizedFlashMessages is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Http/Controllers/Concerns/StandardizedFlashMessages.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Controllers\\CountriesStatesController\:\:\$settings\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/CountriesStatesController.php
+
+		-
+			message: '#^Instanceof between Illuminate\\Support\\Carbon and Carbon\\Carbon will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: app/Http/Controllers/Dev/DevLoginController.php
+
+		-
+			message: '#^Offset ''admin''\|''agency''\|''business''\|''worker'' on array\{worker\: string, business\: string, agency\: string, admin\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Dev/DevLoginController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\HomeController\:\:index\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\HomeController\:\:index\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 5
+			path: app/Http/Controllers/HomeController.php
+
+		-
+			message: '#^Call to static method all\(\) on an unknown class App\\Models\\Languages\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class App\\Models\\Languages\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Call to static method findOrFail\(\) on an unknown class App\\Models\\Languages\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:create\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:create\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:destroy\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:destroy\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:edit\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:edit\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:index\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:index\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:show\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:show\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:store\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:store\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:update\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\LangController\:\:update\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/LangController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/LiveMarketController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Conversation\:\:\$last_message\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/MessagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Conversation\:\:\$other_party_name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/MessagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Conversation\:\:\$unread_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/MessagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Conversation\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Conversation\>\:\:\$other_party_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/MessagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Pages\:\:\$access\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:create\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:create\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:destroy\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:destroy\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:edit\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:edit\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:index\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:index\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:show\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:show\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:store\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:store\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:update\(\) has invalid return type App\\Http\\Controllers\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\PagesController\:\:update\(\) should return App\\Http\\Controllers\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$id$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Http/Controllers/PagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$completed_stripe_onboarding\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeConnectController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$stripe_connect_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Payment/StripeConnectController.php
+
+		-
+			message: '#^Call to static method whereName\(\) on an unknown class App\\Models\\PaymentGateways\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeConnectController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$shift_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Cashier\\Subscription\:\:\$interval\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Cashier\\Subscription\:\:\$last_payment\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Cashier\\Subscription\:\:\$stripe_price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Cashier\\Subscription\:\:\$stripe_status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Cashier\\Subscription\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to property \$subscriptions on an unknown class Laravel\\Cashier\\Billable\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Call to method notify\(\) on an unknown class Laravel\\Cashier\\Billable\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Deposits\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Call to static method whereName\(\) on an unknown class App\\Models\\PaymentGateways\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Call to static method whereName\(\) on an unknown class App\\Models\\Plans\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 3
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Payment\\StripeWebHookController\:\:deposit\(\) has invalid return type App\\Models\\Deposits\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Payment\\StripeWebHookController\:\:transaction\(\) has invalid return type App\\Models\\Transactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Variable \$type in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.variable
+			count: 1
+			path: app/Http/Controllers/Payment/StripeWebHookController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 11
+			path: app/Http/Controllers/Payment/TransactionsController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$user_type\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Payment/TransactionsController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$user\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/Payment/TransactionsController.php
+
+		-
+			message: '#^Call to function compact\(\) contains possibly undefined variable \$totalEarned\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/Payment/TransactionsController.php
+
+		-
+			message: '#^Call to function compact\(\) contains possibly undefined variable \$totalSpent\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/Payment/TransactionsController.php
+
+		-
+			message: '#^Parameter \#2 \$fields of function fputcsv expects array\<int\|string, bool\|float\|int\|string\|null\>, array\<int, float\|int\|Money\\Money\|string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Payment/TransactionsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Rating\:\:\$response_text\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/RatingController.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between bool and int\|string\|null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/RatingController.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$shift_date \(Illuminate\\Support\\Carbon\) does not accept null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Shift/ShiftController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftSwap\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\ShiftSwap\>\:\:\$offeringAssignment\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/Shift/ShiftSwapController.php
+
+		-
+			message: '#^Call to method createOrGetUser\(\) on an unknown class App\\SocialAccountService\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/SocialAuthController.php
+
+		-
+			message: '#^Parameter \$service of method App\\Http\\Controllers\\SocialAuthController\:\:callback\(\) has invalid type App\\SocialAccountService\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/SocialAuthController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Controllers\\TaxRatesController\:\:\$settings\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TaxRatesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\TaxRates\:\:\$state\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TaxRatesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\TaxRates\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\TaxRates\>\:\:\$stripe_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/TaxRatesController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\TaxRatesController\:\:createTaxStripe\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/TaxRatesController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\TaxRatesController\:\:updateTaxStripe\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/TaxRatesController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\TwoFactorAuthController\:\:generateTwofaCode\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/TwoFactorAuthController.php
+
+		-
+			message: '#^Call to static method whereUserId\(\) on an unknown class App\\Models\\TwoFactorCodes\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/TwoFactorAuthController.php
+
+		-
+			message: '#^Call to an undefined method App\\Http\\Controllers\\User\\AccountController\:\:deleteUser\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/User/AccountController.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class App\\Models\\ChatSetting\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/User/ContentSettingsController.php
+
+		-
+			message: '#^Call to static method whereUserId\(\) on an unknown class App\\Models\\ChatSetting\.$#'
+			identifier: class.notFound
+			count: 6
+			path: app/Http/Controllers/User/ContentSettingsController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Http/Controllers/User/ContentSettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:account\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:account\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:dashboard\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:dashboard\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:notifications\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:notifications\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:privacy\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\DashboardController\:\:privacy\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Http/Controllers/User/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$pm_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$stripe_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Access to an undefined property Stripe\\StripeObject\:\:\$exp_month\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Access to an undefined property Stripe\\StripeObject\:\:\$exp_year\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Call to static method whereName\(\) on an unknown class App\\Models\\PaymentGateways\.$#'
+			identifier: class.notFound
+			count: 4
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:addUpdatePaymentCard\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:addUpdatePaymentCard\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:deletePaymentCard\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:deletePaymentCard\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:formAddUpdatePaymentCard\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:formAddUpdatePaymentCard\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:myCards\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\PaymentCardController\:\:myCards\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/User/PaymentCardController.php
+
+		-
+			message: '#^Call to static method whereReferredBy\(\) on an unknown class App\\Models\\ReferralTransactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/ReferralController.php
+
+		-
+			message: '#^Call to an undefined method App\\Models\\User\:\:restrictions\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/User/RestrictionController.php
+
+		-
+			message: '#^Call to static method firstOrNew\(\) on an unknown class App\\Models\\Restrictions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/RestrictionController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/User/RestrictionController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$active_status_online\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$birthdate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$birthdate_changed\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$categories_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$company\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$countries_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$discord\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email_new_ppv\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email_new_subscriber\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$email_new_tip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$facebook\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$gender\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$github\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$hide_count_subscribers\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$hide_last_seen\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$hide_my_country\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$hide_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$hide_profile\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$instagram\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$language\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_commented_post\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_email_new_post\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_liked_comment\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_liked_post\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_live_streaming\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_mentions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_new_ppv\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_new_subscriber\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$notify_new_tip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$permissions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$pinterest\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$plan\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$profession\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$show_my_birthdate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$snapchat\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$story\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$telegram\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$tiktok\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$twitch\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$twitter\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$two_factor_auth\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$vk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$website\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$youtube\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$zip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 13
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:deleteAccount\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:deleteAccount\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:deleteNotifications\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:deleteNotifications\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:editPage\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:editPage\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:index\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:index\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:logoutSession\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:logoutSession\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:notifications\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:notifications\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:password\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:password\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:privacySecurity\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:privacySecurity\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:savePrivacySecurity\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:savePrivacySecurity\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:update\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:update\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updateNotificationPreferences\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updateNotificationPreferences\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updateNotifications\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updateNotifications\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updatePage\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updatePage\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updatePassword\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updatePassword\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 3
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updateProfile\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\SettingsController\:\:updateProfile\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 4
+			path: app/Http/Controllers/User/SettingsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$avatar\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SocialController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$hide_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SocialController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/SocialController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Subscriptions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/SocialController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$total_amount\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/TransactionsController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Deposits\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/User/TransactionsController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Transactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/TransactionsController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/User/TransactionsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$countries_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to property \$address on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to property \$city on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to property \$form_w9 on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to property \$image on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to property \$user_id on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to property \$zip on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Call to method save\(\) on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Call to static method whereUserId\(\) on an unknown class App\\Models\\VerificationRequests\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Instantiated class App\\Models\\VerificationRequests not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\VerificationController\:\:verifyAccount\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\VerificationController\:\:verifyAccount\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\VerificationController\:\:verifyAccountSend\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\VerificationController\:\:verifyAccountSend\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 4
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Variable \$fileImage might not be defined\.$#'
+			identifier: variable.undefined
+			count: 1
+			path: app/Http/Controllers/User/VerificationController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$bank\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$payment_gateway\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$payoneer_account\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$paypal_account\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$zelle_account\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to property \$account on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to property \$amount on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to property \$gateway on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Access to property \$user_id on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Call to an undefined method App\\Models\\User\:\:withdrawals\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Call to method save\(\) on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Call to static method whereUserId\(\) on an unknown class App\\Models\\Withdrawals\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Instantiated class App\\Models\\Withdrawals not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:deleteWithdrawal\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:deleteWithdrawal\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:makeWithdrawals\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:makeWithdrawals\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:payoutMethod\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:payoutMethod\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:payoutMethodConfigure\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:payoutMethodConfigure\(\) should return App\\Http\\Controllers\\User\\Response but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:payoutMethodConfigure\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
+			count: 5
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:withdrawals\(\) has invalid return type App\\Http\\Controllers\\User\\Response\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\User\\WithdrawalController\:\:withdrawals\(\) should return App\\Http\\Controllers\\User\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/User/WithdrawalController.php
+
+		-
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$avatar\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$state\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\WorkerProfile\:\:\$experience_level\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$avatar\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$bio\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$city\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 12
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$state\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$workerProfile\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Call to an undefined static method App\\Models\\WorkerBadge\:\:getAvailableBadgeTypes\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Http\\Controllers\\Worker\\DashboardController\:\:calculateProfileCompleteness\(\) expects App\\Models\\User, Illuminate\\Contracts\\Auth\\Authenticatable\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Worker/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftAssignment\:\:\$completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Worker/ShiftApplicationController.php
+
+		-
+			message: '#^Comparison operation "\<" between 95\.5 and 85 is always false\.$#'
+			identifier: smaller.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Worker/ShiftApplicationController.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Worker/ShiftApplicationController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Worker/ShiftApplicationController.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$middleware is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$middleware\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$middlewareGroups is not covariant with PHPDoc type array\<string, array\<int, string\>\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$middlewareGroups\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Kernel\:\:\$routeMiddleware is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Foundation\\Http\\Kernel\:\:\$routeMiddleware\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Kernel.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$hourly_rate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Livewire/LiveShiftMarket.php
+
+		-
+			message: '#^Method App\\Http\\Livewire\\LiveShiftMarket\:\:calculateDemandLevel\(\) is unused\.$#'
+			identifier: method.unused
+			count: 1
+			path: app/Http/Livewire/LiveShiftMarket.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Shift\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Livewire/LiveShiftMarket.php
+
+		-
+			message: '#^Parameter \#1 \$json of function json_decode expects string, array\<mixed\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Livewire/LiveShiftMarket.php
+
+		-
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
+			count: 1
+			path: app/Http/Middleware/AdminMiddleware.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AiAgentProfile\:\:\$api_key_expires_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/ApiAgentAuth.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Http/Middleware/ApiAgentAuth.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\AiAgentProfile\:\:\$api_key_expires_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/ApiAgentMiddleware.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Http/Middleware/ApiAgentMiddleware.php
+
+		-
+			message: '#^Method App\\Http\\Middleware\\Authenticate\:\:redirectTo\(\) should return string\|null but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/Http/Middleware/Authenticate.php
+
+		-
+			message: '#^Instanceof between Illuminate\\Support\\Carbon and Carbon\\Carbon will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Http/Middleware/CheckDevAccountExpiration.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\EncryptCookies\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Cookie\\Middleware\\EncryptCookies\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/EncryptCookies.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$language\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/Language.php
+
+		-
+			message: '#^Call to static method whereId\(\) on an unknown class App\\Models\\LiveStreamings\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Middleware/OnlineUsersLive.php
+
+		-
+			message: '#^Call to static method whereUserId\(\) on an unknown class App\\Models\\LiveOnlineUsers\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Middleware/OnlineUsersLive.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\PreventRequestsDuringMaintenance\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\PreventRequestsDuringMaintenance\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/PreventRequestsDuringMaintenance.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Middleware\\PrivateContent\:\:\$settings\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Middleware/PrivateContent.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$permissions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/Role.php
+
+		-
+			message: '#^Cannot access property \$headers on class\-string\|object\.$#'
+			identifier: property.nonObject
+			count: 7
+			path: app/Http/Middleware/SecurityHeaders.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\TrimStrings\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\TrimStrings\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/TrimStrings.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Middleware/UserOnline.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\VerifyCsrfToken\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\VerifyCsrfToken\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/VerifyCsrfToken.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/CreateLiveStreamRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/CreateProductRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$verified_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/WithdrawRequest.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Subscriptions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Jobs/RebillWallet.php
+
+		-
+			message: '#^Call to static method whereName\(\) on an unknown class App\\Models\\Plans\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Jobs/RebillWallet.php
+
+		-
+			message: '#^Method App\\Jobs\\RebillWallet\:\:deposit\(\) has invalid return type App\\Models\\Deposits\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Jobs/RebillWallet.php
+
+		-
+			message: '#^Method App\\Jobs\\RebillWallet\:\:transaction\(\) has invalid return type App\\Models\\Transactions\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Jobs/RebillWallet.php
+
+		-
+			message: '#^Anonymous function has an unused use \$logo\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Listeners/CreateIssueResolveListener.php
+
+		-
+			message: '#^Anonymous function has an unused use \$files\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Listeners/SendMailToAdminByCreatorListener.php
+
+		-
+			message: '#^Anonymous function has an unused use \$logo\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Listeners/SendMailToAdminByCreatorListener.php
+
+		-
+			message: '#^Anonymous function has an unused use \$sender\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Listeners/SendMailToAdminByCreatorListener.php
+
+		-
+			message: '#^Parameter \#1 \$view of method Illuminate\\Mail\\Mailable\:\:view\(\) expects view\-string, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Mail/CreatorReportIssueSolve.php
+
+		-
+			message: '#^Class App\\Models\\BusinessVenue not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Models/BusinessProfile.php
+
+		-
+			message: '#^Parameter \#1 \$related of method Illuminate\\Database\\Eloquent\\Model\:\:hasMany\(\) expects class\-string\<Illuminate\\Database\\Eloquent\\Model\>, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/BusinessProfile.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$notify_new_ppv\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Notifications.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\User\>\:\:\$notify_new_tip\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Notifications.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''base_rate'' \(''base_rate'', ''base_rate''\)\.$#'
+			identifier: array.duplicateKey
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Array has 2 duplicate keys with value ''final_rate'' \(''final_rate'', ''final_rate''\)\.$#'
+			identifier: array.duplicateKey
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\Shift\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\Shift\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$base_worker_pay \(Money\\Money\|null\) does not accept \(float\|int\)\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$escrow_amount \(Money\\Money\|null\) does not accept \(float\|int\)\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$platform_fee_amount \(Money\\Money\|null\) does not accept \(float\|int\)\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$total_business_cost \(Money\\Money\|null\) does not accept \(float\|int\)\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$vat_amount \(Money\\Money\|null\) does not accept \(float\|int\)\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$worker_compensation_amount \(Money\\Money\|null\) does not accept float\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Models/Shift.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\ShiftApplication\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ShiftApplication.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\ShiftApplication\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ShiftApplication.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\ShiftAssignment\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ShiftAssignment.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\ShiftAssignment\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ShiftAssignment.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\ShiftPayment\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ShiftPayment.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\ShiftPayment\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/ShiftPayment.php
+
+		-
+			message: '#^Right side of && is always true\.$#'
+			identifier: booleanAnd.rightAlwaysTrue
+			count: 1
+			path: app/Models/ShiftPayment.php
+
+		-
+			message: '#^Access to an undefined property \$this\(App\\Models\\User\)\:\:\$completed_stripe_onboarding\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$blocked_countries\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$completed_stripe_onboarding\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$language\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$permissions\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$stripe_connect_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\User\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\User\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\User\:\:\$hidden is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$hidden\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\WorkerProfile\:\:\$casts is not covariant with PHPDoc type array\<string, string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$casts\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/WorkerProfile.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Models\\WorkerProfile\:\:\$fillable is not covariant with PHPDoc type list\<string\> of overridden property Illuminate\\Database\\Eloquent\\Model\:\:\$fillable\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Models/WorkerProfile.php
+
+		-
+			message: '#^Access to an undefined property Laravel\\Cashier\\Payment\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/ConfirmPayment.php
+
+		-
+			message: '#^Variable \$subject might not be defined\.$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Notifications/PayPerViewReceived.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Observers/ShiftAssignmentObserver.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Providers\\AuthServiceProvider\:\:\$policies is not covariant with PHPDoc type array\<class\-string, class\-string\> of overridden property Illuminate\\Foundation\\Support\\Providers\\AuthServiceProvider\:\:\$policies\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Providers/AuthServiceProvider.php
+
+		-
+			message: '#^Class App\\Listeners\\MassMessagesListener not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Providers\\EventServiceProvider\:\:\$listen is not covariant with PHPDoc type array\<string, array\<int, string\>\> of overridden property Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider\:\:\$listen\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, max\> and 0 is always true\.$#'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Services/AnalyticsService.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Services\\ShiftPayment\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/BadgeService.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Services/BadgeService.php
+
+		-
+			message: '#^Property App\\Models\\Shift\:\:\$id \(int\) does not accept string\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/DemoShiftService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$match_reasons\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/LiveMarketService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$match_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/LiveMarketService.php
+
+		-
+			message: '#^Variable \$totalValue on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Services/LiveMarketService.php
+
+		-
+			message: '#^Offset ''email'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/NotificationService.php
+
+		-
+			message: '#^Offset ''push'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/NotificationService.php
+
+		-
+			message: '#^Offset ''sms'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/NotificationService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Shift\:\:\$match_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftMatchingService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$match_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftMatchingService.php
+
+		-
+			message: '#^Anonymous function has an unused use \$workerProfile\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Services/ShiftMatchingService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftAssignment\:\:\$acknowledged_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftAssignment\:\:\$application\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$escrow_amount\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$hourly_rate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$hours_estimated\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftPayment\:\:\$shift_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$default_payment_method\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$stripe_connect_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$stripe_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Services\\ShiftPaymentService\:\:\$platformFeePercentage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Call to function is_numeric\(\) with float\|int will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class App\\Models\\Transaction\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Parameter \#1 \$amount of method App\\Services\\ShiftPaymentService\:\:validateAndConvertToCents\(\) expects float\|int\|null, Money\\Money given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Parameter \#1 \$amount of method App\\Services\\ShiftPaymentService\:\:validateAndConvertToCents\(\) expects float\|int\|null, Money\\Money\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Parameter \#2 \$amount of method App\\Models\\WorkerProfile\:\:increment\(\) expects float\|int, Money\\Money given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Parameter \#2 \$amount of method App\\Services\\ShiftPaymentService\:\:refundToBusiness\(\) expects float, Money\\Money given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between float\|int and '''' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Undefined variable\: \$amountGross$#'
+			identifier: variable.undefined
+			count: 2
+			path: app/Services/ShiftPaymentService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftSwap\:\:\$eligible\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftSwapService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftSwap\:\:\$ineligibility_reason\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftSwapService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftSwap\:\:\$match_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ShiftSwapService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ShiftSwap\:\:\$offeringAssignment\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/ShiftSwapService.php
+
+		-
+			message: '#^Call to protected method refundToBusiness\(\) of class App\\Services\\ShiftPaymentService\.$#'
+			identifier: method.protected
+			count: 1
+			path: app/Services/ShiftSwapService.php

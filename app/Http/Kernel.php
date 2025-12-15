@@ -76,6 +76,6 @@ class Kernel extends HttpKernel
         'business' => \App\Http\Middleware\BusinessMiddleware::class,
         'agency' => \App\Http\Middleware\AgencyMiddleware::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
-        'api.agent' => \App\Http\Middleware\ApiAgentMiddleware::class,
+        'team.permission' => \App\Http\Middleware\CheckTeamPermission::class, // BIZ-003: Team permission checking
     ];
 }

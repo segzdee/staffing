@@ -2,191 +2,145 @@
 
 namespace App\Http\Controllers\Traits;
 
-use App\Models\AdminSettings;
+use App\Models\Deposits;
+use App\Models\Transactions;
+use Carbon\Carbon;
 
 /**
- * Common utility functions used across controllers
+ * Common functions trait for payment processing and transactions.
+ * Used by webhook controllers and jobs for consistent handling.
  */
 trait Functions
 {
     /**
-     * Get admin settings
+     * Calculate earnings distribution between admin (platform) and user (creator).
      *
-     * @return AdminSettings|null
+     * @param float|null $customFee User's custom fee percentage (if any)
+     * @param float $amount Transaction amount
+     * @param float|null $gatewayFee Payment gateway fee percentage
+     * @param float|null $gatewayCents Payment gateway fixed fee in cents
+     * @return array
      */
-    protected function getSettings()
+    protected function earningsAdminUser($customFee, $amount, $gatewayFee = null, $gatewayCents = null)
     {
-        return AdminSettings::first();
-    }
+        // Default platform fee percentage (35% for OvertimeStaff)
+        $platformFeePercentage = config('services.platform.fee_percentage', 35);
 
-    /**
-     * Format currency amount
-     *
-     * @param float $amount
-     * @param string $currency
-     * @return string
-     */
-    protected function formatAmount($amount, $currency = 'USD')
-    {
-        $settings = $this->getSettings();
-        $currencySymbol = $settings->currency_symbol ?? '$';
-
-        return $currencySymbol . number_format($amount, 2);
-    }
-
-    /**
-     * Convert amount from cents to dollars
-     *
-     * @param int $cents
-     * @return float
-     */
-    protected function centsToAmount($cents)
-    {
-        return $cents / 100;
-    }
-
-    /**
-     * Convert amount from dollars to cents
-     *
-     * @param float $amount
-     * @return int
-     */
-    protected function amountToCents($amount)
-    {
-        return (int) round($amount * 100);
-    }
-
-    /**
-     * Generate a unique transaction reference
-     *
-     * @param string $prefix
-     * @return string
-     */
-    protected function generateTransactionRef($prefix = 'TXN')
-    {
-        return $prefix . '_' . strtoupper(uniqid()) . '_' . time();
-    }
-
-    /**
-     * Check if user has reached rate limit
-     *
-     * @param string $key
-     * @param int $maxAttempts
-     * @param int $decayMinutes
-     * @return bool
-     */
-    protected function isRateLimited($key, $maxAttempts = 5, $decayMinutes = 1)
-    {
-        $attempts = cache()->get($key, 0);
-
-        if ($attempts >= $maxAttempts) {
-            return true;
+        // Apply custom fee if set
+        if ($customFee !== null && $customFee > 0) {
+            $platformFeePercentage = $customFee;
         }
 
-        cache()->put($key, $attempts + 1, now()->addMinutes($decayMinutes));
-
-        return false;
-    }
-
-    /**
-     * Send JSON response
-     *
-     * @param bool $success
-     * @param string|null $message
-     * @param array $data
-     * @param int $status
-     * @return \Illuminate\Http\JsonResponse
-     */
-    protected function jsonResponse($success, $message = null, $data = [], $status = 200)
-    {
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-            'data' => $data,
-        ], $status);
-    }
-
-    /**
-     * Validate file upload
-     *
-     * @param \Illuminate\Http\UploadedFile $file
-     * @param array $allowedTypes
-     * @param int $maxSizeKb
-     * @return bool
-     */
-    protected function validateFile($file, $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'], $maxSizeKb = 5120)
-    {
-        if (!$file || !$file->isValid()) {
-            return false;
+        // Calculate gateway fees
+        $gatewayFeeAmount = 0;
+        if ($gatewayFee !== null && $gatewayFee > 0) {
+            $gatewayFeeAmount = ($amount * $gatewayFee / 100);
+        }
+        if ($gatewayCents !== null && $gatewayCents > 0) {
+            $gatewayFeeAmount += ($gatewayCents / 100);
         }
 
-        $extension = strtolower($file->getClientOriginalExtension());
-        if (!in_array($extension, $allowedTypes)) {
-            return false;
+        // Calculate platform fee
+        $adminEarnings = ($amount * $platformFeePercentage / 100);
+
+        // Calculate user earnings (after platform fee and gateway fees)
+        $userEarnings = $amount - $adminEarnings - $gatewayFeeAmount;
+
+        // Ensure no negative earnings
+        $userEarnings = max(0, $userEarnings);
+
+        return [
+            'user' => round($userEarnings, 2),
+            'admin' => round($adminEarnings, 2),
+            'percentageApplied' => $platformFeePercentage,
+            'gatewayFee' => round($gatewayFeeAmount, 2),
+        ];
+    }
+
+    /**
+     * Create a transaction record.
+     *
+     * @param string $txnId Transaction ID
+     * @param int $userId User ID
+     * @param int $subscriptionId Subscription ID
+     * @param int $subscriptedUserId Subscribed user ID
+     * @param float $amount Transaction amount
+     * @param float $userEarnings User earnings
+     * @param float $adminEarnings Admin/platform earnings
+     * @param string $paymentGateway Payment gateway name
+     * @param string $type Transaction type
+     * @param float $percentageApplied Fee percentage applied
+     * @param string|null $taxes Tax IDs (underscore separated)
+     * @return Transactions|null
+     */
+    protected function transaction(
+        $txnId,
+        $userId,
+        $subscriptionId,
+        $subscriptedUserId,
+        $amount,
+        $userEarnings,
+        $adminEarnings,
+        $paymentGateway,
+        $type,
+        $percentageApplied,
+        $taxes = null
+    ) {
+        // Check if Transactions model exists
+        if (!class_exists('App\Models\Transactions')) {
+            return null;
         }
 
-        if ($file->getSize() > ($maxSizeKb * 1024)) {
-            return false;
+        try {
+            return Transactions::create([
+                'txn_id' => $txnId,
+                'user_id' => $userId,
+                'subscriptions_id' => $subscriptionId,
+                'subscribed' => $subscriptedUserId,
+                'amount' => $amount,
+                'earning_net_user' => $userEarnings,
+                'earning_net_admin' => $adminEarnings,
+                'payment_gateway' => $paymentGateway,
+                'type' => $type,
+                'percentage_applied' => $percentageApplied,
+                'taxes' => $taxes,
+                'created_at' => Carbon::now(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Transaction creation failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Create a deposit record.
+     *
+     * @param int $userId User ID
+     * @param string $txnId Transaction ID
+     * @param float $amount Deposit amount
+     * @param string $paymentGateway Payment gateway name
+     * @param string|null $taxes Tax information
+     * @return Deposits|null
+     */
+    protected function deposit($userId, $txnId, $amount, $paymentGateway, $taxes = null)
+    {
+        // Check if Deposits model exists
+        if (!class_exists('App\Models\Deposits')) {
+            return null;
         }
 
-        return true;
-    }
-
-    /**
-     * Clean input string
-     *
-     * @param string $input
-     * @return string
-     */
-    protected function cleanInput($input)
-    {
-        return trim(strip_tags($input));
-    }
-
-    /**
-     * Generate random string
-     *
-     * @param int $length
-     * @return string
-     */
-    protected function generateRandomString($length = 32)
-    {
-        return bin2hex(random_bytes($length / 2));
-    }
-
-    /**
-     * Check if request is AJAX
-     *
-     * @return bool
-     */
-    protected function isAjax()
-    {
-        return request()->ajax() || request()->wantsJson();
-    }
-
-    /**
-     * Get client IP address
-     *
-     * @return string|null
-     */
-    protected function getClientIp()
-    {
-        return request()->ip();
-    }
-
-    /**
-     * Calculate percentage
-     *
-     * @param float $value
-     * @param float $total
-     * @return float
-     */
-    protected function calculatePercentage($value, $total)
-    {
-        if ($total == 0) {
-            return 0;
+        try {
+            return Deposits::create([
+                'user_id' => $userId,
+                'txn_id' => $txnId,
+                'amount' => $amount,
+                'payment_gateway' => $paymentGateway,
+                'taxes' => $taxes,
+                'created_at' => Carbon::now(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Deposit creation failed: ' . $e->getMessage());
+            return null;
         }
-
-        return round(($value / $total) * 100, 2);
     }
 }

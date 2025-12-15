@@ -125,7 +125,7 @@ class DashboardController extends Controller
             ->select('shift_assignments.*')
             ->first();
 
-        return view('dashboard.worker', compact(
+        return view('worker.dashboard', compact(
             'todayShifts',
             'upcomingShifts',
             'pendingApplications',
@@ -140,7 +140,7 @@ class DashboardController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return view('dashboard.worker', [
+            return view('worker.dashboard', [
                 'todayShifts' => collect(),
                 'upcomingShifts' => collect(),
                 'pendingApplications' => collect(),
@@ -176,11 +176,17 @@ class DashboardController extends Controller
             ->get();
 
         // Pending applications
+        // Eager load worker with completed_shifts_count to prevent N+1 queries in the view
         $pendingApplications = ShiftApplication::whereHas('shift', function($q) use ($business) {
             $q->where('business_id', $business->id);
         })
         ->where('status', 'pending')
-        ->with('worker', 'shift')
+        ->with(['worker' => function($q) {
+            // Use withCount to eager load the completed shifts count instead of calling count() in the view
+            $q->withCount(['shiftAssignments as completed_shifts_count' => function($query) {
+                $query->where('status', 'completed');
+            }]);
+        }, 'shift'])
         ->latest()
         ->limit(10)
         ->get();
@@ -217,7 +223,7 @@ class DashboardController extends Controller
         // Recent activity
         $recentActivity = $this->getRecentBusinessActivity($business->id);
 
-        return view('dashboard.business', compact(
+        return view('business.dashboard', compact(
             'activeShifts',
             'todayShifts',
             'pendingApplications',
@@ -231,7 +237,7 @@ class DashboardController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return view('dashboard.business', [
+            return view('business.dashboard', [
                 'activeShifts' => collect(),
                 'todayShifts' => collect(),
                 'pendingApplications' => collect(),
@@ -251,11 +257,15 @@ class DashboardController extends Controller
             $agency = Auth::user();
 
         // Agency workers (using relationship through agency_workers pivot table)
+        // Eager load assignedShifts and use withCount to get completed shifts count to prevent N+1 queries
         $agencyWorkers = $agency->agencyWorkers()
             ->with(['assignedShifts' => function($q) {
                 $q->whereHas('shift', function($query) {
                     $query->where('shift_date', '>=', Carbon::today());
                 });
+            }])
+            ->withCount(['shiftAssignments as completed_shifts_count' => function($query) {
+                $query->where('status', 'completed');
             }])
             ->get();
 
@@ -311,7 +321,7 @@ class DashboardController extends Controller
                 });
         })->get();
 
-        return view('dashboard.agency', compact(
+        return view('agency.dashboard', compact(
             'agencyWorkers',
             'activePlacements',
             'availableShifts',
@@ -325,7 +335,7 @@ class DashboardController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return view('dashboard.agency', [
+            return view('agency.dashboard', [
                 'agencyWorkers' => collect(),
                 'activePlacements' => collect(),
                 'availableShifts' => collect(),

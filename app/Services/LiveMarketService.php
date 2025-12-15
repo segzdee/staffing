@@ -83,7 +83,7 @@ class LiveMarketService
         }
 
         // Calculate match scores for worker
-        if ($worker && $worker->role === 'worker') {
+        if ($worker && $worker->user_type === 'worker') {
             $shifts = $shifts->map(function ($shift) use ($worker) {
                 $matchScore = $this->shiftMatchingService->calculateMatchScore($worker, $shift);
                 $shift->match_score = $matchScore['overall_score'];
@@ -249,7 +249,7 @@ class LiveMarketService
         $minRating = config('market.instant_claim_min_rating', 4.5);
         $workerProfile = WorkerProfile::where('user_id', $worker->id)->first();
 
-        if (!$workerProfile || $workerProfile->average_rating < $minRating) {
+        if (!$workerProfile || $workerProfile->rating_average < $minRating) {
             throw new \Exception("Instant claim requires a rating of {$minRating} or higher");
         }
 
@@ -268,6 +268,7 @@ class LiveMarketService
             $assignment = ShiftAssignment::create([
                 'shift_id' => $shift->id,
                 'worker_id' => $worker->id,
+                'assigned_by' => $worker->id, // Worker assigned themselves via instant claim
                 'status' => 'confirmed',
                 'assigned_at' => now(),
                 'confirmed_at' => now(),
@@ -330,6 +331,7 @@ class LiveMarketService
             $assignment = ShiftAssignment::create([
                 'shift_id' => $shift->id,
                 'worker_id' => $worker->id,
+                'assigned_by' => $agency->id, // Agency user who made the assignment
                 'assigned_by_agency_id' => $agency->id,
                 'status' => 'confirmed',
                 'assigned_at' => now(),

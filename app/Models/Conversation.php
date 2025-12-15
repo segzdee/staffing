@@ -5,6 +5,39 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property int|null $shift_id
+ * @property int $worker_id
+ * @property int $business_id
+ * @property string|null $subject
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $last_message_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User|null $business
+ * @property-read \App\Models\Message|null $lastMessage
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Message> $messages
+ * @property-read int|null $messages_count
+ * @property-read \App\Models\Shift|null $shift
+ * @property-read \App\Models\User|null $worker
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation forUser($userId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereBusinessId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereLastMessageAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereShiftId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation whereWorkerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Conversation withUnreadFor($userId)
+ * @mixin \Eloquent
+ */
 class Conversation extends Model
 {
     use HasFactory;

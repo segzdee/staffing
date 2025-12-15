@@ -15,7 +15,7 @@ class AddUserTypeColumnsToUsersTable extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Add user type enum
-            $table->enum('user_type', ['worker', 'business', 'agency', 'ai_agent', 'admin'])
+            $table->enum('user_type', ['worker', 'business', 'agency', 'admin'])
                 ->default('worker');
 
             // Verification flags for different user types

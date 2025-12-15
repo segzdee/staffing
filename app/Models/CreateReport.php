@@ -7,6 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 
+/**
+ * @property-read User|null $users
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreateReport newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreateReport newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreateReport onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreateReport query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreateReport withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CreateReport withoutTrashed()
+ * @mixin \Eloquent
+ */
 class CreateReport extends Model
 {
     use SoftDeletes;

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.authenticated')
 
 @section('title', 'Shift Analytics')
 @section('page-title', 'Shift Analytics & Reports')

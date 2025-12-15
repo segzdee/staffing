@@ -25,6 +25,43 @@ class ShiftManagementController extends Controller
     }
 
     /**
+     * List shifts for agency - shows both assigned shifts and available shifts.
+     */
+    public function index(Request $request)
+    {
+        $agency = Auth::user();
+
+        // Get shifts that agency workers are assigned to
+        $assignedShifts = Shift::with(['business', 'assignments'])
+            ->whereHas('assignments', function($query) use ($agency) {
+                $query->whereIn('worker_id', function($q) use ($agency) {
+                    $q->select('worker_id')
+                        ->from('agency_workers')
+                        ->where('agency_id', $agency->id);
+                });
+            })
+            ->orderBy('shift_date', 'desc')
+            ->paginate(15);
+
+        // Get available shifts count
+        $availableShiftsCount = Shift::where('status', 'open')
+            ->where('shift_date', '>=', now())
+            ->where('allow_agencies', true)
+            ->count();
+
+        // Get agency workers count
+        $workersCount = AgencyWorker::where('agency_id', $agency->id)
+            ->where('status', 'active')
+            ->count();
+
+        return view('agency.shifts.index', compact(
+            'assignedShifts',
+            'availableShiftsCount',
+            'workersCount'
+        ));
+    }
+
+    /**
      * Agency dashboard.
      */
     public function dashboard()
@@ -434,6 +471,37 @@ class ShiftManagementController extends Controller
             'dateFrom',
             'dateTo'
         ));
+    }
+
+    /**
+     * Show form to add a worker to the agency.
+     */
+    public function showAddWorkerForm()
+    {
+        return view('agency.workers.add');
+    }
+
+    /**
+     * Create a new placement (assign worker to client shift).
+     */
+    public function createPlacement()
+    {
+        $agency = Auth::user();
+
+        // Get available agency workers
+        $availableWorkers = AgencyWorker::with(['worker.workerProfile', 'worker.skills'])
+            ->where('agency_id', $agency->id)
+            ->where('status', 'active')
+            ->get();
+
+        // Get available shifts
+        $availableShifts = Shift::where('status', 'open')
+            ->where('shift_date', '>=', now())
+            ->orderBy('shift_date', 'asc')
+            ->limit(50)
+            ->get();
+
+        return view('agency.placements.create', compact('availableWorkers', 'availableShifts'));
     }
 
     /**

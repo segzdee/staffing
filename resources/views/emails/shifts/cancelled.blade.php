@@ -23,7 +23,7 @@ Browse Available Shifts
 @else
 We apologize for any inconvenience. You can post a new shift at any time.
 
-@component('mail::button', ['url' => route('business.shifts.create')])
+@component('mail::button', ['url' => route('shifts.create')])
 Post New Shift
 @endcomponent
 @endif

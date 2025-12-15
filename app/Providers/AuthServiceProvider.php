@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Models\BusinessProfile;
 use App\Models\AgencyProfile;
-use App\Models\AiAgentProfile;
 use App\Models\Shift;
 use App\Models\ShiftTemplate;
 use App\Models\ShiftApplication;
@@ -42,7 +41,6 @@ use App\Policies\UserPolicy;
 use App\Policies\WorkerProfilePolicy;
 use App\Policies\BusinessProfilePolicy;
 use App\Policies\AgencyProfilePolicy;
-use App\Policies\AiAgentProfilePolicy;
 use App\Policies\ShiftPolicy;
 use App\Policies\ShiftTemplatePolicy;
 use App\Policies\ShiftApplicationPolicy;
@@ -85,7 +83,6 @@ class AuthServiceProvider extends ServiceProvider
         WorkerProfile::class => WorkerProfilePolicy::class,
         BusinessProfile::class => BusinessProfilePolicy::class,
         AgencyProfile::class => AgencyProfilePolicy::class,
-        AiAgentProfile::class => AiAgentProfilePolicy::class,
         Shift::class => ShiftPolicy::class,
         ShiftTemplate::class => ShiftTemplatePolicy::class,
         ShiftApplication::class => ShiftApplicationPolicy::class,

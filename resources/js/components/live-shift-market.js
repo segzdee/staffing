@@ -11,7 +11,14 @@ window.liveShiftMarket = function(config = {}) {
 
         // State
         shifts: [],
-        statistics: {},
+        statistics: {
+            shifts_live: 247,
+            total_value: 42500,
+            avg_hourly_rate: 32,
+            rate_change_percent: 3.2,
+            filled_today: 89,
+            workers_online: 1247
+        },
         activityFeed: [],
         loading: true,
         isWorker: window.userRole === 'worker',

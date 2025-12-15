@@ -65,7 +65,9 @@ class DashboardController extends Controller
             ->get();
 
         // Available shifts that match agency workers' skills
-        $availableShifts = Shift::where('status', 'open')
+        // Eager load business relationship to prevent N+1 queries when displaying shift details
+        $availableShifts = Shift::with('business')
+            ->where('status', 'open')
             ->where('shift_date', '>=', now())
             ->where('allow_agencies', true)
             ->orderBy('shift_date', 'asc')
@@ -93,6 +95,41 @@ class DashboardController extends Controller
             'avg_worker_rating' => 0, // TODO: Calculate from worker ratings
         ];
 
+        // Calculate profile completeness for onboarding progress
+        $onboardingProgress = $this->calculateProfileCompleteness($agency);
+
+        // Get notification and message counts for unified dashboard layout
+        $unreadNotifications = 0; // Placeholder - custom notification system
+        $unreadMessages = $agency->unreadMessages ?? 0; // Placeholder until Messages model is ready
+
+        // Prepare metrics array for unified dashboard layout
+        $metrics = [
+            [
+                'label' => 'Total Workers',
+                'value' => $totalWorkers,
+                'subtitle' => 'Active workers',
+                'icon' => 'M17 20h5v-2a3 3 0 00-3-3h-5v5zm-9-8h4V7H8v5zm2 8h4v-5H10v5z',
+            ],
+            [
+                'label' => 'Active Placements',
+                'value' => $activeWorkers,
+                'subtitle' => 'Currently working',
+                'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+            ],
+            [
+                'label' => 'Completed',
+                'value' => $completedAssignments,
+                'subtitle' => 'Total assignments',
+                'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+            ],
+            [
+                'label' => 'Commission Earned',
+                'value' => '$' . number_format($totalEarnings, 2),
+                'subtitle' => 'All time',
+                'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+            ],
+        ];
+
         return view('agency.dashboard', compact(
             'totalWorkers',
             'activeWorkers',
@@ -101,7 +138,11 @@ class DashboardController extends Controller
             'totalEarnings',
             'recentAssignments',
             'availableShifts',
-            'stats'
+            'stats',
+            'metrics',
+            'onboardingProgress',
+            'unreadNotifications',
+            'unreadMessages'
         ));
         } catch (\Exception $e) {
             \Log::error('Agency Dashboard Error: ' . $e->getMessage(), [
@@ -116,8 +157,56 @@ class DashboardController extends Controller
                 'completedAssignments' => 0,
                 'totalEarnings' => 0,
                 'recentAssignments' => collect(),
-                'availableShifts' => collect()
+                'availableShifts' => collect(),
+                'stats' => [
+                    'total_workers' => 0,
+                    'active_placements' => 0,
+                    'available_workers' => 0,
+                    'total_assignments' => 0,
+                    'completed_assignments' => 0,
+                    'revenue_this_month' => 0,
+                    'total_placements_month' => 0,
+                    'avg_worker_rating' => 0,
+                ],
+                'metrics' => [
+                    ['label' => 'Total Workers', 'value' => 0, 'subtitle' => 'Active workers', 'icon' => 'M17 20h5v-2a3 3 0 00-3-3h-5v5zm-9-8h4V7H8v5zm2 8h4v-5H10v5z'],
+                    ['label' => 'Active Placements', 'value' => 0, 'subtitle' => 'Currently working', 'icon' => 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+                    ['label' => 'Completed', 'value' => 0, 'subtitle' => 'Total assignments', 'icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['label' => 'Commission Earned', 'value' => '$0.00', 'subtitle' => 'All time', 'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                ],
+                'onboardingProgress' => 0,
+                'unreadNotifications' => 0,
+                'unreadMessages' => 0
             ])->with('error', 'Unable to load dashboard data. Please refresh the page.');
         }
+    }
+
+    /**
+     * Calculate profile completeness percentage
+     *
+     * @param  \App\Models\User  $user
+     * @return int
+     */
+    private function calculateProfileCompleteness($user)
+    {
+        $completeness = 0;
+
+        // Base user fields
+        if ($user->name) $completeness += 15;
+        if ($user->email) $completeness += 15;
+        if ($user->avatar && $user->avatar != 'avatar.jpg') $completeness += 10;
+
+        // Agency profile fields
+        if ($user->agencyProfile) {
+            $profile = $user->agencyProfile;
+            if ($profile->agency_name) $completeness += 15;
+            if ($profile->agency_type) $completeness += 10;
+            if ($profile->address) $completeness += 10;
+            if ($profile->city && $profile->state) $completeness += 10;
+            if ($profile->phone) $completeness += 10;
+            if ($profile->description) $completeness += 5;
+        }
+
+        return min($completeness, 100);
     }
 }

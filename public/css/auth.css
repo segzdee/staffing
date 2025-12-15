@@ -1,0 +1,962 @@
+/* ============================================
+   AUTH PAGES (LOGIN/REGISTER) DESIGN SYSTEM
+   Responsive, accessible, professional
+   ============================================ */
+
+:root {
+    --spacing-mobile: 16px;
+    --spacing-tablet: 24px;
+    --spacing-desktop: 32px;
+    --touch-target-min: 44px;
+}
+
+/* ============================================
+   LOGIN/REGISTER CONTAINER
+   ============================================ */
+.auth-container {
+    width: 100%;
+    max-width: 28rem; /* 448px */
+    margin: 0 auto;
+    padding: 0 var(--spacing-mobile);
+}
+
+@media (min-width: 640px) {
+    .auth-container {
+        max-width: 32rem; /* 512px */
+        padding: 0 var(--spacing-tablet);
+    }
+}
+
+.auth-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: var(--spacing-mobile);
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .auth-card {
+        padding: var(--spacing-tablet);
+    }
+}
+
+/* ============================================
+   LOGO SECTION
+   ============================================ */
+.auth-logo-section {
+    text-align: center;
+    margin-bottom: var(--spacing-tablet);
+}
+
+.auth-logo {
+    display: inline-block;
+    margin-bottom: var(--spacing-mobile);
+}
+
+.auth-logo img {
+    height: 48px;
+    width: auto;
+    max-width: 200px;
+    object-fit: contain;
+}
+
+@media (min-width: 640px) {
+    .auth-logo img {
+        height: 56px;
+    }
+}
+
+.auth-logo-text {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 50%, #1F2937 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+@media (min-width: 640px) {
+    .auth-logo-text {
+        font-size: 2.5rem;
+    }
+}
+
+.auth-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #18181B;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+@media (min-width: 640px) {
+    .auth-header h2 {
+        font-size: 1.75rem;
+    }
+}
+
+.auth-header p {
+    font-size: 0.875rem;
+    color: #6B7280;
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+    .auth-header p {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-mobile);
+}
+
+@media (min-width: 640px) {
+    .auth-form {
+        gap: var(--spacing-tablet);
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #18181B;
+    line-height: 1.4;
+}
+
+.form-label .required {
+    color: #EF4444;
+    margin-left: 2px;
+}
+
+.form-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.form-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #6B7280;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.form-input {
+    width: 100%;
+    min-height: var(--touch-target-min);
+    padding: 12px 16px;
+    padding-left: 44px; /* Space for icon */
+    font-size: 1rem; /* Prevents zoom on iOS */
+    font-weight: 400;
+    color: #18181B;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: #18181B;
+    box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.1);
+}
+
+.form-input::placeholder {
+    color: #9CA3AF;
+}
+
+.form-input:disabled {
+    background: #F9FAFB;
+    color: #6B7280;
+    cursor: not-allowed;
+}
+
+.form-input-error {
+    border-color: #EF4444;
+}
+
+.form-input-error:focus {
+    border-color: #EF4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Input without icon */
+.form-input.no-icon {
+    padding-left: 16px;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn-form-primary {
+    width: 100%;
+    min-height: var(--touch-target-min);
+    padding: 12px 24px;
+    font-size: 1rem; /* Increased from 0.875rem to prevent iOS zoom */
+    font-weight: 500;
+    color: white;
+    background: #18181B;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.btn-form-primary:hover {
+    background: #27272A;
+}
+
+.btn-form-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-form-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.2);
+}
+
+.btn-form-primary:disabled {
+    background: #9CA3AF;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-form-secondary {
+    width: 100%;
+    min-height: var(--touch-target-min);
+    padding: 12px 24px;
+    font-size: 1rem; /* Increased from 0.875rem to prevent iOS zoom */
+    font-weight: 500;
+    color: #18181B;
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.btn-form-secondary:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+}
+
+.btn-form-secondary:active {
+    transform: scale(0.98);
+}
+
+.btn-form-secondary:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.1);
+}
+
+/* ============================================
+   CHECKBOX & RADIO
+   ============================================ */
+.form-checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.form-checkbox {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    margin-top: 2px;
+    border: 2px solid #D1D5DB;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.form-checkbox:checked {
+    background: #18181B;
+    border-color: #18181B;
+}
+
+.form-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.form-checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(24, 24, 27, 0.1);
+}
+
+.form-checkbox-label {
+    font-size: 0.875rem;
+    color: #6B7280;
+    line-height: 1.5;
+    user-select: none;
+}
+
+/* Radio buttons for user type selection */
+.form-radio-group {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-mobile);
+}
+
+@media (min-width: 640px) {
+    .form-radio-group {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.form-radio-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.form-radio-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.form-radio-card {
+    border: 2px solid #E5E7EB;
+    border-radius: 8px;
+    padding: var(--spacing-mobile);
+    text-align: center;
+    transition: all 0.2s;
+    background: white;
+}
+
+@media (min-width: 640px) {
+    .form-radio-card {
+        padding: var(--spacing-tablet);
+    }
+}
+
+.form-radio-option input[type="radio"]:checked + .form-radio-card {
+    border-color: #18181B;
+    background: #F9FAFB;
+}
+
+.form-radio-option:hover .form-radio-card {
+    border-color: #D1D5DB;
+}
+
+.form-radio-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto var(--spacing-mobile);
+    background: #F3F4F6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6B7280;
+}
+
+.form-radio-option input[type="radio"]:checked + .form-radio-card .form-radio-icon {
+    background: #18181B;
+    color: white;
+}
+
+.form-radio-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #18181B;
+    margin-bottom: 4px;
+}
+
+.form-radio-description {
+    font-size: 0.75rem;
+    color: #6B7280;
+    line-height: 1.4;
+}
+
+/* ============================================
+   ALERT MESSAGES
+   ============================================ */
+.auth-alert {
+    padding: var(--spacing-mobile);
+    border-radius: 8px;
+    border: 1px solid;
+    margin-bottom: var(--spacing-tablet);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.auth-alert-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.auth-alert-content {
+    flex: 1;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.auth-alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #DC2626;
+}
+
+.auth-alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #059669;
+}
+
+.auth-alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #D97706;
+}
+
+.auth-alert ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    list-style: disc;
+}
+
+.auth-alert li {
+    margin-bottom: 4px;
+}
+
+.auth-alert li:last-child {
+    margin-bottom: 0;
+}
+
+/* ============================================
+   DIVIDER
+   ============================================ */
+.auth-divider {
+    position: relative;
+    margin: var(--spacing-tablet) 0;
+    text-align: center;
+}
+
+.auth-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #E5E7EB;
+}
+
+.auth-divider span {
+    position: relative;
+    padding: 0 16px;
+    background: white;
+    font-size: 0.875rem;
+    color: #6B7280;
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+.auth-link {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #18181B;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.auth-link:hover {
+    color: #27272A;
+    text-decoration: underline;
+}
+
+.auth-link:focus {
+    outline: none;
+    text-decoration: underline;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+.auth-text {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #6B7280;
+}
+
+.auth-text-small {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #9CA3AF;
+}
+
+.auth-text-bold {
+    font-weight: 600;
+    color: #18181B;
+}
+
+/* ============================================
+   RESPONSIVE FORM GRID
+   ============================================ */
+.auth-form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-mobile);
+}
+
+@media (min-width: 640px) {
+    .auth-form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
+   TERMS AGREEMENT BOX
+   ============================================ */
+.auth-terms-box {
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: var(--spacing-mobile);
+}
+
+/* ============================================
+   DEV LOGIN SECTION (LOCAL ONLY)
+   ============================================ */
+.auth-dev-section {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+}
+
+.auth-dev-header {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(59, 130, 246);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.auth-dev-header svg {
+    width: 16px;
+    height: 16px;
+}
+
+.auth-dev-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 639px) {
+    .auth-dev-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.auth-dev-btn {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgb(59, 130, 246);
+    background: white;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.auth-dev-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgb(59, 130, 246);
+}
+
+.auth-dev-link {
+    font-size: 0.75rem;
+    color: rgb(59, 130, 246);
+    text-decoration: underline;
+}
+
+.auth-dev-link:hover {
+    text-decoration: none;
+}
+
+/* ============================================
+   ICON SIZES
+   ============================================ */
+.auth-icon-sm {
+    width: 12px;
+    height: 12px;
+}
+
+.auth-icon-md {
+    width: 16px;
+    height: 16px;
+}
+
+.auth-icon-lg {
+    width: 20px;
+    height: 20px;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 639px) {
+    .auth-card {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .form-radio-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+.form-input:focus-visible,
+.form-checkbox:focus-visible,
+.btn-form-primary:focus-visible,
+.btn-form-secondary:focus-visible {
+    outline: 2px solid #18181B;
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .auth-card {
+        border-width: 2px;
+    }
+    
+    .form-input {
+        border-width: 2px;
+    }
+    
+    .btn-form-primary,
+    .btn-form-secondary {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .form-input,
+    .btn-form-primary,
+    .btn-form-secondary,
+    .form-radio-card {
+        transition: none;
+    }
+}
+
+/* ============================================
+   CLIENT-SIDE VALIDATION STATES
+   ============================================ */
+
+/* Valid state */
+.form-input-valid {
+    border-color: #10B981;
+}
+
+.form-input-valid:focus {
+    border-color: #10B981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Error state (extending existing .form-input-error) */
+.form-input-error {
+    border-color: #EF4444;
+}
+
+.form-input-error:focus {
+    border-color: #EF4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Validation icon indicators */
+.form-input-wrapper .validation-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.form-input-wrapper .validation-icon.show {
+    opacity: 1;
+}
+
+.form-input-wrapper .validation-icon-valid {
+    color: #10B981;
+}
+
+.form-input-wrapper .validation-icon-error {
+    color: #EF4444;
+}
+
+/* Validation message container */
+.validation-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.2s ease, max-height 0.2s ease;
+}
+
+.validation-message.show {
+    opacity: 1;
+    max-height: 100px;
+}
+
+.validation-message-error {
+    color: #EF4444;
+}
+
+.validation-message-success {
+    color: #10B981;
+}
+
+.validation-message-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+/* Password strength indicator */
+.password-strength {
+    margin-top: 8px;
+}
+
+.password-strength-label {
+    font-size: 0.75rem;
+    color: #6B7280;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.password-strength-meter {
+    height: 4px;
+    background: #E5E7EB;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.password-strength-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    width: 0%;
+}
+
+.password-strength-fill.weak {
+    width: 25%;
+    background: #EF4444;
+}
+
+.password-strength-fill.fair {
+    width: 50%;
+    background: #F59E0B;
+}
+
+.password-strength-fill.good {
+    width: 75%;
+    background: #3B82F6;
+}
+
+.password-strength-fill.strong {
+    width: 100%;
+    background: #10B981;
+}
+
+/* Password requirements checklist */
+.password-requirements {
+    margin-top: 8px;
+    padding: 12px;
+    background: #F9FAFB;
+    border-radius: 6px;
+    border: 1px solid #E5E7EB;
+}
+
+.password-requirements-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6B7280;
+    margin-bottom: 8px;
+}
+
+.password-requirement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: #6B7280;
+    margin-bottom: 4px;
+}
+
+.password-requirement:last-child {
+    margin-bottom: 0;
+}
+
+.password-requirement-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.password-requirement.met {
+    color: #10B981;
+}
+
+.password-requirement.met .password-requirement-icon {
+    color: #10B981;
+}
+
+/* Real-time feedback animations */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.form-input.shake {
+    animation: shake 0.4s ease-in-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.validation-message.animate {
+    animation: fadeInUp 0.2s ease-out;
+}
+
+/* Submit button states during validation */
+.btn-form-primary.validating {
+    position: relative;
+    color: transparent;
+}
+
+.btn-form-primary.validating::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Form group with validation */
+.form-group.has-error .form-label {
+    color: #EF4444;
+}
+
+.form-group.has-success .form-label {
+    color: #10B981;
+}
+
+/* Accessibility: Screen reader only text */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Live region for announcing validation errors */
+.validation-announcer {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}

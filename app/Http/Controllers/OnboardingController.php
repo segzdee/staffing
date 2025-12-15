@@ -432,14 +432,14 @@ class OnboardingController extends Controller
                             'title' => 'Add Your Workers',
                             'description' => 'Import your existing worker roster',
                             'action' => 'Add Workers',
-                            'route' => route('business.dashboard'),
+                            'route' => route('dashboard'),
                         ],
                         [
                             'icon' => 'building',
                             'title' => 'Add Client Businesses',
                             'description' => 'Connect client businesses to manage their shifts',
                             'action' => 'Add Clients',
-                            'route' => route('business.dashboard'),
+                            'route' => route('dashboard'),
                         ],
                     ],
                 ];
@@ -460,12 +460,13 @@ class OnboardingController extends Controller
     {
         switch ($user->user_type) {
             case 'worker':
-                return redirect()->route('worker.dashboard');
             case 'business':
             case 'agency':
-                return redirect()->route('business.dashboard');
+                return redirect()->route('dashboard');
             case 'admin':
-                return redirect()->route('admin');
+                return redirect()->route('admin.dashboard');
+            case 'ai_agent':
+                return redirect()->route('agent.dashboard');
             default:
                 return redirect()->route('home');
         }

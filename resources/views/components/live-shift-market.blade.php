@@ -7,34 +7,46 @@
     class="live-shift-market {{ $variant }}"
 >
     {{-- Statistics Bar with Demo Data --}}
-    <div class="bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl p-6 text-white mb-8">
+    <div class="bg-gray-900 rounded-xl p-6 text-white mb-8">
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
             <div>
-                <div class="text-3xl font-bold" x-text="statistics.shifts_live || 247">247</div>
-                <div class="text-sm opacity-80">Shifts Live</div>
+                <div class="text-3xl font-bold">
+                    <span x-text="statistics?.shifts_live || '247'">247</span>
+                </div>
+                <div class="text-sm text-gray-400">Shifts Live</div>
             </div>
             <div>
-                <div class="text-3xl font-bold">$<span x-text="((statistics.total_value || 42500)/1000).toFixed(1)">42.5</span>K</div>
-                <div class="text-sm opacity-80">Total Value</div>
+                <div class="text-3xl font-bold">
+                    $<span x-text="statistics?.total_value ? ((statistics.total_value)/1000).toFixed(1) + 'K' : '42.5K'">42.5K</span>
+                </div>
+                <div class="text-sm text-gray-400">Total Value</div>
             </div>
             <div>
-                <div class="text-3xl font-bold">$<span x-text="statistics.avg_hourly_rate || 32">32</span></div>
-                <div class="text-sm opacity-80">Avg Rate</div>
+                <div class="text-3xl font-bold">
+                    $<span x-text="statistics?.avg_hourly_rate || '32'">32</span>
+                </div>
+                <div class="text-sm text-gray-400">Avg Rate</div>
             </div>
             <div>
-                <div class="text-3xl font-bold text-green-300">↑<span x-text="statistics.rate_change_percent || 3.2">3.2</span>%</div>
-                <div class="text-sm opacity-80">Rate Change</div>
+                <div class="text-3xl font-bold text-gray-300">
+                    ↑<span x-text="statistics?.rate_change_percent || '3.2'">3.2</span>%
+                </div>
+                <div class="text-sm text-gray-400">Rate Change</div>
             </div>
             <div>
-                <div class="text-3xl font-bold" x-text="statistics.filled_today || 89">89</div>
-                <div class="text-sm opacity-80">Filled Today</div>
+                <div class="text-3xl font-bold">
+                    <span x-text="statistics?.filled_today || '89'">89</span>
+                </div>
+                <div class="text-sm text-gray-400">Filled Today</div>
             </div>
             <div>
                 <div class="flex items-center justify-center gap-2">
-                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                    <span class="text-3xl font-bold" x-text="(statistics.workers_online || 1247).toLocaleString()">1,247</span>
+                    <span class="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
+                    <span class="text-3xl font-bold">
+                        <span x-text="statistics?.workers_online ? (statistics.workers_online).toLocaleString() : '1,247'">1,247</span>
+                    </span>
                 </div>
-                <div class="text-sm opacity-80">Workers Online</div>
+                <div class="text-sm text-gray-400">Workers Online</div>
             </div>
         </div>
     </div>

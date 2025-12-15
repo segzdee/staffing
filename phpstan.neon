@@ -1,0 +1,35 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app/
+
+    level: 5
+
+    ignoreErrors:
+        # Larastan relationship detection limitation
+        - '#Relation .* is not found in App\\Models\\.*#'
+
+        # Laravel Handler interface covariance
+        - '#PHPDoc tag @param .* does not match parent#'
+        - '#PHPDoc tag @return .* does not match parent#'
+
+        # Safe to ignore
+        - '#Unsafe usage of new static#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+
+        # Legacy code - AdminSettings properties
+        - '#Access to an undefined property App\\Models\\AdminSettings::\$.*#'
+
+        # Legacy facade methods
+        - '#Call to an undefined static method Intervention\\Image\\Laravel\\Facades\\Image::.*#'
+
+    excludePaths:
+        - app/Console/Kernel.php
+        - app/Exceptions/Handler.php
+        - app/Helper.php
+        - app/Library/
+
+    reportUnmatchedIgnoredErrors: false

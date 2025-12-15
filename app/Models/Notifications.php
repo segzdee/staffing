@@ -5,6 +5,28 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property int $destination
+ * @property int $author
+ * @property int $type
+ * @property int|null $target
+ * @property bool $read
+ * @property \Illuminate\Support\Carbon|null $read_at
+ * @property \Illuminate\Support\Carbon $created_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereAuthor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereDestination($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereRead($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereReadAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereTarget($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereType($value)
+ * @mixin \Eloquent
+ */
 class Notifications extends Model
 {
 	protected $guarded = ['id'];

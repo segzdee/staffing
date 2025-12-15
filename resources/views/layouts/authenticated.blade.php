@@ -15,7 +15,7 @@
 
     <!-- Vite Assets -->
     @if(file_exists(public_path('build/manifest.json')))
-        @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
         <!-- Fallback to Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
@@ -60,6 +60,18 @@
                             card: {
                                 DEFAULT: 'hsl(0 0% 100%)',
                                 foreground: 'hsl(240 10% 3.9%)',
+                            },
+                            brand: {
+                                50: '#f5f3ff',
+                                100: '#ede9fe',
+                                200: '#ddd6fe',
+                                300: '#c4b5fd',
+                                400: '#a78bfa',
+                                500: '#667eea',
+                                600: '#5a67d8',
+                                700: '#4c51bf',
+                                800: '#3730a3',
+                                900: '#312e81',
                             },
                             success: '#10B981',
                             warning: '#F59E0B',
@@ -161,9 +173,8 @@
             <div class="h-full flex flex-col">
                 <!-- Logo -->
                 <div class="flex items-center justify-between h-16 px-6 border-b border-border">
-                    <a href="{{ route('dashboard') }}" class="flex items-center space-x-3">
-                        <span class="logo-gradient text-2xl">OS</span>
-                        <span class="font-semibold text-foreground">OvertimeStaff</span>
+                    <a href="{{ route('dashboard') }}" class="flex items-center">
+                        <img src="/images/logo.svg" alt="OvertimeStaff" style="height: 32px; width: auto;">
                     </a>
                     <button @click="sidebarOpen = false" class="lg:hidden text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,13 +302,13 @@
                              x-transition:leave-start="opacity-100 scale-100"
                              x-transition:leave-end="opacity-0 scale-95"
                              class="absolute right-0 mt-2 w-48 bg-popover rounded-md shadow-lg border border-border py-1 z-50">
-                            <a href="{{ route(auth()->user()->user_type.'.profile') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors">
+                            <a href="{{ auth()->user()->profile_route }}" class="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
                                 Profile
                             </a>
-                            <a href="#" class="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors">
+                            <a href="{{ route('settings.index') }}" class="flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>

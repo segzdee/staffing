@@ -20,7 +20,7 @@ class ShiftManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Shift::with(['business', 'applications', 'assignments']);
+        $query = Shift::with(['business', 'applications.worker', 'assignments.worker']);
 
         // Status filter
         if ($request->has('status') && $request->status != '') {

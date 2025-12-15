@@ -5,6 +5,40 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id
+ * @property int $shift_assignment_id
+ * @property int $offering_worker_id
+ * @property int|null $receiving_worker_id
+ * @property string|null $reason
+ * @property string $status
+ * @property bool $business_approval_required
+ * @property \Illuminate\Support\Carbon|null $business_approved_at
+ * @property int|null $approved_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User|null $approvedBy
+ * @property-read \App\Models\ShiftAssignment $assignment
+ * @property-read \App\Models\User $offeringWorker
+ * @property-read \App\Models\User|null $receivingWorker
+ * @property-read \App\Models\Shift|null $shift
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereApprovedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereBusinessApprovalRequired($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereBusinessApprovedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereOfferingWorkerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereReceivingWorkerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereShiftAssignmentId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftSwap whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class ShiftSwap extends Model
 {
     use HasFactory;

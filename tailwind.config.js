@@ -52,24 +52,20 @@ export default {
         },
         // Semantic colors for status indicators
         success: {
-          DEFAULT: "#10B981",
-          foreground: "#ffffff",
-          light: "#D1FAE5",
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
         warning: {
-          DEFAULT: "#F59E0B",
-          foreground: "#ffffff",
-          light: "#FEF3C7",
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
         },
         error: {
-          DEFAULT: "#EF4444",
-          foreground: "#ffffff",
-          light: "#FEE2E2",
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
         },
         info: {
-          DEFAULT: "#3B82F6",
-          foreground: "#ffffff",
-          light: "#DBEAFE",
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
         },
       },
       borderRadius: {

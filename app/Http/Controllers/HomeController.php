@@ -50,43 +50,10 @@ class HomeController extends Controller
         return view('welcome');
     }
 
-    /**
-     * Handle Contact Form Submission
-     */
-    public function submitContact(Request $request)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'email' => 'required|email|max:255',
-            'phone' => 'nullable|string|max:20',
-            'user_type' => 'required|in:worker,business,agency,other',
-            'subject' => 'required|string|max:200',
-            'message' => 'required|string|max:5000',
-        ]);
 
-        // Here you would typically:
-        // 1. Save to database
-        // 2. Send notification email to admin
-        // 3. Send confirmation email to user
-
-        // For now, we'll just redirect with success
-        return redirect()->back()->with('success', 'Thank you for your message! We will get back to you within 24 hours.');
-    }
 
     // Marketing Page Methods
-    public function features()
-    {
-        return view('public.features');
-    }
-    public function about()
-    {
-        return view('public.about');
-    }
-    public function contact()
-    {
-        return view('public.contact');
-    }
+
     public function terms()
     {
         return view('public.terms');
@@ -96,23 +63,12 @@ class HomeController extends Controller
         return view('public.privacy');
     }
 
-    // Worker Marketing Pages
-    public function workerFindShifts()
-    {
-        return view('public.workers.find-shifts');
-    }
-    public function workerFeatures()
-    {
-        return view('public.workers.features');
-    }
+
 
     // Business Marketing Pages
     public function businessPricing()
     {
         return view('public.business.pricing');
     }
-    public function businessPostShifts()
-    {
-        return view('public.business.post-shifts');
-    }
+
 }

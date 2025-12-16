@@ -23,24 +23,13 @@ Route::middleware(['web'])->group(function () {
     // Access Denied Page
     Route::get('/access-denied', [App\Http\Controllers\HomeController::class, 'accessDenied'])->name('errors.access-denied');
 
-    // Public Marketing Pages (13 Landing Pages)
-    Route::get('/features', [App\Http\Controllers\HomeController::class, 'features'])->name('features');
-    Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->name('about');
-    Route::get('/contact', [App\Http\Controllers\HomeController::class, 'contact'])->name('contact');
-    Route::post('/contact', [App\Http\Controllers\HomeController::class, 'submitContact'])->name('contact.submit');
+    // Public Marketing Pages
     Route::get('/terms', [App\Http\Controllers\HomeController::class, 'terms'])->name('terms');
     Route::get('/privacy', [App\Http\Controllers\HomeController::class, 'privacy'])->name('privacy');
-
-    // For Workers Pages
-    Route::prefix('workers')->name('workers.')->group(function () {
-        Route::get('/find-shifts', [App\Http\Controllers\HomeController::class, 'workerFindShifts'])->name('find-shifts');
-        Route::get('/features', [App\Http\Controllers\HomeController::class, 'workerFeatures'])->name('features');
-    });
 
     // For Businesses Pages
     Route::prefix('business')->name('business.')->group(function () {
         Route::get('/pricing', [App\Http\Controllers\HomeController::class, 'businessPricing'])->name('pricing');
-        Route::get('/post-shifts', [App\Http\Controllers\HomeController::class, 'businessPostShifts'])->name('post-shifts');
     });
 
     // Public profile browsing (no auth required)

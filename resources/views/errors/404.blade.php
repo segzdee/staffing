@@ -47,7 +47,7 @@
                         <svg class="w-4 h-4 flex-shrink-0" style="color: hsl(262 83% 58%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
-                        <a href="{{ route('dashboard') }}" class="hover:underline" style="color: hsl(262 83% 58%);">Go to your dashboard</a>
+                        <a href="{{ route('dashboard.index') }}" class="hover:underline" style="color: hsl(262 83% 58%);">Go to your dashboard</a>
                     </li>
                     @else
                     <li class="flex items-center gap-2">

@@ -73,7 +73,7 @@ class ShiftManagementController extends Controller
             abort(403, 'Only businesses and agencies can access this page.');
         }
 
-        $shift = Shift::with(['assignments.worker', 'applications.worker', 'business'])
+        $shift = Shift::with(['assignments.worker', 'applications.worker', 'business', 'venue'])
             ->findOrFail($shiftId);
 
         // Check ownership

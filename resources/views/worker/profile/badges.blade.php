@@ -4,7 +4,7 @@
 @section('page-title', 'My Badges & Achievements')
 
 @section('sidebar-nav')
-@include('worker.partials.sidebar')
+<x-dashboard.sidebar-nav />
 @endsection
 
 @section('content')

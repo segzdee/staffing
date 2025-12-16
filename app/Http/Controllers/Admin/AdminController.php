@@ -294,10 +294,6 @@ class AdminController extends Controller
 			 $data = User::where('user_type', 'agency')->orderBy('id','desc')->paginate(20);
 		 }
 
-		 if (request('sort') == 'ai_agents') {
-			 $data = User::where('user_type', 'ai_agent')->orderBy('id','desc')->paginate(20);
-		 }
-
 		 // ==== ADMIN FILTER ====
 		 if (request('sort') == 'admins') {
 			 $data = User::whereRole('admin')->orderBy('id','desc')->paginate(20);

@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // Register middleware aliases for OvertimeStaff
         $middleware->alias([
+            'role' => \App\Http\Middleware\Role::class,
             'worker' => \App\Http\Middleware\WorkerMiddleware::class,
             'business' => \App\Http\Middleware\BusinessMiddleware::class,
             'agency' => \App\Http\Middleware\AgencyMiddleware::class,

@@ -223,6 +223,27 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping()
             ->onOneServer();
 
+        // ============================================================================
+        // AGENCY COMPLIANCE & GO-LIVE AUTOMATION (AGY-REG-005)
+        // ============================================================================
+
+        // AGY-REG-005: Monitor agency compliance daily at 6 AM
+        // - Checks for expiring documents (30-day warning)
+        // - Detects compliance score drops
+        // - Auto-restricts agencies with expired licenses
+        $schedule->command('agency:monitor-compliance')
+            ->dailyAt('06:00')
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // AGY-REG-005: Process go-live requests every 4 hours
+        // - Auto-approves agencies meeting all requirements (score >= 80%)
+        // - Flags agencies needing manual review
+        $schedule->command('agency:process-go-live')
+            ->everyFourHours()
+            ->withoutOverlapping()
+            ->onOneServer();
+
       //  $schedule->command('uploadvideos:videouploadercron')->everyMinute()->runInBackground();;
 
     }

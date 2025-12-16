@@ -131,77 +131,82 @@
                 <h3 class="box-title">All Payments ({{ $payments->total() }})</h3>
             </div>
             <div class="box-body table-responsive no-padding">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Shift</th>
-                            <th>Worker</th>
-                            <th>Business</th>
-                            <th>Amount</th>
-                            <th>Platform Fee</th>
-                            <th>Worker Amount</th>
-                            <th>Status</th>
-                            <th>Payout Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Worker</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform Fee</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Worker Amount</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payout Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($payments as $payment)
-                        <tr class="{{ $payment->is_disputed ? 'bg-danger-light' : '' }} {{ $payment->status == 'on_hold' ? 'bg-warning-light' : '' }}">
-                            <td>{{ $payment->id }}</td>
-                            <td>
+                        <tr class="{{ $payment->is_disputed ? 'bg-red-50' : ($payment->status == 'on_hold' ? 'bg-yellow-50' : 'hover:bg-gray-50') }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $payment->id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 <a href="{{ url('panel/admin/shifts/'.$payment->shift_id) }}">
                                     {{ \Illuminate\Support\Str::limit($payment->shift->title, 30) }}
                                 </a>
                             </td>
-                            <td>
-                                <a href="{{ url('panel/admin/workers/'.$payment->worker_id) }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <a href="{{ url('panel/admin/workers/'.$payment->worker_id) }}" class="text-blue-600 hover:text-blue-800">
                                     {{ $payment->worker->name }}
                                 </a>
                             </td>
-                            <td>
-                                <a href="{{ url('panel/admin/businesses/'.$payment->business_id) }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <a href="{{ url('panel/admin/businesses/'.$payment->business_id) }}" class="text-blue-600 hover:text-blue-800">
                                     {{ $payment->business->name }}
                                 </a>
                             </td>
-                            <td>{{ Helper::amountFormatDecimal($payment->total_amount) }}</td>
-                            <td>{{ Helper::amountFormatDecimal($payment->platform_fee) }}</td>
-                            <td class="text-green">{{ Helper::amountFormatDecimal($payment->worker_amount) }}</td>
-                            <td>
-                                @if($payment->status == 'in_escrow')
-                                    <span class="label label-warning">In Escrow</span>
-                                @elseif($payment->status == 'released')
-                                    <span class="label label-info">Released</span>
-                                @elseif($payment->status == 'paid_out')
-                                    <span class="label label-success">Paid Out</span>
-                                @elseif($payment->status == 'on_hold')
-                                    <span class="label label-danger">On Hold</span>
-                                @elseif($payment->status == 'refunded')
-                                    <span class="label label-default">Refunded</span>
-                                @elseif($payment->status == 'failed')
-                                    <span class="label label-danger">Failed</span>
-                                @else
-                                    <span class="label label-default">{{ ucfirst($payment->status) }}</span>
-                                @endif
-                                @if($payment->is_disputed)
-                                    <i class="fa fa-exclamation-triangle text-danger" title="Disputed"></i>
-                                @endif
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ Helper::amountFormatDecimal($payment->total_amount) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ Helper::amountFormatDecimal($payment->platform_fee) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">{{ Helper::amountFormatDecimal($payment->worker_amount) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <div class="flex items-center gap-2">
+                                    @if($payment->status == 'in_escrow')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">In Escrow</span>
+                                    @elseif($payment->status == 'released')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Released</span>
+                                    @elseif($payment->status == 'paid_out')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Paid Out</span>
+                                    @elseif($payment->status == 'on_hold')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">On Hold</span>
+                                    @elseif($payment->status == 'refunded')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Refunded</span>
+                                    @elseif($payment->status == 'failed')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>
+                                    @else
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ ucfirst($payment->status) }}</span>
+                                    @endif
+                                    @if($payment->is_disputed)
+                                        <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20" title="Disputed">
+                                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                        </svg>
+                                    @endif
+                                </div>
                             </td>
-                            <td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 @if($payment->payout_status == 'completed')
-                                    <span class="label label-success">Completed</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Completed</span>
                                 @elseif($payment->payout_status == 'processing')
-                                    <span class="label label-info">Processing</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Processing</span>
                                 @elseif($payment->payout_status == 'failed')
-                                    <span class="label label-danger">Failed</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Failed</span>
                                 @else
-                                    <span class="label label-default">{{ ucfirst($payment->payout_status ?? 'Pending') }}</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ ucfirst($payment->payout_status ?? 'Pending') }}</span>
                                 @endif
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($payment->created_at)->format('M d, Y') }}</td>
-                            <td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ \Carbon\Carbon::parse($payment->created_at)->format('M d, Y') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="btn-group">
                                     <a href="{{ url('panel/admin/payments/'.$payment->id) }}" class="btn btn-xs btn-info" title="View Details">
                                         <i class="fa fa-eye"></i>
@@ -221,13 +226,14 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="11" class="text-center text-muted">
-                                <p style="padding: 20px;">No payments found.</p>
+                            <td colspan="11" class="px-6 py-4 text-center text-sm text-gray-500">
+                                <p class="py-8">No payments found.</p>
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
             @if($payments->total() > 0)
             <div class="box-footer clearfix">

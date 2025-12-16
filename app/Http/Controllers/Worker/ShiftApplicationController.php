@@ -288,32 +288,40 @@ class ShiftApplicationController extends Controller
             abort(403, 'Only workers can view assignments.');
         }
 
+        // Get status filter from request (view expects $status, not $filter)
+        $status = $request->get('status', 'all');
         $filter = $request->get('filter', 'upcoming');
 
         $query = ShiftAssignment::with(['shift.business', 'payment'])
             ->where('worker_id', Auth::id());
 
-        switch ($filter) {
-            case 'upcoming':
-                $query->whereIn('status', ['assigned', 'checked_in'])
-                      ->whereHas('shift', function($q) {
-                          $q->where('shift_date', '>=', Carbon::today());
-                      })
-                      ->orderBy('created_at', 'asc');
-                break;
-            case 'completed':
-                $query->where('status', 'completed')
-                      ->orderBy('completed_at', 'desc');
-                break;
-            case 'all':
-            default:
-                $query->orderBy('created_at', 'desc');
-                break;
+        // Handle status-based filtering
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        } else {
+            // Handle filter-based filtering (for backward compatibility)
+            switch ($filter) {
+                case 'upcoming':
+                    $query->whereIn('status', ['assigned', 'checked_in'])
+                          ->whereHas('shift', function($q) {
+                              $q->where('shift_date', '>=', Carbon::today());
+                          })
+                          ->orderBy('created_at', 'asc');
+                    break;
+                case 'completed':
+                    $query->where('status', 'completed')
+                          ->orderBy('completed_at', 'desc');
+                    break;
+                case 'all':
+                default:
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
         }
 
         $assignments = $query->paginate(20);
 
-        return view('worker.assignments.index', compact('assignments', 'filter'));
+        return view('worker.assignments.index', compact('assignments', 'filter', 'status'));
     }
 
     /**

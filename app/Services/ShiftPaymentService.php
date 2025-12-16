@@ -267,8 +267,8 @@ class ShiftPaymentService
                 'transfer_id' => $payout->id,
             ]);
 
-            // TODO: Send notification to worker
-            // event(new InstantPayoutCompleted($shiftPayment));
+            // Send notification to worker
+            event(new \App\Events\InstantPayoutCompleted($shiftPayment));
 
             return true;
 
@@ -360,8 +360,8 @@ class ShiftPaymentService
                 'reason' => $reason,
             ]);
 
-            // TODO: Notify both parties
-            // event(new PaymentDisputed($shiftPayment));
+            // Notify both parties
+            event(new \App\Events\PaymentDisputed($shiftPayment, $reason));
 
             return true;
 

@@ -4,13 +4,7 @@
 @section('page-title', 'Browse Shifts')
 
 @section('sidebar-nav')
-@if(auth()->user()->isWorker())
-    @include('worker.partials.sidebar')
-@elseif(auth()->user()->isBusiness())
-    @include('business.partials.sidebar')
-@elseif(auth()->user()->isAgency())
-    @include('agency.partials.sidebar')
-@endif
+<x-dashboard.sidebar-nav />
 @endsection
 
 @section('content')
@@ -88,12 +82,12 @@
             </div>
         </div>
 
-        <div class="text-center py-12 bg-white border border-gray-200 rounded-lg">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No more shifts found</h3>
-            <p class="mt-1 text-sm text-gray-500">Try adjusting your filters or check back later.</p>
+        <div class="bg-white border border-gray-200 rounded-lg">
+            <x-dashboard.empty-state
+                icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                title="No more shifts found"
+                description="Try adjusting your filters or check back later."
+            />
         </div>
     </div>
 </div>

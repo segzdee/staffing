@@ -6,7 +6,7 @@
 <div class="container py-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('worker.assignments') }}">Assignments</a></li>
             <li class="breadcrumb-item active" aria-current="page">Assignment #{{ $assignment->id }}</li>
         </ol>

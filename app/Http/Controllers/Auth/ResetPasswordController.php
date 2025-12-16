@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use App\Models\AdminSettings;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
 
 class ResetPasswordController extends Controller
 {
@@ -55,6 +56,7 @@ class ResetPasswordController extends Controller
 
     /**
      * Get the password reset validation rules.
+     * SECURITY: Strengthened password policy - minimum 12 characters with complexity requirements
      *
      * @return array
      */
@@ -66,7 +68,15 @@ class ResetPasswordController extends Controller
         return [
             'token' => 'required',
             'email' => 'required|email',
-            'password' => 'required|confirmed|min:8',
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(12)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
+            ],
             'g-recaptcha-response' => $catpcha
         ];
     }

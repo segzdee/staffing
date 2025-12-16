@@ -15,18 +15,39 @@ class NotificationController extends Controller
     /**
      * Display all notifications for the authenticated user.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        // Get all notifications (unread first, then read)
-        // Note: Legacy notifications table uses 'read' (boolean), not 'read_at'
-        $notifications = $user->notifications()
-            ->orderBy('read', 'asc')  // false (unread) comes before true (read)
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        // Get filter from request
+        $filter = $request->get('filter', 'all');
 
-        return view('notifications.index', compact('notifications'));
+        // Calculate unread count
+        $unreadCount = $user->notifications()->where('read', false)->count();
+
+        // Get shift notifications (unread priority notifications)
+        $shiftNotifications = $user->notifications()
+            ->where('read', false)
+            ->where('type', 'shift')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Get all notifications (unread first, then read) with filtering
+        $query = $user->notifications()
+            ->orderBy('read', 'asc')  // false (unread) comes before true (read)
+            ->orderBy('created_at', 'desc');
+
+        // Apply filter
+        if ($filter === 'unread') {
+            $query->where('read', false);
+        } elseif ($filter === 'read') {
+            $query->where('read', true);
+        }
+
+        $notifications = $query->paginate(20);
+
+        return view('notifications.index', compact('notifications', 'unreadCount', 'filter', 'shiftNotifications'));
     }
 
     /**

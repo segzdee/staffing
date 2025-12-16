@@ -63,15 +63,16 @@ class SpendAnalyticsService
     {
         $dateRange = $this->getDateRange($timeRange);
 
-        $spendByRole = ShiftPayment::join('shifts', 'shift_payments.shift_id', '=', 'shifts.id')
+        $spendByRole = ShiftPayment::join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_profile_id', $businessProfileId)
             ->whereBetween('shift_payments.created_at', [$dateRange['start'], $dateRange['end']])
             ->whereIn('shift_payments.status', ['completed', 'paid'])
             ->select(
                 'shifts.role',
                 DB::raw('COUNT(*) as shift_count'),
-                DB::raw('SUM(shift_payments.total_amount) as total_spend'),
-                DB::raw('AVG(shift_payments.total_amount) as average_cost')
+                DB::raw('SUM(shift_payments.amount_gross) as total_spend'),
+                DB::raw('AVG(shift_payments.amount_gross) as average_cost')
             )
             ->groupBy('shifts.role')
             ->orderByDesc('total_spend')
@@ -105,11 +106,12 @@ class SpendAnalyticsService
             $weekStart = $currentDate->copy()->startOfWeek();
             $weekEnd = $currentDate->copy()->endOfWeek();
 
-            $weeklySpend = ShiftPayment::join('shifts', 'shift_payments.shift_id', '=', 'shifts.id')
+            $weeklySpend = ShiftPayment::join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+                ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
                 ->where('shifts.business_profile_id', $businessProfileId)
                 ->whereBetween('shift_payments.created_at', [$weekStart, $weekEnd])
                 ->whereIn('shift_payments.status', ['completed', 'paid'])
-                ->sum('shift_payments.total_amount');
+                ->sum('shift_payments.amount_gross');
 
             $shiftsCount = Shift::where('business_profile_id', $businessProfileId)
                 ->whereBetween('created_at', [$weekStart, $weekEnd])
@@ -145,11 +147,12 @@ class SpendAnalyticsService
             }])
             ->get()
             ->map(function ($venue) use ($dateRange) {
-                $totalSpend = ShiftPayment::join('shifts', 'shift_payments.shift_id', '=', 'shifts.id')
+                $totalSpend = ShiftPayment::join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+                    ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
                     ->where('shifts.venue_id', $venue->id)
                     ->whereBetween('shift_payments.created_at', [$dateRange['start'], $dateRange['end']])
                     ->whereIn('shift_payments.status', ['completed', 'paid'])
-                    ->sum('shift_payments.total_amount');
+                    ->sum('shift_payments.amount_gross');
 
                 $shiftsCount = $venue->shifts->count();
                 $budgetUtilization = $venue->monthly_budget > 0
@@ -260,11 +263,12 @@ class SpendAnalyticsService
         $monthsBack = 6;
         $startDate = Carbon::now()->subMonths($monthsBack)->startOfMonth();
 
-        $totalSpend = ShiftPayment::join('shifts', 'shift_payments.shift_id', '=', 'shifts.id')
+        $totalSpend = ShiftPayment::join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_profile_id', $businessProfileId)
             ->where('shift_payments.created_at', '>=', $startDate)
             ->whereIn('shift_payments.status', ['completed', 'paid'])
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         $averageMonthly = $totalSpend / $monthsBack;
 

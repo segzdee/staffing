@@ -54,6 +54,23 @@ class ShiftSwapController extends Controller
             });
         }
 
+        // Manual pagination for filtered collection
+        $perPage = 20;
+        $currentPage = $request->get('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+
+        // Slice the collection for current page
+        $paginatedItems = $swaps->slice($offset, $perPage)->values();
+
+        // Create a LengthAwarePaginator instance
+        $swaps = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedItems,
+            $swaps->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
         return view('swaps.index', compact('swaps'));
     }
 

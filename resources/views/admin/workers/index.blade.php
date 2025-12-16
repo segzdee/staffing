@@ -138,26 +138,27 @@
                 <h3 class="box-title">All Workers ({{ $workers->total() }})</h3>
             </div>
             <div class="box-body table-responsive no-padding">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Location</th>
-                            <th>Rating</th>
-                            <th>Shifts Completed</th>
-                            <th>Total Earned</th>
-                            <th>Status</th>
-                            <th>Verified</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                <div class="overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shifts Completed</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Earned</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verified</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($workers as $worker)
-                        <tr class="{{ $worker->status == 'suspended' ? 'bg-danger-light' : '' }}">
-                            <td>{{ $worker->id }}</td>
-                            <td>
+                        <tr class="{{ $worker->status == 'suspended' ? 'bg-red-50' : 'hover:bg-gray-50' }}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $worker->id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 <a href="{{ url('panel/admin/workers/'.$worker->id) }}">
                                     {{ $worker->name }}
                                 </a>
@@ -167,9 +168,9 @@
                                     @endforeach
                                 @endif
                             </td>
-                            <td>{{ $worker->email }}</td>
-                            <td>{{ $worker->city }}, {{ $worker->state }}</td>
-                            <td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $worker->email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $worker->city }}, {{ $worker->state }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 @if($worker->average_rating)
                                     <span class="badge bg-{{ $worker->average_rating >= 4.5 ? 'green' : ($worker->average_rating >= 4.0 ? 'blue' : 'yellow') }}">
                                         {{ number_format($worker->average_rating, 1) }} <i class="fa fa-star"></i>
@@ -178,9 +179,9 @@
                                     <span class="text-muted">No ratings</span>
                                 @endif
                             </td>
-                            <td>{{ number_format($worker->shifts_completed_count ?? 0) }}</td>
-                            <td class="text-green">{{ Helper::amountFormatDecimal($worker->total_earned ?? 0) }}</td>
-                            <td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ number_format($worker->shifts_completed_count ?? 0) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">{{ Helper::amountFormatDecimal($worker->total_earned ?? 0) }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 @if($worker->status == 'active')
                                     <span class="label label-success">Active</span>
                                 @elseif($worker->status == 'inactive')
@@ -191,14 +192,17 @@
                                     <span class="label label-default">{{ ucfirst($worker->status) }}</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 @if($worker->is_verified_worker)
-                                    <span class="label label-success"><i class="fa fa-check"></i> Verified</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        Verified
+                                    </span>
                                 @else
-                                    <span class="label label-warning">Unverified</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Unverified</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="btn-group">
                                     <a href="{{ url('panel/admin/workers/'.$worker->id) }}" class="btn btn-xs btn-info" title="View Details">
                                         <i class="fa fa-eye"></i>
@@ -222,13 +226,14 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted">
-                                <p style="padding: 20px;">No workers found.</p>
+                            <td colspan="10" class="px-6 py-4 text-center text-sm text-gray-500">
+                                <p class="py-8">No workers found.</p>
                             </td>
                         </tr>
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
             @if($workers->total() > 0)
             <div class="box-footer clearfix">

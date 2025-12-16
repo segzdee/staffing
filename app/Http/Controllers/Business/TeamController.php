@@ -3,27 +3,36 @@
 namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Business\TeamInvitationRequest;
+use App\Models\TeamMember;
+use App\Models\TeamInvitation;
+use App\Models\TeamActivity;
+use App\Models\TeamPermission;
+use App\Models\Venue;
+use App\Models\User;
+use App\Services\TeamManagementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
-use App\Models\TeamMember;
-use App\Models\User;
-use App\Notifications\TeamInvitationNotification;
-use Carbon\Carbon;
 
 /**
- * BIZ-003: Team Management Controller
+ * BIZ-REG-008: Team Management Controller
  *
  * Handles team member invitations, management, and permission updates.
  */
 class TeamController extends Controller
 {
+    protected TeamManagementService $teamService;
+
+    public function __construct(TeamManagementService $teamService)
+    {
+        $this->teamService = $teamService;
+    }
+
     /**
      * Display team members list.
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -32,15 +41,28 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to manage team members.');
         }
 
-        $teamMembers = TeamMember::with(['user', 'invitedBy'])
-            ->where('business_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $filters = [
+            'status' => $request->get('status'),
+            'role' => $request->get('role'),
+            'venue_id' => $request->get('venue_id'),
+            'search' => $request->get('search'),
+        ];
 
-        $activeCount = $teamMembers->where('status', 'active')->count();
-        $pendingCount = $teamMembers->where('status', 'pending')->count();
+        $teamMembers = $this->teamService->getTeamMembers($user->id, $filters);
+        $pendingInvitations = $this->teamService->getPendingInvitations($user->id);
+        $statistics = $this->teamService->getTeamStatistics($user->id);
 
-        return view('business.team.index', compact('teamMembers', 'activeCount', 'pendingCount'));
+        $roles = TeamPermission::getInvitableRoles();
+        $venues = Venue::forBusiness($user->businessProfile->id)->active()->get();
+
+        return view('business.team.index', compact(
+            'teamMembers',
+            'pendingInvitations',
+            'statistics',
+            'roles',
+            'venues',
+            'filters'
+        ));
     }
 
     /**
@@ -54,23 +76,17 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to invite team members.');
         }
 
-        $roles = [
-            'administrator' => 'Administrator - Full access except billing',
-            'location_manager' => 'Location Manager - Manage specific venues',
-            'scheduler' => 'Scheduler - Create and manage shifts only',
-            'viewer' => 'Viewer - Read-only access',
-        ];
+        $roles = $this->teamService->getValidRolesForInviter($user, $user->id);
+        $venues = Venue::forBusiness($user->businessProfile->id)->active()->get();
+        $permissionMatrix = TeamPermission::getPermissionMatrix();
 
-        // Get available venues for location manager assignment
-        $venues = []; // TODO: Fetch from venues table when implemented
-
-        return view('business.team.invite', compact('roles', 'venues'));
+        return view('business.team.invite', compact('roles', 'venues', 'permissionMatrix'));
     }
 
     /**
      * Send team invitation.
      */
-    public function invite(Request $request)
+    public function invite(TeamInvitationRequest $request)
     {
         $user = Auth::user();
 
@@ -78,81 +94,24 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to invite team members.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'role' => 'required|in:administrator,location_manager,scheduler,viewer',
-            'venue_access' => 'nullable|array',
-            'venue_access.*' => 'integer|exists:business_venues,id',
-            'notes' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $email = $request->input('email');
-
-        // Check if user exists
-        $invitedUser = User::where('email', $email)->first();
-
-        // Check if already a team member
-        $existingMember = TeamMember::where('business_id', $user->id)
-            ->where('user_id', $invitedUser?->id)
-            ->first();
-
-        if ($existingMember) {
-            if ($existingMember->status === 'active') {
-                return redirect()->back()->with('error', 'This user is already a team member.');
-            } elseif ($existingMember->status === 'pending') {
-                return redirect()->back()->with('error', 'An invitation has already been sent to this email.');
-            } else {
-                return redirect()->back()->with('error', 'This user was previously removed from your team.');
-            }
-        }
-
-        // Create team member record
-        $teamMember = TeamMember::create([
-            'business_id' => $user->id,
-            'user_id' => $invitedUser?->id,
-            'invited_by' => $user->id,
-            'role' => $request->input('role'),
-            'venue_access' => $request->input('venue_access'),
-            'status' => 'pending',
-            'notes' => $request->input('notes'),
-        ]);
-
-        // Apply role permissions
-        $teamMember->applyRolePermissions();
-
-        // Generate invitation token
-        $plainToken = $teamMember->generateInvitationToken();
-
-        // Send invitation notification
         try {
-            if ($invitedUser) {
-                // User exists, send notification
-                $invitedUser->notify(new TeamInvitationNotification($teamMember, $plainToken));
-            } else {
-                // User doesn't exist, send email invitation
-                Mail::send('emails.team-invitation', [
-                    'businessName' => $user->businessProfile->business_name ?? $user->name,
-                    'role' => $teamMember->role_name,
-                    'invitationUrl' => route('team.invitation.accept', ['token' => $plainToken]),
-                    'expiresAt' => $teamMember->invitation_expires_at->format('M j, Y'),
-                ], function ($message) use ($email, $user) {
-                    $message->to($email)
-                        ->subject("You've been invited to join " . ($user->businessProfile->business_name ?? $user->name));
-                });
-            }
-        } catch (\Exception $e) {
-            // Log error but don't fail the invitation
-            \Log::error('Failed to send team invitation: ' . $e->getMessage());
-        }
+            $invitation = $this->teamService->inviteTeamMember(
+                $user,
+                $user,
+                $request->input('email'),
+                $request->input('role'),
+                $request->input('venue_access'),
+                $request->input('message'),
+                $request->input('custom_permissions')
+            );
 
-        return redirect()->route('business.team.index')
-            ->with('success', 'Invitation sent successfully to ' . $email);
+            return redirect()->route('business.team.index')
+                ->with('success', 'Invitation sent successfully to ' . $request->input('email'));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -161,11 +120,12 @@ class TeamController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $teamMember = TeamMember::with(['user', 'invitedBy'])
-            ->where('business_id', $user->id)
-            ->findOrFail($id);
+        $teamMember = $this->getTeamMemberForBusiness($id, $user);
 
-        return view('business.team.show', compact('teamMember'));
+        $activities = $this->teamService->getMemberActivity($teamMember, 50);
+        $venues = Venue::forBusiness($user->businessProfile->id)->get();
+
+        return view('business.team.show', compact('teamMember', 'activities', 'venues'));
     }
 
     /**
@@ -179,25 +139,18 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to edit team members.');
         }
 
-        $teamMember = TeamMember::with('user')
-            ->where('business_id', $user->id)
-            ->findOrFail($id);
+        $teamMember = $this->getTeamMemberForBusiness($id, $user);
 
         // Cannot edit owner role
         if ($teamMember->role === 'owner') {
             abort(403, 'Cannot edit business owner role.');
         }
 
-        $roles = [
-            'administrator' => 'Administrator - Full access except billing',
-            'location_manager' => 'Location Manager - Manage specific venues',
-            'scheduler' => 'Scheduler - Create and manage shifts only',
-            'viewer' => 'Viewer - Read-only access',
-        ];
+        $roles = $this->teamService->getValidRolesForInviter($user, $user->id);
+        $venues = Venue::forBusiness($user->businessProfile->id)->active()->get();
+        $permissionMatrix = TeamPermission::getPermissionMatrix();
 
-        $venues = []; // TODO: Fetch from venues table
-
-        return view('business.team.edit', compact('teamMember', 'roles', 'venues'));
+        return view('business.team.edit', compact('teamMember', 'roles', 'venues', 'permissionMatrix'));
     }
 
     /**
@@ -211,7 +164,7 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to update team members.');
         }
 
-        $teamMember = TeamMember::where('business_id', $user->id)->findOrFail($id);
+        $teamMember = $this->getTeamMemberForBusiness($id, $user);
 
         // Cannot edit owner role
         if ($teamMember->role === 'owner') {
@@ -219,9 +172,9 @@ class TeamController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'role' => 'required|in:administrator,location_manager,scheduler,viewer',
+            'role' => 'required|in:admin,manager,scheduler,viewer',
             'venue_access' => 'nullable|array',
-            'venue_access.*' => 'integer|exists:business_venues,id',
+            'venue_access.*' => 'integer|exists:venues,id',
             'notes' => 'nullable|string|max:500',
         ]);
 
@@ -231,17 +184,27 @@ class TeamController extends Controller
                 ->withInput();
         }
 
-        // Update role and venue access
-        $teamMember->role = $request->input('role');
-        $teamMember->venue_access = $request->input('venue_access');
-        $teamMember->notes = $request->input('notes');
-        $teamMember->save();
+        try {
+            // Update role if changed
+            if ($request->input('role') !== $teamMember->role) {
+                $this->teamService->updateMemberRole($teamMember, $request->input('role'), $user);
+            }
 
-        // Reapply role permissions
-        $teamMember->applyRolePermissions();
+            // Update venue access
+            $this->teamService->updateVenueAccess($teamMember, $request->input('venue_access'), $user);
 
-        return redirect()->route('business.team.show', $teamMember->id)
-            ->with('success', 'Team member updated successfully.');
+            // Update notes
+            if ($request->has('notes')) {
+                $teamMember->update(['notes' => $request->input('notes')]);
+            }
+
+            return redirect()->route('business.team.show', $teamMember->id)
+                ->with('success', 'Team member updated successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -255,39 +218,53 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to resend invitations.');
         }
 
-        $teamMember = TeamMember::with('user')
-            ->where('business_id', $user->id)
-            ->where('status', 'pending')
-            ->findOrFail($id);
+        // Check both team_members and team_invitations
+        $invitation = TeamInvitation::forBusiness($user->id)->find($id);
 
-        // Generate new token
-        $plainToken = $teamMember->resendInvitation();
+        if (!$invitation) {
+            // Fallback to team member with pending status
+            $teamMember = TeamMember::forBusiness($user->id)
+                ->where('status', 'pending')
+                ->findOrFail($id);
 
-        if (!$plainToken) {
-            return redirect()->back()->with('error', 'Cannot resend invitation. Member status is not pending.');
-        }
+            $plainToken = $teamMember->resendInvitation();
 
-        // Send notification
-        try {
-            if ($teamMember->user) {
-                $teamMember->user->notify(new TeamInvitationNotification($teamMember, $plainToken));
-            } else {
-                // Email-only invitation (user doesn't have account yet)
-                Mail::send('emails.team-invitation', [
-                    'businessName' => $user->businessProfile->business_name ?? $user->name,
-                    'role' => $teamMember->role_name,
-                    'invitationUrl' => route('team.invitation.accept', ['token' => $plainToken]),
-                    'expiresAt' => $teamMember->invitation_expires_at->format('M j, Y'),
-                ], function ($message) use ($teamMember, $user) {
-                    $message->to($teamMember->user->email)
-                        ->subject("Reminder: You've been invited to join " . ($user->businessProfile->business_name ?? $user->name));
-                });
+            if (!$plainToken) {
+                return redirect()->back()->with('error', 'Cannot resend invitation.');
             }
-        } catch (\Exception $e) {
-            \Log::error('Failed to resend team invitation: ' . $e->getMessage());
+        } else {
+            try {
+                $this->teamService->resendInvitation($invitation, $user);
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', $e->getMessage());
+            }
         }
 
         return redirect()->back()->with('success', 'Invitation resent successfully.');
+    }
+
+    /**
+     * Revoke a pending invitation.
+     */
+    public function revokeInvitation(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        if (!$this->canManageTeam($user)) {
+            abort(403, 'You do not have permission to revoke invitations.');
+        }
+
+        $invitation = TeamInvitation::forBusiness($user->id)
+            ->pending()
+            ->findOrFail($id);
+
+        try {
+            $this->teamService->revokeInvitation($invitation, $user, $request->input('reason'));
+
+            return redirect()->back()->with('success', 'Invitation revoked.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -301,15 +278,15 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to suspend team members.');
         }
 
-        $teamMember = TeamMember::where('business_id', $user->id)->findOrFail($id);
+        $teamMember = $this->getTeamMemberForBusiness($id, $user);
 
-        if ($teamMember->role === 'owner') {
-            abort(403, 'Cannot suspend business owner.');
+        try {
+            $this->teamService->suspendMember($teamMember, $user, $request->input('reason'));
+
+            return redirect()->back()->with('success', 'Team member suspended.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
-        $teamMember->suspend($request->input('reason'));
-
-        return redirect()->back()->with('success', 'Team member suspended.');
     }
 
     /**
@@ -323,14 +300,19 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to reactivate team members.');
         }
 
-        $teamMember = TeamMember::where('business_id', $user->id)->findOrFail($id);
-        $teamMember->reactivate();
+        $teamMember = $this->getTeamMemberForBusiness($id, $user);
 
-        return redirect()->back()->with('success', 'Team member reactivated.');
+        try {
+            $this->teamService->reactivateMember($teamMember, $user);
+
+            return redirect()->back()->with('success', 'Team member reactivated.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
 
     /**
-     * Revoke team member access.
+     * Remove team member access.
      */
     public function destroy(Request $request, $id)
     {
@@ -340,17 +322,17 @@ class TeamController extends Controller
             abort(403, 'You do not have permission to remove team members.');
         }
 
-        $teamMember = TeamMember::where('business_id', $user->id)->findOrFail($id);
+        $teamMember = $this->getTeamMemberForBusiness($id, $user);
 
-        if ($teamMember->role === 'owner') {
-            abort(403, 'Cannot remove business owner.');
+        try {
+            $reason = $request->input('reason', 'Removed by administrator');
+            $this->teamService->removeMember($teamMember, $user, $reason);
+
+            return redirect()->route('business.team.index')
+                ->with('success', 'Team member removed successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
-
-        $reason = $request->input('reason', 'Removed by administrator');
-        $teamMember->revoke($reason);
-
-        return redirect()->route('business.team.index')
-            ->with('success', 'Team member removed successfully.');
     }
 
     /**
@@ -358,45 +340,75 @@ class TeamController extends Controller
      */
     public function acceptInvitation(Request $request, $token)
     {
-        $hashedToken = hash('sha256', $token);
+        $invitation = $this->teamService->validateInvitation($token);
 
-        $teamMember = TeamMember::where('invitation_token', $hashedToken)
-            ->where('status', 'pending')
-            ->first();
+        if (!$invitation) {
+            // Try legacy team member token
+            $hashedToken = hash('sha256', $token);
+            $teamMember = TeamMember::where('invitation_token', $hashedToken)
+                ->where('status', 'pending')
+                ->first();
 
-        if (!$teamMember) {
-            return redirect()->route('login')->with('error', 'Invalid invitation link.');
-        }
+            if (!$teamMember) {
+                return redirect()->route('login')
+                    ->with('error', 'Invalid or expired invitation link.');
+            }
 
-        if (!$teamMember->isInvitationValid()) {
-            return redirect()->route('login')->with('error', 'This invitation has expired.');
+            if (!$teamMember->isInvitationValid()) {
+                return redirect()->route('login')
+                    ->with('error', 'This invitation has expired.');
+            }
+
+            // Handle legacy flow
+            return $this->handleLegacyInvitation($teamMember, $token);
         }
 
         // If user is not logged in, redirect to login/register
         if (!Auth::check()) {
             session(['team_invitation_token' => $token]);
-            return redirect()->route('register')->with('info', 'Please create an account or login to accept the invitation.');
+            return redirect()->route('register')
+                ->with('info', 'Please create an account or login to accept the invitation.');
         }
 
         $user = Auth::user();
 
-        // Update team member user_id if not set
-        if (!$teamMember->user_id) {
-            $teamMember->user_id = $user->id;
-        }
+        try {
+            $teamMember = $this->teamService->acceptInvitation(
+                $invitation,
+                $user,
+                $request->ip(),
+                $request->userAgent()
+            );
 
-        // Verify it's the correct user
-        if ($teamMember->user_id !== $user->id) {
-            return redirect()->route('dashboard')->with('error', 'This invitation is for a different user.');
-        }
-
-        // Accept invitation
-        if ($teamMember->acceptInvitation()) {
             return redirect()->route('business.team.dashboard')
                 ->with('success', 'Welcome to the team! You can now access the business dashboard.');
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard')
+                ->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Decline team invitation.
+     */
+    public function declineInvitation($token)
+    {
+        $invitation = $this->teamService->validateInvitation($token);
+
+        if (!$invitation) {
+            return redirect()->route('home')
+                ->with('error', 'Invalid or expired invitation link.');
         }
 
-        return redirect()->route('dashboard')->with('error', 'Failed to accept invitation.');
+        try {
+            $this->teamService->declineInvitation($invitation);
+
+            return redirect()->route('home')
+                ->with('success', 'You have declined the team invitation.');
+        } catch (\Exception $e) {
+            return redirect()->route('home')
+                ->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -413,10 +425,118 @@ class TeamController extends Controller
             ->get();
 
         if ($teamMemberships->isEmpty()) {
-            return redirect()->route('dashboard')->with('error', 'You are not a member of any team.');
+            return redirect()->route('dashboard')
+                ->with('error', 'You are not a member of any team.');
         }
 
         return view('business.team.dashboard', compact('teamMemberships'));
+    }
+
+    /**
+     * Get activity log for team or member.
+     */
+    public function getActivity(Request $request, $id = null)
+    {
+        $user = Auth::user();
+
+        if (!$this->canViewActivity($user)) {
+            abort(403, 'You do not have permission to view activity logs.');
+        }
+
+        $filters = [
+            'team_member_id' => $id,
+            'activity_type' => $request->get('type'),
+            'category' => $request->get('category'),
+            'venue_id' => $request->get('venue_id'),
+            'days' => $request->get('days', 30),
+            'limit' => $request->get('limit', 100),
+        ];
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $filters['start_date'] = $request->get('start_date');
+            $filters['end_date'] = $request->get('end_date');
+            unset($filters['days']);
+        }
+
+        $activities = $this->teamService->getBusinessActivity($user->id, $filters);
+        $activityTypes = TeamActivity::ACTIVITY_TYPES;
+        $categories = TeamActivity::CATEGORIES;
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'activities' => $activities,
+                'types' => $activityTypes,
+                'categories' => $categories,
+            ]);
+        }
+
+        return view('business.team.activity', compact('activities', 'activityTypes', 'categories', 'filters'));
+    }
+
+    /**
+     * Get permission matrix.
+     */
+    public function getPermissions()
+    {
+        $user = Auth::user();
+
+        if (!$this->canManageTeam($user)) {
+            abort(403, 'You do not have permission to view permissions.');
+        }
+
+        $matrix = TeamPermission::getPermissionMatrix();
+        $roles = TeamPermission::getRoles();
+        $categories = TeamPermission::getPermissionsByCategory();
+
+        return response()->json([
+            'matrix' => $matrix,
+            'roles' => $roles,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Handle legacy invitation (TeamMember-based).
+     */
+    protected function handleLegacyInvitation(TeamMember $teamMember, string $token)
+    {
+        if (!Auth::check()) {
+            session(['team_invitation_token' => $token]);
+            return redirect()->route('register')
+                ->with('info', 'Please create an account or login to accept the invitation.');
+        }
+
+        $user = Auth::user();
+
+        // Update team member user_id if not set
+        if (!$teamMember->user_id) {
+            $teamMember->user_id = $user->id;
+        }
+
+        // Verify it's the correct user
+        if ($teamMember->user_id !== $user->id) {
+            return redirect()->route('dashboard')
+                ->with('error', 'This invitation is for a different user.');
+        }
+
+        // Accept invitation
+        if ($teamMember->acceptInvitation()) {
+            return redirect()->route('business.team.dashboard')
+                ->with('success', 'Welcome to the team!');
+        }
+
+        return redirect()->route('dashboard')
+            ->with('error', 'Failed to accept invitation.');
+    }
+
+    /**
+     * Get team member for the business.
+     */
+    protected function getTeamMemberForBusiness($id, $user): TeamMember
+    {
+        return TeamMember::with(['user', 'invitedBy', 'managedVenues'])
+            ->where('business_id', $user->id)
+            ->findOrFail($id);
     }
 
     /**
@@ -432,7 +552,26 @@ class TeamController extends Controller
         // Check if user is an administrator of any business
         $teamMember = TeamMember::where('user_id', $user->id)
             ->where('status', 'active')
-            ->whereIn('role', ['owner', 'administrator'])
+            ->where('can_manage_team', true)
+            ->first();
+
+        return !is_null($teamMember);
+    }
+
+    /**
+     * Check if user can view activity logs.
+     */
+    protected function canViewActivity($user): bool
+    {
+        // Business owner can always view activity
+        if ($user->user_type === 'business') {
+            return true;
+        }
+
+        // Check if user has view_activity permission
+        $teamMember = TeamMember::where('user_id', $user->id)
+            ->where('status', 'active')
+            ->where('can_view_activity', true)
             ->first();
 
         return !is_null($teamMember);

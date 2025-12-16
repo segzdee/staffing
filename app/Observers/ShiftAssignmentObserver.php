@@ -10,10 +10,12 @@ use Illuminate\Support\Facades\Log;
 class ShiftAssignmentObserver
 {
     protected $badgeService;
+    protected $reliabilityService;
 
-    public function __construct(BadgeService $badgeService)
+    public function __construct(BadgeService $badgeService, \App\Services\ReliabilityScoreService $reliabilityService)
     {
         $this->badgeService = $badgeService;
+        $this->reliabilityService = $reliabilityService;
     }
 
     /**
@@ -30,9 +32,21 @@ class ShiftAssignmentObserver
     public function updated(ShiftAssignment $shiftAssignment): void
     {
         $worker = $shiftAssignment->worker;
-        
+
         if (!$worker || !$worker->isWorker()) {
             return;
+        }
+
+        // Trigger reliability score recalculation on any status change that affects score
+        if ($shiftAssignment->wasChanged('status')) {
+            $relevantStatuses = ['completed', 'no_show', 'cancelled_by_worker', 'checked_in'];
+            if (in_array($shiftAssignment->status, $relevantStatuses)) {
+                try {
+                    $this->reliabilityService->recalculateAndSave($worker);
+                } catch (\Exception $e) {
+                    Log::error("Failed to update reliability score via observer: " . $e->getMessage());
+                }
+            }
         }
 
         // Check if status changed to checked_in
@@ -45,13 +59,13 @@ class ShiftAssignmentObserver
         if ($shiftAssignment->wasChanged('status') && $shiftAssignment->status === 'completed') {
             // Fire shift completed event
             event(new ShiftCompleted($shiftAssignment));
-            
+
             // Check for shift completion badges
             $awarded = $this->badgeService->checkAndAward($worker, 'shift_completed');
-            
+
             if (!empty($awarded)) {
                 Log::info("Badges awarded to worker {$worker->id}", [
-                    'badges' => $awarded->pluck('badge_type')->toArray()
+                    'badges' => collect($awarded)->pluck('badge_type')->toArray()
                 ]);
             }
         }

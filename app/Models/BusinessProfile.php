@@ -181,8 +181,12 @@ class BusinessProfile extends Model
 
     protected $fillable = [
         'user_id',
+        'primary_admin_user_id',
         'business_name',
+        'legal_business_name',
+        'trading_name',
         'business_type',
+        'business_category',
         'industry',
         'business_address',
         'business_city',
@@ -260,6 +264,28 @@ class BusinessProfile extends Model
         'account_warning_message',
         'last_shift_posted_at',
         'can_post_shifts',
+
+        // BIZ-REG-002 & 003: Registration & Profile fields
+        'company_size',
+        'logo_url',
+        'logo_public_id',
+        'default_currency',
+        'default_timezone',
+        'jurisdiction_country',
+        'jurisdiction_state',
+        'tax_jurisdiction',
+        'work_email',
+        'work_email_domain',
+        'work_email_verified',
+        'work_email_verified_at',
+        'email_verification_token',
+        'email_verification_sent_at',
+        'registration_source',
+        'sales_rep_name',
+        'sales_rep_email',
+        'referral_code_used',
+        'profile_completion_percentage',
+        'profile_completion_details',
     ];
 
     protected $casts = [
@@ -301,6 +327,21 @@ class BusinessProfile extends Model
         'account_in_good_standing' => 'boolean',
         'last_shift_posted_at' => 'datetime',
         'can_post_shifts' => 'boolean',
+        // BIZ-REG-002 & 003 casts
+        'work_email_verified' => 'boolean',
+        'work_email_verified_at' => 'datetime',
+        'email_verification_sent_at' => 'datetime',
+        'profile_completion_percentage' => 'decimal:2',
+        'profile_completion_details' => 'array',
+        // BIZ-REG-011: Activation tracking
+        'activation_checked' => 'boolean',
+        'activation_checked_at' => 'datetime',
+        'last_activation_check' => 'datetime',
+        'activation_requirements_status' => 'array',
+        'activation_completion_percentage' => 'integer',
+        'activation_requirements_met' => 'integer',
+        'activation_requirements_total' => 'integer',
+        'activation_blocked_reasons' => 'array',
     ];
 
     public function user()
@@ -794,5 +835,346 @@ class BusinessProfile extends Model
     {
         $this->last_shift_posted_at = now();
         $this->save();
+    }
+
+    // ===== BIZ-REG-002 & 003: Registration & Profile Methods =====
+
+    /**
+     * Get business contacts.
+     */
+    public function contacts()
+    {
+        return $this->hasMany(BusinessContact::class);
+    }
+
+    /**
+     * Get primary contact.
+     */
+    public function primaryContact()
+    {
+        return $this->hasOne(BusinessContact::class)
+            ->where('contact_type', 'primary')
+            ->where('is_primary', true);
+    }
+
+    /**
+     * Get billing contact.
+     */
+    public function billingContact()
+    {
+        return $this->hasOne(BusinessContact::class)
+            ->where('contact_type', 'billing')
+            ->where('is_primary', true);
+    }
+
+    /**
+     * Get business addresses.
+     */
+    public function addresses()
+    {
+        return $this->hasMany(BusinessAddress::class);
+    }
+
+    /**
+     * Get registered address.
+     */
+    public function registeredAddress()
+    {
+        return $this->hasOne(BusinessAddress::class)
+            ->where('address_type', 'registered')
+            ->where('is_primary', true);
+    }
+
+    /**
+     * Get billing address.
+     */
+    public function billingAddress()
+    {
+        return $this->hasOne(BusinessAddress::class)
+            ->where('address_type', 'billing')
+            ->where('is_primary', true);
+    }
+
+    /**
+     * Get operating addresses.
+     */
+    public function operatingAddresses()
+    {
+        return $this->hasMany(BusinessAddress::class)
+            ->where('address_type', 'operating');
+    }
+
+    /**
+     * Get onboarding record.
+     */
+    public function onboarding()
+    {
+        return $this->hasOne(BusinessOnboarding::class);
+    }
+
+    /**
+     * Get referrals made by this business.
+     */
+    public function referralsMade()
+    {
+        return $this->hasMany(BusinessReferral::class, 'referrer_business_id');
+    }
+
+    /**
+     * Get referral that brought this business.
+     */
+    public function referredBy()
+    {
+        return $this->hasOne(BusinessReferral::class, 'referred_business_id');
+    }
+
+    /**
+     * Get the primary admin user.
+     */
+    public function primaryAdmin()
+    {
+        return $this->belongsTo(User::class, 'primary_admin_user_id');
+    }
+
+    /**
+     * Get the business type details.
+     */
+    public function businessTypeDetails()
+    {
+        return BusinessType::findByCode($this->business_category);
+    }
+
+    /**
+     * Get the industry details.
+     */
+    public function industryDetails()
+    {
+        return Industry::findByCode($this->industry);
+    }
+
+    /**
+     * Check if work email is verified.
+     */
+    public function hasVerifiedWorkEmail(): bool
+    {
+        return $this->work_email_verified;
+    }
+
+    /**
+     * Generate email verification token.
+     */
+    public function generateEmailVerificationToken(): string
+    {
+        $token = bin2hex(random_bytes(32));
+        $this->update([
+            'email_verification_token' => $token,
+            'email_verification_sent_at' => now(),
+        ]);
+        return $token;
+    }
+
+    /**
+     * Verify email with token.
+     */
+    public function verifyWorkEmail(string $token): bool
+    {
+        if ($this->email_verification_token === $token) {
+            $this->update([
+                'work_email_verified' => true,
+                'work_email_verified_at' => now(),
+                'email_verification_token' => null,
+            ]);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get display name (trading name or business name).
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->trading_name ?: $this->business_name;
+    }
+
+    /**
+     * Get logo URL or default.
+     */
+    public function getLogoUrlOrDefaultAttribute(): string
+    {
+        return $this->logo_url ?: asset('images/default-business-logo.png');
+    }
+
+    /**
+     * Check if profile meets minimum completion threshold.
+     */
+    public function meetsMinimumCompletion(): bool
+    {
+        return $this->profile_completion_percentage >= 80;
+    }
+
+    /**
+     * Check if business can be activated.
+     */
+    public function canBeActivated(): bool
+    {
+        return $this->hasVerifiedWorkEmail()
+            && $this->meetsMinimumCompletion()
+            && $this->onboarding?->terms_accepted;
+    }
+
+    /**
+     * Scope to get businesses by email domain.
+     */
+    public function scopeByEmailDomain($query, string $domain)
+    {
+        return $query->where('work_email_domain', strtolower($domain));
+    }
+
+    /**
+     * Scope to get businesses by registration source.
+     */
+    public function scopeByRegistrationSource($query, string $source)
+    {
+        return $query->where('registration_source', $source);
+    }
+
+    /**
+     * Scope to get verified businesses.
+     */
+    public function scopeVerified($query)
+    {
+        return $query->where('is_verified', true);
+    }
+
+    /**
+     * Scope to get businesses with verified work email.
+     */
+    public function scopeWithVerifiedEmail($query)
+    {
+        return $query->where('work_email_verified', true);
+    }
+
+    /**
+     * Scope to get activated businesses.
+     */
+    public function scopeActivated($query)
+    {
+        return $query->whereHas('onboarding', function ($q) {
+            $q->where('is_activated', true);
+        });
+    }
+
+    // ===== BIZ-REG-011: Activation Methods =====
+
+    /**
+     * Check if business is fully activated.
+     */
+    public function isActivated(): bool
+    {
+        return $this->onboarding?->is_activated ?? false;
+    }
+
+    /**
+     * Check if business can post shifts.
+     */
+    public function canPostShifts(): bool
+    {
+        return $this->isActivated()
+            && $this->can_post_shifts
+            && $this->account_in_good_standing;
+    }
+
+    /**
+     * Update activation requirements status cache.
+     */
+    public function updateActivationStatus(array $requirementsStatus): void
+    {
+        $metCount = collect($requirementsStatus)->filter(fn($req) => $req['met'])->count();
+        $totalCount = count($requirementsStatus);
+        $percentage = $totalCount > 0 ? round(($metCount / $totalCount) * 100, 2) : 0;
+
+        $this->update([
+            'activation_requirements_status' => $requirementsStatus,
+            'activation_requirements_met' => $metCount,
+            'activation_requirements_total' => $totalCount,
+            'activation_completion_percentage' => $percentage,
+            'activation_checked' => true,
+            'activation_checked_at' => now(),
+            'last_activation_check' => now(),
+        ]);
+    }
+
+    /**
+     * Get activation completion percentage.
+     */
+    public function getActivationCompletionPercentage(): int
+    {
+        return $this->activation_completion_percentage ?? 0;
+    }
+
+    /**
+     * Check if all activation requirements are met.
+     */
+    public function hasMetAllActivationRequirements(): bool
+    {
+        return $this->activation_completion_percentage >= 100;
+    }
+
+    /**
+     * Add activation blocked reason.
+     */
+    public function addActivationBlockedReason(string $type, string $message, string $severity = 'warning'): void
+    {
+        $reasons = $this->activation_blocked_reasons ?? [];
+
+        $reasons[] = [
+            'type' => $type,
+            'message' => $message,
+            'severity' => $severity,
+            'added_at' => now()->toIso8601String(),
+        ];
+
+        $this->update(['activation_blocked_reasons' => $reasons]);
+    }
+
+    /**
+     * Clear activation blocked reasons.
+     */
+    public function clearActivationBlockedReasons(): void
+    {
+        $this->update(['activation_blocked_reasons' => []]);
+    }
+
+    /**
+     * Get cached activation status or null if needs refresh.
+     */
+    public function getCachedActivationStatus(): ?array
+    {
+        // Cache is valid for 1 hour
+        if (!$this->activation_checked || !$this->last_activation_check) {
+            return null;
+        }
+
+        if ($this->last_activation_check->diffInHours(now()) > 1) {
+            return null;
+        }
+
+        return [
+            'requirements_status' => $this->activation_requirements_status,
+            'completion_percentage' => $this->activation_completion_percentage,
+            'requirements_met' => $this->activation_requirements_met,
+            'requirements_total' => $this->activation_requirements_total,
+            'blocked_reasons' => $this->activation_blocked_reasons,
+            'checked_at' => $this->last_activation_check->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Set activation notes.
+     */
+    public function setActivationNotes(string $notes): void
+    {
+        $this->update(['activation_notes' => $notes]);
     }
 }

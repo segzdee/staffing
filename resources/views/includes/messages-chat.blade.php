@@ -82,7 +82,7 @@
   @if ($mediaCount != 0 && $msg->message != '')
     <div class="w-100 d-inline-block">
       <div class="w-auto position-relative text-word-break message bg-primary float-right text-white rounded-top-right-0">
-        {!! $chatMessage !!}
+        {!! e($chatMessage) !!}
       </div>
     </div>
 @endif
@@ -159,7 +159,7 @@
   @if ($mediaCount != 0 && $msg->message != '')
     <div class="w-100 d-inline-block">
       <div class="w-auto position-relative text-word-break message bg-light float-left rounded-top-left-0">
-        {!! $chatMessage !!}
+        {!! e($chatMessage) !!}
       </div>
   </div>
 @endif

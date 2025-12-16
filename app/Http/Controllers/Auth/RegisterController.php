@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Validation\Rules\Password;
 
 
 class RegisterController extends Controller
@@ -79,7 +80,15 @@ class RegisterController extends Controller
         return Validator::make($data, [
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:255|unique:users',
-            'password' => 'required|min:8|confirmed',
+            'password' => [
+                'required',
+                'confirmed',
+                Password::min(12)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
+            ],
             'user_type' => 'required|in:worker,business,agency',
             'agree_terms' => 'required|accepted',
             'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha'
@@ -115,6 +124,7 @@ class RegisterController extends Controller
     protected function create(array $data)
     {
         // Simple user creation for OvertimeStaff
+        // SECURITY: email_verified_at is NOT set - users must verify via email
         $user = User::create([
             'name' => $data['name'],
             'email' => strtolower($data['email']),
@@ -122,7 +132,6 @@ class RegisterController extends Controller
             'user_type' => $data['user_type'] ?? 'worker',
             'role' => 'user',
             'status' => 'active',
-            'email_verified_at' => now(), // Auto-verify for now
             'onboarding_completed' => false,
         ]);
 
@@ -152,6 +161,13 @@ class RegisterController extends Controller
      */
     public function register(Request $request)
     {
+        // If agency, redirect to multi-step agency registration flow
+        // Agency registration requires documents, verification, and partnership tier selection
+        if ($request->user_type === 'agency') {
+            return redirect()->route('agency.register.index')
+                ->with('info', 'Agency registration requires additional information. Please complete the multi-step registration process.');
+        }
+
         $validator = $this->validator($request->all());
 
         if ($validator->fails()) {
@@ -160,13 +176,19 @@ class RegisterController extends Controller
                 ->withInput();
         }
 
+        // Create the user and fire Registered event
+        // The Registered event listener will send email verification notification
         event(new Registered($user = $this->create($request->all())));
+
+        // SECURITY: Send email verification notification explicitly
+        // This ensures the user must verify their email before full access
+        $user->sendEmailVerificationNotification();
 
         // Auto-login the user
         $this->guard()->login($user);
 
-        // Redirect to dashboard
-        return redirect()->route('dashboard')
-            ->with('success', 'Welcome to OvertimeStaff! Your account has been created.');
+        // Redirect to email verification notice page
+        return redirect()->route('verification.notice')
+            ->with('success', 'Welcome to OvertimeStaff! Please check your email to verify your account.');
     }
 }

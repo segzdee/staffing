@@ -19,7 +19,7 @@
 
         <div class="col-md-12 col-lg-12 mb-5 mb-lg-0">
           <div class="content-p">
-            {!! $response->content !!}
+            {!! e($response->content) !!}
           </div>
         </div><!-- end col-md-12 -->
       </div>

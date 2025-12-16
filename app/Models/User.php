@@ -13,6 +13,7 @@ use App\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use App\Models\Notifications;
 use App\Models\AgencyClient;
+use App\Traits\CachesUserProfile;
 use Carbon\Carbon;
 
 /**
@@ -133,9 +134,9 @@ use Carbon\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUsername($value)
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements HasLocalePreference
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
-    use HasFactory, Notifiable, Billable;
+    use HasFactory, Notifiable, Billable, \Laravel\Sanctum\HasApiTokens, CachesUserProfile;
 
     // Use standard Laravel timestamps for OvertimeStaff
     // const CREATED_AT = 'date';
@@ -190,6 +191,13 @@ class User extends Authenticatable implements HasLocalePreference
         // Dev account fields
         'is_dev_account',
         'dev_expires_at',
+        // Account lockout fields
+        'locked_until',
+        'lock_reason',
+        'failed_login_attempts',
+        'last_failed_login_at',
+        'locked_at',
+        'locked_by_admin_id',
     ];
 
     /**
@@ -198,7 +206,10 @@ class User extends Authenticatable implements HasLocalePreference
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -212,6 +223,15 @@ class User extends Authenticatable implements HasLocalePreference
         'is_dev_account' => 'boolean',
         'suspended_until' => 'datetime',
         'last_suspended_at' => 'datetime',
+        // Account lockout casts
+        'locked_until' => 'datetime',
+        'last_failed_login_at' => 'datetime',
+        'locked_at' => 'datetime',
+        'failed_login_attempts' => 'integer',
+        // Two-Factor Authentication casts
+        'two_factor_secret' => 'encrypted',
+        'two_factor_recovery_codes' => 'encrypted:array',
+        'two_factor_confirmed_at' => 'datetime',
     ];
 
     /**
@@ -851,6 +871,202 @@ class User extends Authenticatable implements HasLocalePreference
           return $service->calculateCompletion($this);
       }
 
+      // ==================== ACCOUNT LOCKOUT METHODS ====================
+
+      /**
+       * Maximum number of failed login attempts before lockout.
+       */
+      const MAX_LOGIN_ATTEMPTS = 5;
+
+      /**
+       * Duration of account lockout in minutes.
+       */
+      const LOCKOUT_DURATION_MINUTES = 30;
+
+      /**
+       * Check if user account is currently locked.
+       *
+       * @return bool
+       */
+      public function isLocked(): bool
+      {
+          if (!$this->locked_until) {
+              return false;
+          }
+
+          // Check if lock has expired
+          if (Carbon::now()->gte($this->locked_until)) {
+              // Auto-unlock expired locks
+              $this->unlock();
+              return false;
+          }
+
+          return true;
+      }
+
+      /**
+       * Get the number of minutes remaining until account unlocks.
+       *
+       * @return int|null
+       */
+      public function lockoutMinutesRemaining(): ?int
+      {
+          if (!$this->isLocked()) {
+              return null;
+          }
+
+          return Carbon::now()->diffInMinutes($this->locked_until, false);
+      }
+
+      /**
+       * Lock the user account due to failed login attempts.
+       *
+       * @param string $reason
+       * @param int|null $durationMinutes
+       * @return void
+       */
+      public function lockAccount(string $reason = 'Too many failed login attempts', ?int $durationMinutes = null): void
+      {
+          $duration = $durationMinutes ?? self::LOCKOUT_DURATION_MINUTES;
+
+          $this->update([
+              'locked_until' => Carbon::now()->addMinutes($duration),
+              'lock_reason' => $reason,
+              'locked_at' => Carbon::now(),
+          ]);
+      }
+
+      /**
+       * Lock the user account by an admin (manual lock).
+       *
+       * @param int $adminId
+       * @param string $reason
+       * @param int|null $durationMinutes
+       * @return void
+       */
+      public function lockByAdmin(int $adminId, string $reason, ?int $durationMinutes = null): void
+      {
+          $lockedUntil = $durationMinutes
+              ? Carbon::now()->addMinutes($durationMinutes)
+              : null; // Indefinite lock if no duration specified
+
+          $this->update([
+              'locked_until' => $lockedUntil,
+              'lock_reason' => $reason,
+              'locked_at' => Carbon::now(),
+              'locked_by_admin_id' => $adminId,
+          ]);
+      }
+
+      /**
+       * Unlock the user account.
+       *
+       * @return void
+       */
+      public function unlock(): void
+      {
+          $this->update([
+              'locked_until' => null,
+              'lock_reason' => null,
+              'locked_at' => null,
+              'locked_by_admin_id' => null,
+              'failed_login_attempts' => 0,
+          ]);
+      }
+
+      /**
+       * Increment failed login attempts and lock if threshold reached.
+       *
+       * @return bool True if account was locked, false otherwise
+       */
+      public function incrementFailedLoginAttempts(): bool
+      {
+          $this->update([
+              'failed_login_attempts' => $this->failed_login_attempts + 1,
+              'last_failed_login_at' => Carbon::now(),
+          ]);
+
+          // Refresh the model to get updated value
+          $this->refresh();
+
+          // Check if we should lock the account
+          if ($this->failed_login_attempts >= self::MAX_LOGIN_ATTEMPTS) {
+              $this->lockAccount();
+              return true;
+          }
+
+          return false;
+      }
+
+      /**
+       * Reset failed login attempts (called on successful login).
+       *
+       * @return void
+       */
+      public function resetFailedLoginAttempts(): void
+      {
+          if ($this->failed_login_attempts > 0) {
+              $this->update([
+                  'failed_login_attempts' => 0,
+                  'last_failed_login_at' => null,
+              ]);
+          }
+      }
+
+      /**
+       * Get the admin who locked this account (if applicable).
+       *
+       * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+       */
+      public function lockedByAdmin()
+      {
+          return $this->belongsTo(User::class, 'locked_by_admin_id');
+      }
+
+      /**
+       * Check if account was locked by an admin (vs auto-locked).
+       *
+       * @return bool
+       */
+      public function wasLockedByAdmin(): bool
+      {
+          return $this->locked_by_admin_id !== null;
+      }
+
+      /**
+       * Get remaining failed login attempts before lockout.
+       *
+       * @return int
+       */
+      public function remainingLoginAttempts(): int
+      {
+          return max(0, self::MAX_LOGIN_ATTEMPTS - $this->failed_login_attempts);
+      }
+
+      /**
+       * Scope for locked accounts.
+       *
+       * @param \Illuminate\Database\Eloquent\Builder $query
+       * @return \Illuminate\Database\Eloquent\Builder
+       */
+      public function scopeLocked($query)
+      {
+          return $query->whereNotNull('locked_until')
+              ->where('locked_until', '>', Carbon::now());
+      }
+
+      /**
+       * Scope for accounts with failed login attempts.
+       *
+       * @param \Illuminate\Database\Eloquent\Builder $query
+       * @param int $minAttempts
+       * @return \Illuminate\Database\Eloquent\Builder
+       */
+      public function scopeWithFailedAttempts($query, int $minAttempts = 1)
+      {
+          return $query->where('failed_login_attempts', '>=', $minAttempts);
+      }
+
       // ==================== SUSPENSION METHODS ====================
 
       /**
@@ -1008,5 +1224,131 @@ class User extends Authenticatable implements HasLocalePreference
       public function disputesAsBusiness()
       {
           return $this->hasMany(AdminDisputeQueue::class, 'business_id');
+      }
+
+      // ==================== TWO-FACTOR AUTHENTICATION METHODS ====================
+
+      /**
+       * Check if two-factor authentication is enabled for this user.
+       *
+       * @return bool
+       */
+      public function hasTwoFactorEnabled(): bool
+      {
+          return !is_null($this->two_factor_secret) && !is_null($this->two_factor_confirmed_at);
+      }
+
+      /**
+       * Check if two-factor authentication has been confirmed (setup complete).
+       *
+       * @return bool
+       */
+      public function hasConfirmedTwoFactor(): bool
+      {
+          return !is_null($this->two_factor_confirmed_at);
+      }
+
+      /**
+       * Get the number of remaining recovery codes.
+       *
+       * @return int
+       */
+      public function recoveryCodes(): array
+      {
+          return $this->two_factor_recovery_codes ?? [];
+      }
+
+      /**
+       * Get the count of remaining recovery codes.
+       *
+       * @return int
+       */
+      public function recoveryCodesCount(): int
+      {
+          return count($this->recoveryCodes());
+      }
+
+      /**
+       * Replace the current recovery codes with new ones.
+       *
+       * @param array $codes
+       * @return void
+       */
+      public function replaceRecoveryCodes(array $codes): void
+      {
+          $this->forceFill([
+              'two_factor_recovery_codes' => $codes,
+          ])->save();
+      }
+
+      /**
+       * Enable two-factor authentication for the user.
+       *
+       * @param string $secret
+       * @return void
+       */
+      public function enableTwoFactorAuth(string $secret): void
+      {
+          $this->forceFill([
+              'two_factor_secret' => $secret,
+          ])->save();
+      }
+
+      /**
+       * Confirm two-factor authentication for the user.
+       *
+       * @return void
+       */
+      public function confirmTwoFactorAuth(): void
+      {
+          $this->forceFill([
+              'two_factor_confirmed_at' => now(),
+          ])->save();
+      }
+
+      /**
+       * Disable two-factor authentication for the user.
+       *
+       * @return void
+       */
+      public function disableTwoFactorAuth(): void
+      {
+          $this->forceFill([
+              'two_factor_secret' => null,
+              'two_factor_recovery_codes' => null,
+              'two_factor_confirmed_at' => null,
+          ])->save();
+      }
+
+      /**
+       * Use a recovery code (removes it from the list).
+       *
+       * @param string $code
+       * @return bool
+       */
+      public function useRecoveryCode(string $code): bool
+      {
+          $codes = $this->recoveryCodes();
+          $index = array_search($code, $codes);
+
+          if ($index === false) {
+              return false;
+          }
+
+          unset($codes[$index]);
+          $this->replaceRecoveryCodes(array_values($codes));
+
+          return true;
+      }
+
+      /**
+       * Check if the provided code is a valid recovery code.
+       *
+       * @param string $code
+       * @return bool
+       */
+      public function isValidRecoveryCode(string $code): bool
+      {
+          return in_array($code, $this->recoveryCodes());
       }
 }

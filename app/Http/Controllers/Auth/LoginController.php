@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Validator;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Models\AdminSettings;
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
+use App\Notifications\AccountLockedNotification;
 
 class LoginController extends Controller
 {
@@ -53,10 +54,9 @@ class LoginController extends Controller
      *
      * @return void
      */
-    public function __construct(Guard $auth)
+    public function __construct()
     {
-      $this->auth = $auth;
-      $this->middleware('guest')->except('logout');
+        $this->middleware('guest')->except('logout');
     }
 
     /**
@@ -80,35 +80,48 @@ class LoginController extends Controller
         // Validate request
         $this->validateLogin($request);
 
-        // Check rate limiting
+        // Check rate limiting (IP-based throttling)
         if ($this->hasTooManyLoginAttempts($request)) {
             $this->fireLockoutEvent($request);
             return $this->sendLockoutResponse($request);
         }
 
+        // Check if the user account is locked (database-level lockout)
+        $lockedUser = $this->checkAccountLockout($request);
+        if ($lockedUser) {
+            return $this->sendAccountLockedResponse($request, $lockedUser);
+        }
+
         // Attempt login
         if ($this->attemptLogin($request)) {
-            $user = $this->auth->user();
+            $user = Auth::user();
+
+            // Check if account is locked (double-check after auth)
+            if ($user->isLocked()) {
+                Auth::logout();
+                return $this->sendAccountLockedResponse($request, $user);
+            }
 
             // Check if account is active
             if ($user->status !== 'active') {
-                $this->auth->logout();
+                Auth::logout();
                 $this->incrementLoginAttempts($request);
-                
+
                 \Log::channel('security')->warning('Login attempt with inactive account', [
                     'email' => $request->email,
                     'ip' => $request->ip(),
                     'user_agent' => $request->userAgent(),
                     'timestamp' => now()->toISOString(),
                 ]);
-                
+
                 return redirect()->back()
                     ->withErrors(['email' => 'Your account is not active.'])
                     ->withInput();
             }
 
-            // Clear login attempts on successful login
+            // Clear login attempts on successful login (both rate limiter and database)
             $this->clearLoginAttempts($request);
+            $user->resetFailedLoginAttempts();
 
             // Regenerate session to prevent fixation
             $request->session()->regenerate();
@@ -128,9 +141,59 @@ class LoginController extends Controller
                 ?: redirect()->intended($this->redirectPath());
         }
 
-        // Login failed - increment attempts and log
+        // Login failed - increment attempts and handle lockout
         $this->incrementLoginAttempts($request);
         return $this->sendFailedLoginResponse($request);
+    }
+
+    /**
+     * Check if the user account is locked before attempting login.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \App\Models\User|null
+     */
+    protected function checkAccountLockout(Request $request): ?User
+    {
+        $user = User::where('email', $request->input('email'))->first();
+
+        if ($user && $user->isLocked()) {
+            return $user;
+        }
+
+        return null;
+    }
+
+    /**
+     * Send response when account is locked.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\User  $user
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    protected function sendAccountLockedResponse(Request $request, User $user)
+    {
+        $minutesRemaining = $user->lockoutMinutesRemaining();
+
+        \Log::channel('security')->warning('Login attempt on locked account', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'locked_until' => $user->locked_until->toIso8601String(),
+            'lock_reason' => $user->lock_reason,
+            'minutes_remaining' => $minutesRemaining,
+            'timestamp' => now()->toISOString(),
+        ]);
+
+        throw ValidationException::withMessages([
+            'email' => [
+                trans('auth.locked', [
+                    'minutes' => $minutesRemaining,
+                ])
+            ],
+        ])->status(423); // 423 Locked status code
     }
 
     /**
@@ -157,7 +220,7 @@ class LoginController extends Controller
      */
     protected function attemptLogin(Request $request)
     {
-        return $this->auth->attempt(
+        return Auth::attempt(
             $this->credentials($request),
             $request->filled('remember')
         );
@@ -228,7 +291,7 @@ class LoginController extends Controller
      * Redirect the user after determining they are locked out.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return void
+     * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -245,10 +308,12 @@ class LoginController extends Controller
         ]);
 
         throw ValidationException::withMessages([
-            'email' => [trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ])],
+            'email' => [
+                trans('auth.throttle', [
+                    'seconds' => $seconds,
+                    'minutes' => ceil($seconds / 60),
+                ])
+            ],
         ])->status(429);
     }
 
@@ -262,18 +327,94 @@ class LoginController extends Controller
      */
     protected function sendFailedLoginResponse(Request $request)
     {
+        $email = $request->input('email');
+        $ipAddress = $request->ip();
+        $userAgent = $request->userAgent();
+
+        // Find the user to track their failed attempts
+        $user = User::where('email', $email)->first();
+
         // Log the failed attempt
         \Log::channel('security')->warning('Failed login attempt', [
-            'email' => $request->input('email'),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'attempts' => RateLimiter::attempts($this->throttleKey($request)),
+            'email' => $email,
+            'ip' => $ipAddress,
+            'user_agent' => $userAgent,
+            'rate_limiter_attempts' => RateLimiter::attempts($this->throttleKey($request)),
+            'user_failed_attempts' => $user ? $user->failed_login_attempts + 1 : 'N/A (user not found)',
             'timestamp' => now()->toISOString(),
         ]);
+
+        // If user exists, increment their failed login attempts
+        if ($user) {
+            $wasLocked = $user->incrementFailedLoginAttempts();
+
+            // If the account was just locked, send notification and log
+            if ($wasLocked) {
+                $this->handleAccountLockout($user, $ipAddress, $userAgent);
+
+                // Return locked response instead of generic failed response
+                return $this->sendAccountLockedResponse($request, $user);
+            }
+
+            // Warn user about remaining attempts
+            $remainingAttempts = $user->remainingLoginAttempts();
+            if ($remainingAttempts <= 2 && $remainingAttempts > 0) {
+                throw ValidationException::withMessages([
+                    'email' => [
+                        trans('auth.failed_with_warning', [
+                            'attempts' => $remainingAttempts,
+                        ])
+                    ],
+                ]);
+            }
+        }
 
         throw ValidationException::withMessages([
             'email' => [trans('auth.failed')],
         ]);
+    }
+
+    /**
+     * Handle account lockout - send notification and log security event.
+     *
+     * @param  \App\Models\User  $user
+     * @param  string  $ipAddress
+     * @param  string|null  $userAgent
+     * @return void
+     */
+    protected function handleAccountLockout(User $user, string $ipAddress, ?string $userAgent): void
+    {
+        // Log the lockout event
+        \Log::channel('security')->critical('Account locked due to failed login attempts', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'user_type' => $user->user_type,
+            'ip' => $ipAddress,
+            'user_agent' => $userAgent,
+            'failed_attempts' => $user->failed_login_attempts,
+            'locked_until' => $user->locked_until->toIso8601String(),
+            'lock_reason' => $user->lock_reason,
+            'timestamp' => now()->toISOString(),
+        ]);
+
+        // Send notification to user
+        try {
+            $user->notify(new AccountLockedNotification(
+                $user->locked_until,
+                $user->lock_reason ?? 'Too many failed login attempts',
+                User::LOCKOUT_DURATION_MINUTES,
+                $ipAddress,
+                $userAgent,
+                false // Not an admin lock
+            ));
+        } catch (\Exception $e) {
+            \Log::channel('security')->error('Failed to send account locked notification', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+                'timestamp' => now()->toISOString(),
+            ]);
+        }
     }
 
     /**
@@ -285,21 +426,42 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        // Check if user has TOTP-based 2FA enabled
+        if ($user->hasTwoFactorEnabled()) {
+            // Log out the user temporarily
+            Auth::logout();
+
+            // Store user ID and remember preference in session for 2FA verification
+            session([
+                'two_factor_user_id' => $user->id,
+                'two_factor_remember' => $request->filled('remember'),
+            ]);
+
+            // Log 2FA challenge
+            \Log::channel('security')->info('2FA challenge initiated', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip(),
+                'timestamp' => now()->toISOString(),
+            ]);
+
+            // Redirect to 2FA verification page
+            return redirect()->route('two-factor.verify');
+        }
+
         // Check for intended URL first
         if (session()->has('url.intended')) {
             return redirect()->intended();
         }
 
         // Route based on user type
-        if ($user->isAiAgent()) {
-            return redirect()->route('agent.dashboard');
-        } elseif ($user->isAdmin()) {
-            return redirect()->route('admin.dashboard');
+        if ($user->isAdmin()) {
+            return redirect()->route('filament.admin.pages.dashboard');
         }
 
         // All other user types (worker, business, agency) use generic dashboard
         // which automatically routes to correct dashboard based on user type
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard.index');
     }
 
     /**
@@ -310,8 +472,8 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-        $user = $this->auth->user();
-        
+        $user = Auth::user();
+
         // Log logout event
         if ($user) {
             \Log::channel('security')->info('User logged out', [
@@ -323,136 +485,61 @@ class LoginController extends Controller
                 'timestamp' => now()->toISOString(),
             ]);
         }
-        
-        $this->auth->logout();
-        
+
+        Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect()->route('home')
             ->with('success', 'You have been logged out successfully.');
     }
 
-    // Legacy AJAX login method (keep for compatibility)
-    public function loginAjax(Request $request)
+    /**
+     * Get the post login redirect path.
+     * Implements the redirect logic: email verify → role select → dashboard
+     *
+     * @return string
+     */
+    public function redirectPath()
     {
-      if (! $request->expectsJson()) {
-          abort(404);
-      }
+        if (Auth::check()) {
+            return $this->resolveRedirectUrl(Auth::user());
+        }
 
-      $settings = AdminSettings::first();
-      $request['_captcha'] = $settings->captcha;
-
-      $messages = [
-    'g-recaptcha-response.required_if' => trans('admin.captcha_error_required'),
-    'g-recaptcha-response.captcha' => trans('admin.captcha_error'),
-  ];
-
-  	     // get our login input
-      $login = $request->input('username_email');
-      $urlReturn = $request->input('return');
-      $isModal = $request->input('isModal');
-
-      // check login field
-      $login_type = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
-
-      // merge our login field into the request with either email or username as key
-      $request->merge([$login_type => $login]);
-
-      // let's validate and set our credentials
-      if ($login_type == 'email') {
-
-          $validator = Validator::make($request->all(), [
-              'username_email'    => 'required|email',
-              'password' => 'required',
-              'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha'
-          ], $messages);
-
-          if ($validator->fails()) {
-   		        return response()->json([
-   				        'success' => false,
-   				        'errors' => $validator->getMessageBag()->toArray()
-   				    ]);
-   		    }
-
-          $credentials = $request->only('email', 'password');
-
-      } else {
-
-          $validator = Validator::make($request->all(), [
-              'username_email' => 'required',
-              'password' => 'required',
-              'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha'
-          ], $messages);
-
-          if ($validator->fails()) {
-   		        return response()->json([
-   				        'success' => false,
-   				        'errors' => $validator->getMessageBag()->toArray(),
-   				    ]);
-   		    }
-
-          $credentials = $request->only('username', 'password');
-
-      }
-
-    if ($this->auth->attempt($credentials, $request->has('remember'))) {
-
-  			if ($this->auth->user()->status == 'active') {
-
-          // Check Two step authentication
-          if ($this->auth->user()->two_factor_auth == 'yes') {
-            // Generate code...
-            $this->generateTwofaCode($this->auth->user());
-
-            // Logout user
-            $this->auth->logout();
-
-            return response()->json([
-                'actionRequired' => true,
-            ]);
-          }
-
-              if (isset($urlReturn) && url()->isValidUrl($urlReturn)) {
-                return response()->json([
-                    'success' => true,
-                    'isLoginRegister' => true,
-                    'isModal' => $isModal ? true : false,
-                    'url_return' => $urlReturn
-                ]);
-                } else {
-                  return response()->json([
-                      'success' => true,
-                      'isLoginRegister' => true,
-                      'isModal' => $isModal ? true : false,
-                      'url_return' => url('/')
-                  ]);
-                }
-
-          } else if ($this->auth->user()->status == 'suspended') {
-
-  			$this->auth->logout();
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['error' => trans('validation.user_suspended')],
-        ]);
-
-      } else if ($this->auth->user()->status == 'pending') {
-
-  			$this->auth->logout();
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['error' => trans('validation.account_not_confirmed')],
-        ]);
-      }
+        return '/';
     }
 
-    return response()->json([
-        'success' => false,
-        'errors' => ['error' => trans('auth.failed')]
-    ]);
-  }
+    /**
+     * Resolve the correct redirect URL based on user state
+     * Implements the redirect logic: email verify → role select → dashboard
+     */
+    protected function resolveRedirectUrl(User $user): string
+    {
+        // 1. Email Verification Check
+        if (!$user->email_verified_at) {
+            return route('verification.notice');
+        }
 
+        // 2. Role/Onboarding Check
+        if (!$user->user_type) {
+            return route('onboarding.role-selection');
+        }
+
+        // 3. Admin Redirect
+        if ($user->role === 'admin') {
+            return route('filament.admin.pages.dashboard');
+        }
+
+        // 4. User Type Redirect
+        // Map user types to their respective dashboard route names
+        $routeName = match ($user->user_type) {
+            'worker' => 'dashboard.worker',
+            'business' => 'dashboard.company',
+            'agency' => 'dashboard.agency',
+            default => 'dashboard.index',
+        };
+
+        return route($routeName);
+    }
 }

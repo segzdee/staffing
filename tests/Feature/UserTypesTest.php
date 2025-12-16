@@ -113,10 +113,11 @@ test('worker can authenticate', function () {
         'password' => bcrypt('password'),
     ]);
 
-    $response = $this->post('/login', [
-        'email' => $worker->email,
-        'password' => 'password',
-    ]);
+    $response = $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
+        ->post('/login', [
+            'email' => $worker->email,
+            'password' => 'password',
+        ]);
 
     expect($response->status())->toBe(302)
         ->and(auth()->check())->toBeTrue()
@@ -129,10 +130,11 @@ test('business can authenticate', function () {
         'password' => bcrypt('password'),
     ]);
 
-    $response = $this->post('/login', [
-        'email' => $business->email,
-        'password' => 'password',
-    ]);
+    $response = $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class)
+        ->post('/login', [
+            'email' => $business->email,
+            'password' => 'password',
+        ]);
 
     expect($response->status())->toBe(302)
         ->and(auth()->check())->toBeTrue()

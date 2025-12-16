@@ -51,46 +51,6 @@ class HomeController extends Controller
     }
 
     /**
-     * About Page
-     */
-    public function about()
-    {
-        return view('pages.about');
-    }
-
-    /**
-     * Contact Page
-     */
-    public function contact()
-    {
-        return view('pages.contact');
-    }
-
-    /**
-     * How It Works Page
-     */
-    public function howItWorks()
-    {
-        return view('pages.how-it-works');
-    }
-
-    /**
-     * Pricing Page
-     */
-    public function pricing()
-    {
-        return view('pages.pricing');
-    }
-
-    /**
-     * FAQ Page
-     */
-    public function faq()
-    {
-        return view('pages.faq');
-    }
-
-    /**
      * Handle Contact Form Submission
      */
     public function submitContact(Request $request)
@@ -112,5 +72,47 @@ class HomeController extends Controller
 
         // For now, we'll just redirect with success
         return redirect()->back()->with('success', 'Thank you for your message! We will get back to you within 24 hours.');
+    }
+
+    // Marketing Page Methods
+    public function features()
+    {
+        return view('public.features');
+    }
+    public function about()
+    {
+        return view('public.about');
+    }
+    public function contact()
+    {
+        return view('public.contact');
+    }
+    public function terms()
+    {
+        return view('public.terms');
+    }
+    public function privacy()
+    {
+        return view('public.privacy');
+    }
+
+    // Worker Marketing Pages
+    public function workerFindShifts()
+    {
+        return view('public.workers.find-shifts');
+    }
+    public function workerFeatures()
+    {
+        return view('public.workers.features');
+    }
+
+    // Business Marketing Pages
+    public function businessPricing()
+    {
+        return view('public.business.pricing');
+    }
+    public function businessPostShifts()
+    {
+        return view('public.business.post-shifts');
     }
 }

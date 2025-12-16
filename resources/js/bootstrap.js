@@ -19,29 +19,59 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
  */
 
 import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
 
-window.Pusher = Pusher;
+// Conditionally initialize broadcasting
+// Only set Pusher on window if we have a key to prevent instantiation errors
+let hasPusherKey = import.meta.env.VITE_PUSHER_APP_KEY && import.meta.env.VITE_PUSHER_APP_KEY.trim() !== '';
 
-// Configure Echo for Laravel Reverb
-if (import.meta.env.VITE_BROADCAST_DRIVER === 'reverb') {
-    window.Echo = new Echo({
-        broadcaster: 'reverb',
-        key: import.meta.env.VITE_REVERB_APP_KEY,
-        wsHost: import.meta.env.VITE_REVERB_HOST,
-        wsPort: import.meta.env.VITE_REVERB_PORT,
-        wssPort: import.meta.env.VITE_REVERB_PORT,
-        forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
-        enabledTransports: ['ws', 'wss'],
+if (hasPusherKey) {
+    // Dynamically import Pusher only when needed
+    import('pusher-js').then((pusherModule) => {
+        window.Pusher = pusherModule.default;
+        initializeEcho();
+    }).catch((e) => {
+        console.warn('Pusher-js not available:', e);
+        initializeEcho();
     });
 } else {
-    // Fallback to Pusher if Reverb not configured
-    window.Echo = new Echo({
-        broadcaster: 'pusher',
-        key: import.meta.env.VITE_PUSHER_APP_KEY,
-        cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-        forceTLS: true
-    });
+    initializeEcho();
+}
+
+function initializeEcho() {
+
+    // Configure Echo for Laravel Reverb
+    if (import.meta.env.VITE_BROADCAST_DRIVER === 'reverb' && import.meta.env.VITE_REVERB_APP_KEY) {
+        try {
+            window.Echo = new Echo({
+                broadcaster: 'reverb',
+                key: import.meta.env.VITE_REVERB_APP_KEY,
+                wsHost: import.meta.env.VITE_REVERB_HOST,
+                wsPort: import.meta.env.VITE_REVERB_PORT,
+                wssPort: import.meta.env.VITE_REVERB_PORT,
+                forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
+                enabledTransports: ['ws', 'wss'],
+            });
+        } catch (e) {
+            console.warn('Failed to initialize Reverb:', e);
+            window.Echo = null;
+        }
+    } else if (hasPusherKey && window.Pusher) {
+        // Fallback to Pusher if Reverb not configured and Pusher key is available
+        try {
+            window.Echo = new Echo({
+                broadcaster: 'pusher',
+                key: import.meta.env.VITE_PUSHER_APP_KEY,
+                cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'mt1',
+                forceTLS: true
+            });
+        } catch (e) {
+            console.warn('Failed to initialize Pusher:', e);
+            window.Echo = null;
+        }
+    } else {
+        // No broadcasting configured - Echo will be null
+        window.Echo = null;
+    }
 }
 
 // Listen for notifications if user is authenticated

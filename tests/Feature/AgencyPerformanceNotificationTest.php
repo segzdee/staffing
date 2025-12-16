@@ -22,10 +22,11 @@ use App\Notifications\Agency\PerformanceFeeIncreaseNotification;
 use App\Notifications\Agency\PerformanceSuspensionNotification;
 use App\Notifications\Agency\PerformanceImprovementNotification;
 use App\Services\AgencyPerformanceNotificationService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
 use Illuminate\Support\Facades\Notification;
 
-uses(RefreshDatabase::class);
+// Use hybrid approach: migrations run once, transactions for isolation
+uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
     // Create an agency user with profile

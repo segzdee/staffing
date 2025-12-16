@@ -43,8 +43,8 @@ class ShiftAssignmentPolicy
      */
     public function create(User $user): bool
     {
-        // Only businesses and AI agents can assign workers
-        return $user->isBusiness() || $user->isAiAgent();
+        // Only businesses can assign workers
+        return $user->isBusiness();
     }
 
     /**

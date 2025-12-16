@@ -5,7 +5,7 @@ namespace Tests\Feature\Admin;
 use App\Models\SystemSettings;
 use App\Models\SystemSettingAudit;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
@@ -14,7 +14,7 @@ use Tests\TestCase;
  */
 class ConfigurationControllerTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrationsWithTransactions;
 
     protected User $admin;
     protected User $regularUser;
@@ -22,6 +22,9 @@ class ConfigurationControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        
+        // Initialize migrations (runs once, sets up transactions)
+        $this->initializeMigrations();
 
         // Create admin user
         $this->admin = User::factory()->create([

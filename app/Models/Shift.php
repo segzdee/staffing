@@ -359,9 +359,7 @@ class Shift extends Model
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
         'duration_hours' => 'decimal:2',
-        'base_rate' => 'decimal:2',
         'dynamic_rate' => 'decimal:2',
-        'final_rate' => 'decimal:2',
         'required_workers' => 'integer',
         'filled_workers' => 'integer',
         'requirements' => 'array',
@@ -561,7 +559,7 @@ class Shift extends Model
               sin( radians( location_lat ) ) )
             ) AS distance
         ", [$lat, $lng, $lat])
-        ->whereRaw("
+            ->whereRaw("
             ( 3959 * acos( cos( radians(?) ) *
               cos( radians( location_lat ) ) *
               cos( radians( location_lng ) - radians(?) ) +
@@ -569,7 +567,7 @@ class Shift extends Model
               sin( radians( location_lat ) ) )
             ) < ?
         ", [$lat, $lng, $lat, $radius])
-        ->orderBy('distance');
+            ->orderBy('distance');
     }
 
     // =========================================
@@ -580,42 +578,15 @@ class Shift extends Model
      * Calculate and update all financial fields for the shift.
      * Formula: ((Hourly Rate × Hours × Workers) + Platform Fee + VAT) + 5% Buffer
      */
+    /**
+     * Calculate and update all financial fields for the shift.
+     * Delegates to ShiftPricingService.
+     */
     public function calculateCosts()
     {
-        // Step 1: Calculate base worker pay (before surge)
-        $baseHourlyRate = $this->base_rate;
-        $hours = $this->duration_hours;
-        $workers = $this->required_workers;
-
-        $this->base_worker_pay = $baseHourlyRate * $hours * $workers;
-
-        // Step 2: Apply surge pricing to get final rate
-        $this->calculateSurge();
-        $finalHourlyRate = $this->final_rate;
-
-        // Step 3: Calculate total worker pay with surge
-        $totalWorkerPay = $finalHourlyRate * $hours * $workers;
-
-        // Step 4: Calculate platform fee (default 35%)
-        $platformFeeRate = $this->platform_fee_rate ?? 35.00;
-        $this->platform_fee_amount = ($totalWorkerPay * $platformFeeRate) / 100;
-
-        // Step 5: Calculate subtotal (worker pay + platform fee)
-        $subtotal = $totalWorkerPay + $this->platform_fee_amount;
-
-        // Step 6: Calculate VAT (default 18% in Malta)
-        $vatRate = $this->vat_rate ?? 18.00;
-        $this->vat_amount = ($subtotal * $vatRate) / 100;
-
-        // Step 7: Calculate total business cost
-        $this->total_business_cost = $subtotal + $this->vat_amount;
-
-        // Step 8: Add 5% contingency buffer for escrow
-        $bufferRate = $this->contingency_buffer_rate ?? 5.00;
-        $this->escrow_amount = $this->total_business_cost * (1 + $bufferRate / 100);
-
+        $pricingService = app(\App\Services\ShiftPricingService::class);
+        $pricingService->calculateCosts($this);
         $this->save();
-
         return $this;
     }
 
@@ -635,49 +606,15 @@ class Shift extends Model
      * Calculate and apply surge pricing multipliers.
      * Formula: Base Rate × (Time Surge + Demand Surge + Event Surge)
      */
+    /**
+     * Calculate and apply surge pricing multipliers.
+     * Delegates to ShiftPricingService.
+     */
     public function calculateSurge()
     {
-        $this->time_surge = $this->calculateTimeSurge();
-        $this->demand_surge = $this->calculateDemandSurge();
-        $this->event_surge = $this->calculateEventSurge();
-
-        // Total surge multiplier
-        $this->surge_multiplier = 1.0 + $this->time_surge + $this->demand_surge + $this->event_surge;
-
-        // Apply surge to base rate
-        $this->final_rate = $this->base_rate * $this->surge_multiplier;
-
+        $pricingService = app(\App\Services\ShiftPricingService::class);
+        $pricingService->calculateSurge($this);
         return $this;
-    }
-
-    /**
-     * Calculate time-based surge (urgency, night shift, weekend, holiday).
-     */
-    protected function calculateTimeSurge()
-    {
-        $surge = 0.0;
-
-        // Urgent shifts (< 24 hours notice): +50%
-        if ($this->urgency_level === 'urgent' || $this->isUrgent()) {
-            $surge += 0.50;
-        }
-
-        // Night shifts (10 PM - 6 AM): +30%
-        if ($this->is_night_shift) {
-            $surge += 0.30;
-        }
-
-        // Weekends (Saturday/Sunday): +20%
-        if ($this->is_weekend) {
-            $surge += 0.20;
-        }
-
-        // Public holidays: +50%
-        if ($this->is_public_holiday) {
-            $surge += 0.50;
-        }
-
-        return $surge;
     }
 
     /**
@@ -1181,6 +1118,14 @@ class Shift extends Model
             'business_id',  // Local key on shifts
             'id'            // Local key on users
         );
+    }
+
+    /**
+     * Get the venue for this shift (if any).
+     */
+    public function venue()
+    {
+        return $this->belongsTo(Venue::class);
     }
 
     // =========================================

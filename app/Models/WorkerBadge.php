@@ -276,4 +276,22 @@ class WorkerBadge extends Model
     {
         return $query->where('badge_type', $type);
     }
+
+    /**
+     * Get available badge types
+     * Returns simple list of badge types with descriptions
+     *
+     * @return array
+     */
+    public static function getAvailableBadgeTypes()
+    {
+        return [
+            'punctuality' => 'Always on time',
+            'reliability' => 'Never cancels',
+            'top_performer' => 'Highest ratings',
+            'veteran' => '100+ shifts completed',
+            'certified' => 'All certifications current',
+            'five_star' => 'Perfect 5.0 rating',
+        ];
+    }
 }

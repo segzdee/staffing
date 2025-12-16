@@ -91,24 +91,26 @@
 
         <div class="space-y-6">
             @forelse($groupedSettings as $category => $settings)
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden" x-data="{ expanded: true }">
-                    {{-- Category Header --}}
-                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 cursor-pointer" @click="expanded = !expanded">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900">
-                                    {{ $categories[$category] ?? ucfirst($category) }}
-                                </h3>
-                                <p class="text-sm text-gray-500 mt-1">{{ $settings->count() }} setting(s)</p>
-                            </div>
-                            <svg class="w-5 h-5 text-gray-400 transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                <div class="hs-accordion bg-white rounded-xl border border-gray-200 overflow-hidden" id="accordion-{{ $category }}">
+                    {{-- Category Header (Preline Accordion) --}}
+                    <button type="button" class="hs-accordion-toggle hs-accordion-active:text-gray-900 py-4 px-6 inline-flex items-center gap-x-3 w-full font-semibold text-start text-gray-800 hover:text-gray-500 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-gray-900" aria-expanded="true" aria-controls="accordion-content-{{ $category }}">
+                        <svg class="hs-accordion-active:hidden block flex-shrink-0 size-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                        <svg class="hs-accordion-active:block hidden flex-shrink-0 size-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m18 15-6-6-6 6"/>
+                        </svg>
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                {{ $categories[$category] ?? ucfirst($category) }}
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-1">{{ $settings->count() }} setting(s)</p>
                         </div>
-                    </div>
+                    </button>
 
-                    {{-- Settings List --}}
-                    <div class="divide-y divide-gray-100" x-show="expanded" x-transition>
+                        {{-- Settings List (Preline Accordion Content) --}}
+                        <div id="accordion-content-{{ $category }}" class="hs-accordion-content w-full overflow-hidden transition-[height] duration-300" aria-labelledby="accordion-{{ $category }}">
+                            <div class="divide-y divide-gray-100">
                         @foreach($settings as $setting)
                             <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
                                 <div class="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -194,9 +196,10 @@
                                     <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                        @endforeach
+                            @endforeach
+                            </div>
+                        </div>
                     </div>
-                </div>
             @empty
                 <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

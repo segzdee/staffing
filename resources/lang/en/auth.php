@@ -14,7 +14,9 @@ return [
     */
 
     'failed'                  => 'These credentials do not match our records.',
+    'failed_with_warning'     => 'Invalid credentials. Warning: :attempts login attempt(s) remaining before your account is temporarily locked.',
     'throttle'                => 'Too many login attempts. Please try again in :seconds seconds.',
+    'locked'                  => 'Your account has been temporarily locked due to multiple failed login attempts. Please try again in :minutes minutes or reset your password.',
 
     'email_sent'              => 'An email with the password reset has been sent.',
     'reset_password'          => 'Reset Password',

@@ -6,9 +6,9 @@ use App\Models\ShiftAssignment;
 use App\Models\BusinessProfile;
 use App\Models\WorkerProfile;
 use App\Models\AgencyProfile;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
     $this->business = User::factory()->create(['user_type' => 'business']);

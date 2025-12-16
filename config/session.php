@@ -46,7 +46,8 @@ return [
     |
     */
 
-    'encrypt' => false,
+    // SECURITY: Session encryption enabled to protect session data
+    'encrypt' => true,
 
     /*
     |--------------------------------------------------------------------------

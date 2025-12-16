@@ -43,3 +43,8 @@ import './components/live-shift-market.js';
  * Form Validation Library
  */
 import './form-validation.js';
+
+/**
+ * Preline UI
+ */
+import 'preline';

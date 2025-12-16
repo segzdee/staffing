@@ -7,9 +7,9 @@ use App\Models\AgencyProfile;
 use App\Models\AgencyWorker;
 use App\Models\BusinessProfile;
 use App\Models\WorkerProfile;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
     $this->business = User::factory()->create(['user_type' => 'business']);

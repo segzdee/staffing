@@ -231,6 +231,65 @@ class WorkerProfile extends Model
         'profile_photo_url',
         'resume_url',
         'linkedin_url',
+
+        // STAFF-REG-003: Profile Creation Fields
+        'first_name',
+        'last_name',
+        'middle_name',
+        'preferred_name',
+        'gender',
+        'profile_photo_verified',
+        'profile_photo_face_detected',
+        'profile_photo_face_confidence',
+        'profile_photo_updated_at',
+
+        // STAFF-REG-004: KYC Status Fields
+        'kyc_status',
+        'kyc_level',
+        'kyc_expires_at',
+        'kyc_verification_id',
+        'verified_first_name',
+        'verified_last_name',
+        'verified_date_of_birth',
+        'verified_nationality',
+        'age_verified',
+        'age_verified_at',
+        'minimum_working_age_met',
+
+        // Location Geocoding
+        'geocoded_address',
+        'geocoded_at',
+        'timezone',
+
+        // Profile Completion Tracking
+        'profile_completion_percentage',
+        'profile_sections_completed',
+        'profile_last_updated_at',
+
+        // Work Eligibility
+        'work_eligibility_status',
+        'work_eligibility_countries',
+
+        // STAFF-REG-011: Activation Fields
+        'is_activated',
+        'activated_at',
+        'is_matching_eligible',
+        'matching_eligibility_reason',
+        'phone_verified',
+        'phone_verified_at',
+        'rtw_verified',
+        'rtw_verified_at',
+        'rtw_document_type',
+        'rtw_document_url',
+        'rtw_expiry_date',
+        'payment_setup_complete',
+        'payment_setup_at',
+        'first_shift_guidance_shown',
+        'first_shift_completed_at',
+        'profile_photo_status',
+        'profile_photo_rejected_reason',
+        'onboarding_started_at',
+        'onboarding_last_step_at',
     ];
 
     /**
@@ -271,6 +330,37 @@ class WorkerProfile extends Model
         'average_response_time_minutes' => 'integer',
         'total_referrals' => 'integer',
         'referral_earnings' => 'decimal:2',
+        // STAFF-REG-003 & 004: New casts
+        'date_of_birth' => 'date',
+        'profile_photo_verified' => 'boolean',
+        'profile_photo_face_detected' => 'boolean',
+        'profile_photo_face_confidence' => 'decimal:4',
+        'profile_photo_updated_at' => 'datetime',
+        'kyc_expires_at' => 'datetime',
+        'verified_date_of_birth' => 'date',
+        'age_verified' => 'boolean',
+        'age_verified_at' => 'datetime',
+        'minimum_working_age_met' => 'boolean',
+        'geocoded_at' => 'datetime',
+        'profile_completion_percentage' => 'integer',
+        'profile_sections_completed' => 'array',
+        'profile_last_updated_at' => 'datetime',
+        'work_eligibility_countries' => 'array',
+        // STAFF-REG-011: Activation casts
+        'is_activated' => 'boolean',
+        'activated_at' => 'datetime',
+        'is_matching_eligible' => 'boolean',
+        'phone_verified' => 'boolean',
+        'phone_verified_at' => 'datetime',
+        'rtw_verified' => 'boolean',
+        'rtw_verified_at' => 'datetime',
+        'rtw_expiry_date' => 'date',
+        'payment_setup_complete' => 'boolean',
+        'payment_setup_at' => 'datetime',
+        'first_shift_guidance_shown' => 'boolean',
+        'first_shift_completed_at' => 'datetime',
+        'onboarding_started_at' => 'datetime',
+        'onboarding_last_step_at' => 'datetime',
     ];
 
     /**
@@ -711,5 +801,427 @@ class WorkerProfile extends Model
         }
 
         return $status->search_boost ?? 1.0;
+    }
+
+    // ===== STAFF-REG-004: Identity Verification Methods =====
+
+    /**
+     * Get all identity verifications for this worker.
+     */
+    public function identityVerifications()
+    {
+        return $this->hasMany(IdentityVerification::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get the current/active identity verification.
+     */
+    public function currentIdentityVerification()
+    {
+        return $this->hasOne(IdentityVerification::class, 'user_id', 'user_id')
+            ->latestOfMany();
+    }
+
+    /**
+     * Get the approved identity verification.
+     */
+    public function approvedIdentityVerification()
+    {
+        return $this->hasOne(IdentityVerification::class, 'user_id', 'user_id')
+            ->where('status', 'approved')
+            ->latestOfMany();
+    }
+
+    /**
+     * Check if worker has completed KYC.
+     */
+    public function hasCompletedKyc(): bool
+    {
+        return $this->kyc_status === 'approved' && !$this->isKycExpired();
+    }
+
+    /**
+     * Check if KYC has expired.
+     */
+    public function isKycExpired(): bool
+    {
+        return $this->kyc_expires_at && $this->kyc_expires_at->isPast();
+    }
+
+    /**
+     * Check if KYC is expiring soon.
+     */
+    public function isKycExpiringSoon(int $days = 30): bool
+    {
+        if (!$this->kyc_expires_at) {
+            return false;
+        }
+
+        return $this->kyc_expires_at->isBetween(now(), now()->addDays($days));
+    }
+
+    /**
+     * Get KYC status label.
+     */
+    public function getKycStatusLabel(): string
+    {
+        $labels = [
+            'not_started' => 'Not Started',
+            'pending' => 'Pending',
+            'in_progress' => 'In Progress',
+            'manual_review' => 'Under Review',
+            'approved' => 'Verified',
+            'rejected' => 'Rejected',
+            'expired' => 'Expired',
+        ];
+
+        return $labels[$this->kyc_status] ?? 'Unknown';
+    }
+
+    // ===== STAFF-REG-003: Age Verification Methods =====
+
+    /**
+     * Get minimum working age for a jurisdiction.
+     */
+    public static function getMinimumWorkingAge(string $countryCode): int
+    {
+        $ages = [
+            'US' => 14, // With restrictions, 16 for general work
+            'GB' => 13, // Part-time, 16 for full-time
+            'CA' => 14, // Varies by province
+            'AU' => 14, // With restrictions
+            'DE' => 15,
+            'FR' => 16,
+            'ES' => 16,
+            'IT' => 16,
+            'NL' => 15,
+            'BE' => 15,
+            'IN' => 14, // With restrictions
+            'BR' => 14, // Apprentice, 16 for general
+            'MX' => 15,
+            'ZA' => 15,
+            'NG' => 15,
+            'KE' => 16,
+        ];
+
+        return $ages[$countryCode] ?? 16; // Default to 16
+    }
+
+    /**
+     * Verify worker meets minimum age requirement.
+     */
+    public function verifyMinimumAge(string $countryCode = null): bool
+    {
+        if (!$this->date_of_birth) {
+            return false;
+        }
+
+        $country = $countryCode ?? $this->country ?? 'US';
+        $minimumAge = self::getMinimumWorkingAge($country);
+        $age = $this->date_of_birth->age;
+
+        $meetsRequirement = $age >= $minimumAge;
+
+        $this->update([
+            'age_verified' => true,
+            'age_verified_at' => now(),
+            'minimum_working_age_met' => $meetsRequirement,
+        ]);
+
+        return $meetsRequirement;
+    }
+
+    /**
+     * Get worker's current age.
+     */
+    public function getAge(): ?int
+    {
+        if (!$this->date_of_birth) {
+            return null;
+        }
+
+        return $this->date_of_birth->age;
+    }
+
+    // ===== STAFF-REG-003: Profile Photo Methods =====
+
+    /**
+     * Check if profile photo has valid face detection.
+     */
+    public function hasValidProfilePhoto(): bool
+    {
+        return $this->profile_photo_url
+            && $this->profile_photo_verified
+            && $this->profile_photo_face_detected;
+    }
+
+    /**
+     * Update profile photo verification status.
+     */
+    public function updatePhotoVerification(bool $faceDetected, float $confidence = null): self
+    {
+        $this->update([
+            'profile_photo_face_detected' => $faceDetected,
+            'profile_photo_face_confidence' => $confidence,
+            'profile_photo_verified' => $faceDetected && ($confidence ?? 0) >= 0.90,
+            'profile_photo_updated_at' => now(),
+        ]);
+
+        return $this;
+    }
+
+    // ===== STAFF-REG-003: Profile Completion Methods =====
+
+    /**
+     * Get full name.
+     */
+    public function getFullNameAttribute(): string
+    {
+        $parts = array_filter([
+            $this->first_name,
+            $this->middle_name,
+            $this->last_name,
+        ]);
+
+        if (empty($parts)) {
+            return $this->user->name ?? '';
+        }
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * Get display name (preferred name or first name).
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->preferred_name ?? $this->first_name ?? $this->user->first_name ?? '';
+    }
+
+    /**
+     * Check if profile is complete.
+     */
+    public function isProfileComplete(): bool
+    {
+        return $this->profile_completion_percentage >= 100;
+    }
+
+    /**
+     * Get required fields for profile completion.
+     */
+    public static function getRequiredFields(): array
+    {
+        return [
+            'first_name',
+            'last_name',
+            'date_of_birth',
+            'city',
+            'phone',
+            'profile_photo_url',
+        ];
+    }
+
+    /**
+     * Get optional fields for profile enhancement.
+     */
+    public static function getOptionalFields(): array
+    {
+        return [
+            'middle_name',
+            'preferred_name',
+            'gender',
+            'bio',
+            'linkedin_url',
+            'emergency_contact_name',
+            'emergency_contact_phone',
+        ];
+    }
+
+    /**
+     * Check which required fields are missing.
+     */
+    public function getMissingRequiredFields(): array
+    {
+        $missing = [];
+
+        foreach (self::getRequiredFields() as $field) {
+            if (empty($this->{$field})) {
+                $missing[] = $field;
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Calculate and update profile completion percentage.
+     */
+    public function recalculateProfileCompletion(): int
+    {
+        $requiredFields = self::getRequiredFields();
+        $optionalFields = self::getOptionalFields();
+
+        $requiredCount = count($requiredFields);
+        $optionalCount = count($optionalFields);
+
+        $requiredCompleted = 0;
+        $optionalCompleted = 0;
+
+        foreach ($requiredFields as $field) {
+            if (!empty($this->{$field})) {
+                $requiredCompleted++;
+            }
+        }
+
+        foreach ($optionalFields as $field) {
+            if (!empty($this->{$field})) {
+                $optionalCompleted++;
+            }
+        }
+
+        // Required fields are worth 70%, optional fields are worth 30%
+        $requiredPercentage = ($requiredCompleted / $requiredCount) * 70;
+        $optionalPercentage = ($optionalCompleted / $optionalCount) * 30;
+
+        $totalPercentage = (int) round($requiredPercentage + $optionalPercentage);
+
+        $this->update([
+            'profile_completion_percentage' => $totalPercentage,
+            'profile_last_updated_at' => now(),
+        ]);
+
+        return $totalPercentage;
+    }
+
+    // ===== STAFF-REG-011: Activation Methods =====
+
+    /**
+     * Check if worker is activated and can access shift marketplace.
+     */
+    public function isActivated(): bool
+    {
+        return $this->is_activated && $this->is_matching_eligible;
+    }
+
+    /**
+     * Check if worker has completed Right to Work verification.
+     */
+    public function hasCompletedRTW(): bool
+    {
+        return $this->rtw_verified;
+    }
+
+    /**
+     * Check if RTW documentation is expired or expiring soon.
+     */
+    public function isRTWExpiring(int $days = 30): bool
+    {
+        if (!$this->rtw_expiry_date) {
+            return false;
+        }
+
+        return $this->rtw_expiry_date->isBetween(now(), now()->addDays($days));
+    }
+
+    /**
+     * Check if RTW documentation has expired.
+     */
+    public function isRTWExpired(): bool
+    {
+        return $this->rtw_expiry_date && $this->rtw_expiry_date->isPast();
+    }
+
+    /**
+     * Check if phone is verified.
+     */
+    public function isPhoneVerified(): bool
+    {
+        return $this->phone_verified;
+    }
+
+    /**
+     * Check if payment setup is complete.
+     */
+    public function hasPaymentSetup(): bool
+    {
+        return $this->payment_setup_complete;
+    }
+
+    /**
+     * Get profile photo status label.
+     */
+    public function getProfilePhotoStatusLabel(): string
+    {
+        $labels = [
+            'none' => 'No Photo',
+            'pending' => 'Pending Review',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+        ];
+
+        return $labels[$this->profile_photo_status] ?? 'Unknown';
+    }
+
+    /**
+     * Check if ready for activation (meets all requirements).
+     */
+    public function isReadyForActivation(): bool
+    {
+        return $this->identity_verified
+            && $this->rtw_verified
+            && $this->phone_verified
+            && $this->payment_setup_complete
+            && $this->profile_completion_percentage >= 80
+            && !$this->is_activated;
+    }
+
+    /**
+     * Mark first shift guidance as shown.
+     */
+    public function markFirstShiftGuidanceShown(): self
+    {
+        $this->update([
+            'first_shift_guidance_shown' => true,
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Mark first shift as completed.
+     */
+    public function markFirstShiftCompleted(): self
+    {
+        $this->update([
+            'first_shift_completed_at' => now(),
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Disable matching eligibility.
+     */
+    public function disableMatching(string $reason): self
+    {
+        $this->update([
+            'is_matching_eligible' => false,
+            'matching_eligibility_reason' => $reason,
+        ]);
+
+        return $this;
+    }
+
+    /**
+     * Enable matching eligibility.
+     */
+    public function enableMatching(): self
+    {
+        $this->update([
+            'is_matching_eligible' => true,
+            'matching_eligibility_reason' => null,
+        ]);
+
+        return $this;
     }
 }

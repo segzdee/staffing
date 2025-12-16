@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Models\BusinessProfile;
 use App\Models\AgencyProfile;
-use App\Models\AiAgentProfile;
 use App\Models\Skill;
 use App\Models\WorkerSkill;
 use Carbon\Carbon;
@@ -18,7 +17,7 @@ class DevCredentialsSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Creates 5 dev accounts (Worker, Business, Agency, AI Agent, Admin) with 7-day expiration.
+     * Creates 4 dev accounts (Worker, Business, Agency, Admin) with 7-day expiration.
      */
     public function run(): void
     {
@@ -169,50 +168,6 @@ class DevCredentialsSeeder extends Seeder
         $this->command->info('✓ Dev Agency created: dev.agency@overtimestaff.io / Dev007!');
 
         // ============================================================
-        // DEV AI AGENT
-        // ============================================================
-        $devAgent = User::updateOrCreate(
-            ['email' => 'dev.agent@overtimestaff.io'],
-            [
-                'name' => 'Dev AI Agent',
-                'username' => 'devagent',
-                'password' => Hash::make('Dev007!'),
-                'user_type' => 'ai_agent',
-                'role' => 'user',
-                'status' => 'active',
-                'email_verified_at' => now(),
-                'is_dev_account' => true,
-                'dev_expires_at' => $expiresAt,
-            ]
-        );
-
-        // Create AI Agent Profile
-        AiAgentProfile::updateOrCreate(
-            ['user_id' => $devAgent->id],
-            [
-                'agent_name' => 'Dev AI Assistant',
-                'api_key' => 'dev_' . str()->random(32),
-                'capabilities' => [
-                    'shift_search',
-                    'worker_search',
-                    'matching',
-                    'application_submission',
-                ],
-                'rate_limits' => [
-                    'per_minute' => 60,
-                    'per_hour' => 1000,
-                ],
-                'is_active' => true,
-                'last_activity_at' => now(),
-                'total_api_calls' => 0,
-                'total_shifts_created' => 0,
-                'total_workers_matched' => 0,
-            ]
-        );
-
-        $this->command->info('✓ Dev AI Agent created: dev.agent@overtimestaff.io / Dev007!');
-
-        // ============================================================
         // DEV ADMIN
         // ============================================================
         $devAdmin = User::updateOrCreate(
@@ -232,7 +187,7 @@ class DevCredentialsSeeder extends Seeder
 
         $this->command->info('✓ Dev Admin created: dev.admin@overtimestaff.io / Dev007!');
 
-        $this->command->info("\n✅ All 5 dev accounts created successfully!");
+        $this->command->info("\n✅ All 4 dev accounts created successfully!");
         $this->command->info("📅 Expiration date: {$expiresAt->format('Y-m-d H:i:s')}");
         $this->command->info("⏰ Expires in: 7 days\n");
     }

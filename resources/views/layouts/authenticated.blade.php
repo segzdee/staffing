@@ -19,7 +19,7 @@
     @else
         <!-- Fallback to Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
-        <script>
+        <script nonce="{{ $cspNonce ?? '' }}">
             tailwind.config = {
                 darkMode: 'class',
                 theme: {
@@ -92,7 +92,9 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <style>
+    {{-- CSP Nonce: All inline styles and scripts must include the nonce attribute --}}
+    {{-- Example: <style nonce="{{ $cspNonce ?? '' }}"> or <script nonce="{{ $cspNonce ?? '' }}"> --}}
+    <style nonce="{{ $cspNonce ?? '' }}">
         [x-cloak] { display: none !important; }
 
         /* Custom scrollbar - minimal */
@@ -173,7 +175,7 @@
             <div class="h-full flex flex-col">
                 <!-- Logo -->
                 <div class="flex items-center justify-between h-16 px-6 border-b border-border">
-                    <a href="{{ route('dashboard') }}" class="flex items-center">
+                    <a href="{{ route('dashboard.index') }}" class="flex items-center">
                         <img src="/images/logo.svg" alt="OvertimeStaff" style="height: 32px; width: auto;">
                     </a>
                     <button @click="sidebarOpen = false" class="lg:hidden text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent transition-colors">
@@ -237,8 +239,9 @@
                 <div class="flex items-center space-x-2">
                     <!-- Search Bar -->
                     <div class="hidden md:block relative">
-                        <input type="text" placeholder="Search..." class="w-64 px-3 py-2 pl-9 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all">
-                        <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <label for="main-search" class="sr-only">Search</label>
+                        <input id="main-search" type="text" placeholder="Search..." aria-label="Search" class="w-64 px-3 py-2 pl-9 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all">
+                        <svg class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                     </div>

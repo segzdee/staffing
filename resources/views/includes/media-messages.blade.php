@@ -601,7 +601,7 @@ use Carbon\Carbon;
 	 @endif
 
 @if ($mediaCount == 0)
-	{!! $chatMessage !!}
+	{!! e($chatMessage) !!}
 @endif
 
 

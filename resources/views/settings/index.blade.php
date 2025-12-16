@@ -5,14 +5,14 @@
 
 @section('sidebar-nav')
 @if(auth()->user()->user_type === 'worker')
-<a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+<a href="{{ route('dashboard.index') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
     </svg>
     <span>Dashboard</span>
 </a>
 @elseif(auth()->user()->user_type === 'business')
-<a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+<a href="{{ route('dashboard.index') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
     </svg>
@@ -42,6 +42,9 @@
                 </button>
                 <button onclick="showTab('notifications')" id="tab-notifications" class="tab-btn px-6 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 font-medium text-sm">
                     Notifications
+                </button>
+                <button onclick="showTab('security')" id="tab-security" class="tab-btn px-6 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 font-medium text-sm">
+                    Security
                 </button>
                 <button onclick="showTab('account')" id="tab-account" class="tab-btn px-6 py-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300 font-medium text-sm">
                     Account
@@ -234,6 +237,58 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="content-security" class="tab-content hidden p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Security Settings</h2>
+
+                <!-- Two-Factor Authentication Section -->
+                <div class="mb-8">
+                    <div class="flex items-center justify-between p-4 rounded-lg {{ auth()->user()->hasTwoFactorEnabled() ? 'bg-green-50' : 'bg-gray-50' }}">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                @if(auth()->user()->hasTwoFactorEnabled())
+                                <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                                @else
+                                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                @endif
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium {{ auth()->user()->hasTwoFactorEnabled() ? 'text-green-900' : 'text-gray-900' }}">
+                                    Two-Factor Authentication (2FA)
+                                </h3>
+                                <p class="mt-1 text-sm {{ auth()->user()->hasTwoFactorEnabled() ? 'text-green-700' : 'text-gray-500' }}">
+                                    @if(auth()->user()->hasTwoFactorEnabled())
+                                    Your account is protected with an authenticator app.
+                                    @else
+                                    Add an extra layer of security to your account.
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <a href="{{ route('two-factor.index') }}" class="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-medium text-sm">
+                                {{ auth()->user()->hasTwoFactorEnabled() ? 'Manage 2FA' : 'Enable 2FA' }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Login Activity (Placeholder for future implementation) -->
+                <div class="border-t border-gray-200 pt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Login Sessions</h3>
+                    <p class="text-sm text-gray-500 mb-4">
+                        Manage and log out your active sessions on other browsers and devices.
+                    </p>
+                    <div class="p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
+                        <p>Session management coming soon.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Account Tab -->

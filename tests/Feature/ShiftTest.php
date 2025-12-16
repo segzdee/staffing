@@ -3,9 +3,9 @@
 use App\Models\Shift;
 use App\Models\User;
 use App\Models\BusinessProfile;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
     // Create a business user with profile

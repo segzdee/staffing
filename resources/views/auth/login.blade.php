@@ -1,421 +1,129 @@
-@extends('layouts.guest')
+@extends('layouts.auth')
 
 @section('title', 'Sign In - OvertimeStaff')
+@section('brand-headline', 'Work. Covered.')
+@section('brand-subtext', 'When shifts break, the right people show up.')
 
-@push('styles')
-<link rel="stylesheet" href="{{ asset('css/auth.css') }}">
-@endpush
-
-@section('content')
-<div class="auth-container">
-    <!-- Accessibility: Live region for announcing validation errors -->
-    <div id="validation-announcer" class="validation-announcer" aria-live="polite" aria-atomic="true"></div>
-
-    <!-- Card Container -->
-    <div class="auth-card" x-data="loginForm()" x-init="init()">
-        <!-- Logo & Header -->
-        <div class="auth-logo-section">
-            <div class="auth-logo">
-                <img src="/images/logo.svg" alt="OvertimeStaff" class="auth-logo-img">
-            </div>
-            <div class="auth-header">
-                <h2>Welcome Back</h2>
-                <p>Sign in to continue to OvertimeStaff</p>
-            </div>
+@section('form')
+    <div class="space-y-6">
+        {{-- Header --}}
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Sign in</h2>
+            <p class="mt-1 text-sm text-gray-500">Welcome back! Enter your details below.</p>
         </div>
 
-        <!-- Error Messages -->
+        {{-- Error Messages --}}
         @if ($errors->any())
-        <div class="auth-alert auth-alert-error" role="alert">
-            <svg class="auth-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <div class="auth-alert-content">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
+        <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <ul class="text-sm text-red-600 space-y-1">
+                @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
         @endif
 
         @if(session('status'))
-        <div class="auth-alert auth-alert-success" role="status">
-            <svg class="auth-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <div class="auth-alert-content">
-                <span>{{ session('status') }}</span>
-            </div>
+        <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+            {{ session('status') }}
         </div>
         @endif
-
-        @if(session('login_required'))
-        <div class="auth-alert auth-alert-warning" role="alert">
-            <svg class="auth-alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <div class="auth-alert-content">
-                <span>Please login to continue</span>
-            </div>
-        </div>
-        @endif
-
-        <!-- Login Form -->
-        <form method="POST"
-              action="{{ route('login') }}"
-              class="auth-form"
-              @submit="handleSubmit"
-              novalidate>
+        
+        {{-- Form --}}
+        <form action="{{ route('login') }}" method="POST" class="space-y-4">
             @csrf
-
-            <!-- Email -->
-            <div class="form-group" :class="{ 'has-error': errors.email, 'has-success': touched.email && !errors.email && email }">
-                <label for="email" class="form-label">Email Address</label>
-                <div class="form-input-wrapper">
-                    <div class="form-input-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
-                        </svg>
-                    </div>
-                    <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        x-model="email"
-                        @blur="validateEmail"
-                        @input="clearError('email')"
-                        value="{{ old('email') }}"
-                        required
-                        autofocus
-                        autocomplete="email"
-                        inputmode="email"
-                        minlength="5"
-                        maxlength="255"
-                        pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                        class="form-input"
-                        :class="{ 'form-input-error': errors.email, 'form-input-valid': touched.email && !errors.email && email }"
-                        :aria-invalid="errors.email ? 'true' : 'false'"
-                        :aria-describedby="errors.email ? 'email-error' : null"
-                        placeholder="you@example.com"
-                    >
-                    <!-- Validation icons -->
-                    <svg x-show="touched.email && !errors.email && email"
-                         class="validation-icon validation-icon-valid show"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <svg x-show="errors.email"
-                         class="validation-icon validation-icon-error show"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"/>
-                    </svg>
-                </div>
-                <!-- Error message -->
-                <div x-show="errors.email"
-                     x-transition:enter="animate"
-                     class="validation-message validation-message-error show"
-                     id="email-error"
-                     role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.email"></span>
-                </div>
-                @if($errors->has('email'))
-                    <span class="validation-message validation-message-error show" role="alert">
-                        <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        {{ $errors->first('email') }}
-                    </span>
-                @endif
+            
+            {{-- Email --}}
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    value="{{ old('email') }}"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('email') border-red-500 @enderror"
+                    placeholder="Your email address"
+                    required
+                    autofocus
+                >
+                @error('email')
+                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                @enderror
             </div>
-
-            <!-- Password -->
-            <div class="form-group" :class="{ 'has-error': errors.password, 'has-success': touched.password && !errors.password && password }">
-                <label for="password" class="form-label">Password</label>
-                <div class="form-input-wrapper">
-                    <div class="form-input-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                    </div>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        x-model="password"
-                        @blur="validatePassword"
-                        @input="clearError('password')"
-                        required
-                        autocomplete="current-password"
-                        minlength="8"
-                        maxlength="128"
-                        class="form-input"
-                        :class="{ 'form-input-error': errors.password, 'form-input-valid': touched.password && !errors.password && password }"
-                        :aria-invalid="errors.password ? 'true' : 'false'"
-                        :aria-describedby="errors.password ? 'password-error' : 'password-hint'"
-                        placeholder="Enter your password"
-                    >
-                    <!-- Validation icons -->
-                    <svg x-show="touched.password && !errors.password && password"
-                         class="validation-icon validation-icon-valid show"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    <svg x-show="errors.password"
-                         class="validation-icon validation-icon-error show"
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"/>
-                    </svg>
+            
+            {{-- Password --}}
+            <div>
+                <div class="flex justify-between items-center mb-1">
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:text-blue-700">Forgot password?</a>
                 </div>
-                <!-- Helper text -->
-                <p class="auth-text-small" id="password-hint" x-show="!errors.password && !touched.password">
-                    <svg class="auth-icon-sm" style="display: inline-block; vertical-align: middle;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    Minimum 8 characters
-                </p>
-                <!-- Error message -->
-                <div x-show="errors.password"
-                     x-transition:enter="animate"
-                     class="validation-message validation-message-error show"
-                     id="password-error"
-                     role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.password"></span>
-                </div>
-                @if($errors->has('password'))
-                    <span class="validation-message validation-message-error show" role="alert">
-                        <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        {{ $errors->first('password') }}
-                    </span>
-                @endif
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('password') border-red-500 @enderror"
+                    placeholder="Password"
+                    required
+                >
+                @error('password')
+                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                @enderror
             </div>
-
-            <!-- Remember Me & Forgot -->
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-                <label class="form-checkbox-wrapper">
-                    <input
-                        type="checkbox"
-                        name="remember"
-                        {{ old('remember') ? 'checked' : '' }}
-                        class="form-checkbox"
-                    >
-                    <span class="form-checkbox-label">Remember me</span>
-                </label>
-
-                <a href="{{ route('password.request') }}" class="auth-link">
-                    Forgot password?
-                </a>
+            
+            {{-- Remember Me --}}
+            <div class="flex items-center">
+                <input 
+                    type="checkbox" 
+                    id="remember" 
+                    name="remember" 
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    {{ old('remember') ? 'checked' : '' }}
+                >
+                <label for="remember" class="ml-2 text-sm text-gray-600">Keep me logged in</label>
             </div>
-
-            <!-- Submit Button -->
-            <button
-                type="submit"
-                class="btn-form-primary"
-                :class="{ 'validating': isSubmitting }"
-                :disabled="isSubmitting"
-                :aria-busy="isSubmitting"
-            >
-                <span x-show="!isSubmitting">Sign In</span>
-                <span x-show="isSubmitting" class="sr-only">Signing in...</span>
-                <svg x-show="!isSubmitting" class="auth-icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                </svg>
+            
+            {{-- Submit --}}
+            <button type="submit" class="w-full py-3 px-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors">
+                Sign in
             </button>
         </form>
-
-        <!-- Divider -->
-        <div class="auth-divider">
-            <span>New to OvertimeStaff?</span>
+        
+        {{-- Divider --}}
+        <div class="flex items-center gap-4">
+            <div class="flex-1 h-px bg-gray-200"></div>
+            <span class="text-sm text-gray-500">OR</span>
+            <div class="flex-1 h-px bg-gray-200"></div>
         </div>
-
-        <!-- Register Link -->
-        <a
-            href="{{ route('register') }}"
-            class="btn-form-secondary"
-        >
-            Create an Account
-        </a>
-    </div>
-
-    <!-- Quick Login (Development) -->
-    @if(config('app.env') === 'local')
-    <div class="auth-dev-section">
-        <p class="auth-dev-header">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Quick Dev Login
-        </p>
-        <div class="auth-dev-grid">
-            <a href="{{ route('dev.login', 'worker') }}" class="auth-dev-btn">
-                Worker
+        
+        {{-- Social Login --}}
+        <div class="flex gap-3">
+            <a href="{{ route('social.redirect', ['provider' => 'google']) }}?action=login" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Google</span>
             </a>
-            <a href="{{ route('dev.login', 'business') }}" class="auth-dev-btn">
-                Business
+            <a href="{{ route('social.redirect', ['provider' => 'apple']) }}?action=login" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Apple</span>
             </a>
-            <a href="{{ route('dev.login', 'agency') }}" class="auth-dev-btn">
-                Agency
-            </a>
-            <a href="{{ route('dev.login', 'agent') }}" class="auth-dev-btn">
-                AI Agent
-            </a>
-            <a href="{{ route('dev.login', 'admin') }}" class="auth-dev-btn">
-                Admin
+            <a href="{{ route('social.redirect', ['provider' => 'facebook']) }}?action=login" class="flex-1 flex items-center justify-center gap-2 py-3 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Facebook</span>
             </a>
         </div>
-        <p>
-            <a href="{{ route('dev.credentials') }}" class="auth-dev-link">View all credentials</a>
+        
+        {{-- Switch to Register --}}
+        <p class="text-center text-sm text-gray-600">
+            Don't have an account? 
+            <a href="{{ route('register') }}" class="font-medium text-blue-600 hover:text-blue-700">Sign up</a>
         </p>
     </div>
-    @endif
-</div>
 @endsection
-
-@push('scripts')
-<script>
-function loginForm() {
-    return {
-        email: '{{ old('email') }}',
-        password: '',
-        errors: {
-            email: '',
-            password: ''
-        },
-        touched: {
-            email: false,
-            password: false
-        },
-        isSubmitting: false,
-
-        init() {
-            // Initialize with old values if present
-            if (this.email) {
-                this.touched.email = true;
-            }
-        },
-
-        validateEmail() {
-            this.touched.email = true;
-            const email = this.email.trim();
-
-            if (!email) {
-                this.errors.email = 'Email address is required';
-                this.announceError('Email address is required');
-                return false;
-            }
-
-            // Basic email format validation
-            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            if (!emailRegex.test(email)) {
-                this.errors.email = 'Please enter a valid email address';
-                this.announceError('Please enter a valid email address');
-                return false;
-            }
-
-            this.errors.email = '';
-            return true;
-        },
-
-        validatePassword() {
-            this.touched.password = true;
-
-            if (!this.password) {
-                this.errors.password = 'Password is required';
-                this.announceError('Password is required');
-                return false;
-            }
-
-            if (this.password.length < 8) {
-                this.errors.password = 'Password must be at least 8 characters';
-                this.announceError('Password must be at least 8 characters');
-                return false;
-            }
-
-            this.errors.password = '';
-            return true;
-        },
-
-        clearError(field) {
-            if (this.touched[field] && this.errors[field]) {
-                // Re-validate on input if there was an error
-                if (field === 'email') {
-                    this.validateEmail();
-                } else if (field === 'password') {
-                    this.validatePassword();
-                }
-            }
-        },
-
-        validateAll() {
-            const emailValid = this.validateEmail();
-            const passwordValid = this.validatePassword();
-            return emailValid && passwordValid;
-        },
-
-        handleSubmit(event) {
-            if (!this.validateAll()) {
-                event.preventDefault();
-
-                // Focus first field with error
-                if (this.errors.email) {
-                    document.getElementById('email').focus();
-                } else if (this.errors.password) {
-                    document.getElementById('password').focus();
-                }
-
-                // Add shake animation to inputs with errors
-                if (this.errors.email) {
-                    this.shakeInput('email');
-                }
-                if (this.errors.password) {
-                    this.shakeInput('password');
-                }
-
-                return false;
-            }
-
-            this.isSubmitting = true;
-        },
-
-        shakeInput(fieldId) {
-            const input = document.getElementById(fieldId);
-            if (input) {
-                input.classList.add('shake');
-                setTimeout(() => {
-                    input.classList.remove('shake');
-                }, 400);
-            }
-        },
-
-        announceError(message) {
-            const announcer = document.getElementById('validation-announcer');
-            if (announcer) {
-                announcer.textContent = message;
-                // Clear after announcement
-                setTimeout(() => {
-                    announcer.textContent = '';
-                }, 1000);
-            }
-        }
-    };
-}
-
-// Quick login helper for development
-function quickLogin(email, password) {
-    document.getElementById('email').value = email;
-    document.getElementById('password').value = password;
-    // Trigger Alpine.js model update
-    document.getElementById('email').dispatchEvent(new Event('input'));
-    document.getElementById('password').dispatchEvent(new Event('input'));
-}
-</script>
-@endpush

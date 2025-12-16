@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
+use App\Auth\SessionGuard;
 use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Models\BusinessProfile;
@@ -122,6 +124,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+        $this->registerSessionRotatingGuard();
 
         // Define additional gates for role-based access
         Gate::define('view-admin-panel', function (User $user) {
@@ -129,7 +132,7 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         Gate::define('manage-shifts', function (User $user) {
-            return $user->isBusiness() || $user->isAiAgent();
+            return $user->isBusiness();
         });
 
         Gate::define('apply-to-shifts', function (User $user) {
@@ -138,6 +141,51 @@ class AuthServiceProvider extends ServiceProvider
 
         Gate::define('manage-agency-workers', function (User $user) {
             return $user->isAgency();
+        });
+    }
+
+    /**
+     * Register the custom session guard with remember token rotation.
+     *
+     * This guard enhances security by rotating the remember_token on every
+     * authentication event, preventing session fixation attacks and limiting
+     * the damage if a remember token is compromised.
+     *
+     * @return void
+     */
+    protected function registerSessionRotatingGuard(): void
+    {
+        Auth::extend('session-rotating', function ($app, $name, array $config) {
+            $provider = Auth::createUserProvider($config['provider'] ?? null);
+
+            $guard = new SessionGuard(
+                $name,
+                $provider,
+                $app['session.store'],
+                $app['request']
+            );
+
+            // Set the cookie jar for remember me functionality
+            if (method_exists($guard, 'setCookieJar')) {
+                $guard->setCookieJar($app['cookie']);
+            }
+
+            // Set the event dispatcher
+            if (method_exists($guard, 'setDispatcher')) {
+                $guard->setDispatcher($app['events']);
+            }
+
+            // Set the request instance
+            if (method_exists($guard, 'setRequest')) {
+                $guard->setRequest($app->refresh('request', $guard, 'setRequest'));
+            }
+
+            // Set password broker for password confirmation timeout
+            if (isset($config['password_timeout'])) {
+                $guard->setPasswordTimeout($config['password_timeout']);
+            }
+
+            return $guard;
         });
     }
 }

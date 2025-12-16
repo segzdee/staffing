@@ -15,11 +15,13 @@ class ViewServiceProvider extends ServiceProvider {
 	public function boot()
 	{
 		try {
-			// Admin Settings
-			 $settings = AdminSettings::first();
-			 View()->share('settings', $settings);
+			// Admin Settings - ensure $settings is never null
+			$settings = AdminSettings::first();
+			// Share settings, or a default object if none exists
+			View()->share('settings', $settings ?? new \stdClass());
 		} catch (\Exception $exception) {
-			// Nothing
+			// Share empty object as fallback to prevent undefined variable errors
+			View()->share('settings', new \stdClass());
 		}
 
 	}

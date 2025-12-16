@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 use App\Models\User;
 use App\Models\AdminSettings;
 use App\Models\Notifications;
@@ -213,6 +214,7 @@ class SettingsController extends Controller
 
     /**
      * Update password
+     * SECURITY: Strengthened password policy - minimum 12 characters with complexity requirements
      *
      * @param Request $request
      * @return Response
@@ -222,8 +224,18 @@ class SettingsController extends Controller
         $user = auth()->user();
 
         $validator = Validator::make($request->all(), [
-            'current_password' => 'required|min:6',
-            'new_password' => 'required|min:6|confirmed',
+            'current_password' => 'required',
+            'new_password' => [
+                'required',
+                'confirmed',
+                Password::min(12)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised(),
+            ],
+        ], [
+            'new_password.min' => 'Your new password must be at least 12 characters.',
         ]);
 
         if ($validator->fails()) {

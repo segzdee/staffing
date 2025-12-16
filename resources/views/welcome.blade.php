@@ -1,337 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="OvertimeStaff - Enterprise-grade shift marketplace platform connecting businesses with verified workers. AI-powered matching, instant payouts, and complete workforce management.">
-    <title>OvertimeStaff - Enterprise Shift Marketplace Platform</title>
+@extends('layouts.marketing')
 
-    <!-- Google Fonts - Inter for professional typography -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+@section('title', 'OvertimeStaff - Global Staffing Marketplace')
+@section('meta_description', 'Connect with verified workers instantly. OvertimeStaff is the global staffing marketplace trusted by 500+ businesses in 70+ countries.')
+@section('keywords', 'staffing, shift marketplace, on-demand workers, temporary staffing, gig work, instant pay, verified workers, AI matching')
+@section('canonical', url('/'))
+@section('og_title', 'OvertimeStaff - Global Staffing Marketplace')
+@section('og_description', 'Connect with verified workers instantly. OvertimeStaff is the global staffing marketplace trusted by 500+ businesses in 70+ countries.')
+@section('og_url', url('/'))
+@section('og_image', asset('images/og-image.jpg'))
+@section('twitter_title', 'OvertimeStaff - Global Staffing Marketplace')
+@section('twitter_description', 'Connect with verified workers instantly. OvertimeStaff is the global staffing marketplace trusted by 500+ businesses in 70+ countries.')
+@section('twitter_image', asset('images/twitter-card.jpg'))
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Alpine.js -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
-    <!-- CSRF Token for AJAX requests -->
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- Custom Tailwind Config - shadcn/ui style -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        border: 'hsl(240 5.9% 90%)',
-                        input: 'hsl(240 5.9% 90%)',
-                        ring: 'hsl(240 5.9% 10%)',
-                        background: 'hsl(0 0% 100%)',
-                        foreground: 'hsl(240 10% 3.9%)',
-                        primary: {
-                            DEFAULT: 'hsl(240 5.9% 10%)',
-                            foreground: 'hsl(0 0% 98%)',
-                        },
-                        secondary: {
-                            DEFAULT: 'hsl(240 4.8% 95.9%)',
-                            foreground: 'hsl(240 5.9% 10%)',
-                        },
-                        destructive: {
-                            DEFAULT: 'hsl(0 84.2% 60.2%)',
-                            foreground: 'hsl(0 0% 98%)',
-                        },
-                        muted: {
-                            DEFAULT: 'hsl(240 4.8% 95.9%)',
-                            foreground: 'hsl(240 3.8% 46.1%)',
-                        },
-                        accent: {
-                            DEFAULT: 'hsl(240 4.8% 95.9%)',
-                            foreground: 'hsl(240 5.9% 10%)',
-                        },
-                        success: '#10B981',
-                        warning: '#F59E0B',
-                        info: '#3B82F6',
-                    },
-                    borderRadius: {
-                        lg: '0.5rem',
-                        md: '0.375rem',
-                        sm: '0.25rem',
-                    },
-                },
-            },
-        }
-    </script>
-
-    <style>
-        /* Button styles - shadcn */
-        .btn-primary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: hsl(0 0% 98%);
-            background: hsl(240 5.9% 10%);
-            border: none;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none;
-        }
-
-        .btn-primary:hover {
-            background: hsl(240 5.9% 10% / 0.9);
-            color: hsl(0 0% 98%);
-        }
-
-        .btn-secondary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 0.625rem 1.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: hsl(240 5.9% 10%);
-            background: transparent;
-            border: 1px solid hsl(240 5.9% 90%);
-            border-radius: 0.375rem;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            text-decoration: none;
-        }
-
-        .btn-secondary:hover {
-            background: hsl(240 4.8% 95.9%);
-            color: hsl(240 5.9% 10%);
-        }
-
-        /* Card styles - shadcn */
-        .card {
-            background: white;
-            border: 1px solid hsl(240 5.9% 90%);
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        }
-
-        /* Feature card */
-        .feature-card {
-            background: white;
-            border: 1px solid hsl(240 5.9% 90%);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .feature-card:hover {
-            border-color: hsl(240 5.9% 80%);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        }
-
-        /* Stats section background */
-        .stats-section {
-            background: hsl(240 5.9% 10%);
-        }
-    </style>
-</head>
-<body class="font-sans antialiased bg-white text-gray-900" x-data="{ mobileMenuOpen: false }">
-
-    <!-- Navigation -->
-    <nav class="border-b bg-white sticky top-0 z-50" style="border-color: hsl(240 5.9% 90%);" role="navigation" aria-label="Main navigation">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <a href="/" class="flex items-center gap-2">
-                    <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                            <rect x="3" y="3" width="7" height="7" rx="1"/>
-                            <rect x="14" y="3" width="7" height="7" rx="1"/>
-                            <rect x="3" y="14" width="7" height="7" rx="1"/>
-                            <rect x="14" y="14" width="7" height="7" rx="1"/>
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold tracking-tight">
-                        OVER<span class="text-blue-600">TIME</span>STAFF
-                    </span>
-                </a>
-
-                <!-- Desktop Navigation -->
-                <div class="hidden lg:flex items-center space-x-8">
-                    @guest
-                        {{-- Guest users see registration links --}}
-                        <a href="{{ route('register', ['type' => 'worker']) }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
-                            Find Shifts
-                        </a>
-                        <a href="{{ route('register', ['type' => 'business']) }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
-                            Find Staff
-                        </a>
-                    @else
-                        @if(auth()->user()->user_type === 'worker')
-                            {{-- Workers see link to browse shifts --}}
-                            <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
-                                Find Shifts
-                            </a>
-                        @elseif(auth()->user()->user_type === 'business')
-                            {{-- Businesses see link to create shifts --}}
-                            <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
-                                Find Staff
-                            </a>
-                        @else
-                            {{-- Agencies and Admins see both links --}}
-                            <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
-                                Find Shifts
-                            </a>
-                            <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);">
-                                Find Staff
-                            </a>
-                        @endif
-                    @endguest
-                </div>
-
-                <!-- Right Side -->
-                <div class="hidden lg:flex items-center space-x-4">
-                    @guest
-                        <a href="{{ route('login') }}" class="text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                            Sign In
-                        </a>
-                        <a href="{{ route('register') }}" class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity" style="background: hsl(240 5.9% 10%);">
-                            Get Started
-                        </a>
-                    @endguest
-                    @auth
-                        <a href="{{ auth()->user()->getDashboardRoute() }}" class="px-4 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 transition-opacity" style="background: hsl(240 5.9% 10%);">
-                            Dashboard
-                        </a>
-                    @endauth
-                </div>
-
-                <!-- Mobile menu button -->
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden p-2" style="color: hsl(240 3.8% 46.1%);">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                </button>
-            </div>
-
-            <!-- Mobile Menu -->
-            <div x-show="mobileMenuOpen" x-cloak class="lg:hidden py-4 space-y-2">
-                @guest
-                    {{-- Guest users see registration links --}}
-                    <a href="{{ route('register', ['type' => 'worker']) }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                        Find Shifts
-                    </a>
-                    <a href="{{ route('register', ['type' => 'business']) }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                        Find Staff
-                    </a>
-                @else
-                    @if(auth()->user()->user_type === 'worker')
-                        {{-- Workers see link to browse shifts --}}
-                        <a href="{{ route('shifts.index') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                            Find Shifts
-                        </a>
-                    @elseif(auth()->user()->user_type === 'business')
-                        {{-- Businesses see link to create shifts --}}
-                        <a href="{{ route('shifts.create') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                            Find Staff
-                        </a>
-                    @else
-                        {{-- Agencies and Admins see both links --}}
-                        <a href="{{ route('shifts.index') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                            Find Shifts
-                        </a>
-                        <a href="{{ route('shifts.create') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                            Find Staff
-                        </a>
-                    @endif
-                @endguest
-                <div class="border-t pt-2" style="border-color: hsl(240 5.9% 90%);">
-                    @guest
-                        <a href="{{ route('login') }}" class="block px-4 py-2 text-sm font-medium" style="color: hsl(240 3.8% 46.1%);">
-                            Sign In
-                        </a>
-                        <a href="{{ route('register') }}" class="block px-4 py-2 text-sm font-medium text-white rounded-lg mx-4" style="background: hsl(240 5.9% 10%);">
-                            Get Started
-                        </a>
-                    @endguest
-                    @auth
-                        <a href="{{ auth()->user()->getDashboardRoute() }}" class="block px-4 py-2 text-sm font-medium text-white rounded-lg mx-4" style="background: hsl(240 5.9% 10%);">
-                            Dashboard
-                        </a>
-                    @endauth
-                </div>
-            </div>
-        </div>
-    </nav>
-
+@section('content')
     <!-- Hero Section -->
-    <section class="py-20 lg:py-28 bg-white">
+    <section class="py-16 lg:py-24 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
                 <!-- Left Column - Content -->
                 <div class="space-y-8">
-                    <!-- Badge -->
-                    <div class="flex items-center space-x-3">
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" style="background: hsl(240 4.8% 95.9%); color: hsl(240 5.9% 10%); border-color: hsl(240 5.9% 90%);">
-                            <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                            70+ countries
-                        </span>
-                        <span class="px-3 py-1 rounded-full text-xs font-medium border" style="background: white; color: hsl(240 3.8% 46.1%); border-color: hsl(240 5.9% 90%);">
-                            Always secure
-                        </span>
+                    <!-- Badges -->
+                    <div class="flex items-center gap-3">
+                        <x-ui.badge-pill color="green">70+ countries</x-ui.badge-pill>
+                        <x-ui.badge-pill color="gray" :dot="false">Always secure</x-ui.badge-pill>
                     </div>
 
                     <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
                         Work. Covered.
                     </h1>
 
-                    <p class="text-lg md:text-xl leading-relaxed max-w-xl" style="color: hsl(240 3.8% 46.1%);">
+                    <p class="text-lg md:text-xl text-gray-500 leading-relaxed max-w-xl">
                         When shifts break, the right people show up. Instantly.
                     </p>
 
                     <!-- Feature Pills -->
                     <div class="flex flex-wrap gap-2">
-                        <span class="inline-flex items-center px-3 py-2 rounded-md text-sm border" style="background: white; border-color: hsl(240 5.9% 90%);">
-                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Instant pay
-                        </span>
-                        <span class="inline-flex items-center px-3 py-2 rounded-md text-sm border" style="background: white; border-color: hsl(240 5.9% 90%);">
-                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Verified workers
-                        </span>
-                        <span class="inline-flex items-center px-3 py-2 rounded-md text-sm border" style="background: white; border-color: hsl(240 5.9% 90%);">
-                            <svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                            Smart matching
-                        </span>
+                        <x-ui.badge-pill color="green" pillSize="lg">Instant pay</x-ui.badge-pill>
+                        <x-ui.badge-pill color="green" pillSize="lg">Verified workers</x-ui.badge-pill>
+                        <x-ui.badge-pill color="green" pillSize="lg">Smart matching</x-ui.badge-pill>
                     </div>
 
 
                     <!-- Stats Row -->
-                    <div class="grid grid-cols-3 gap-6 pt-8 border-t" style="border-color: hsl(240 5.9% 90%);">
+                    <div class="grid grid-cols-3 gap-6 pt-8 border-t border-gray-200">
                         <div>
-                            <div class="text-3xl font-bold">2.3M+</div>
-                            <div class="text-sm" style="color: hsl(240 3.8% 46.1%);">shifts</div>
+                            <div class="text-3xl font-bold text-gray-900">2.3M+</div>
+                            <div class="text-sm text-gray-500">shifts</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold">98.7%</div>
-                            <div class="text-sm" style="color: hsl(240 3.8% 46.1%);">filled</div>
+                            <div class="text-3xl font-bold text-gray-900">98.7%</div>
+                            <div class="text-sm text-gray-500">filled</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold">15min</div>
-                            <div class="text-sm" style="color: hsl(240 3.8% 46.1%);">to match</div>
+                            <div class="text-3xl font-bold text-gray-900">15min</div>
+                            <div class="text-sm text-gray-500">to match</div>
                         </div>
                     </div>
                 </div>
@@ -340,49 +62,112 @@
                 <div class="lg:pl-8">
                     <div class="bg-white shadow-xl rounded-2xl border border-gray-200 p-8" x-data="{ formTab: 'business' }">
                         <!-- Tab Navigation -->
-                        <div class="inline-flex items-center p-1 rounded-md mb-6" style="background: hsl(240 4.8% 95.9%);">
-                            <button
-                                @click="formTab = 'business'"
+                        <div class="inline-flex items-center p-1 rounded-md mb-6 bg-gray-100">
+                            <button @click="formTab = 'business'"
                                 :class="formTab === 'business' ? 'bg-gray-900 text-white' : 'bg-transparent text-gray-600'"
-                                class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
-                            >
+                                class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
                                 For Business
                             </button>
-                            <button
-                                @click="formTab = 'worker'"
+                            <button @click="formTab = 'worker'"
                                 :class="formTab === 'worker' ? 'bg-gray-900 text-white' : 'bg-transparent text-gray-600'"
-                                class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
-                            >
+                                class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
                                 For Workers
+                            </button>
+                            <button @click="formTab = 'agency'"
+                                :class="formTab === 'agency' ? 'bg-gray-900 text-white' : 'bg-transparent text-gray-600'"
+                                class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                                For Agencies
                             </button>
                         </div>
 
                         <!-- Preview Content -->
                         <div class="space-y-4">
                             <div class="text-center mb-6">
-                                <h3 class="text-lg font-semibold mb-2" x-text="formTab === 'business' ? 'Post a shift.' : 'Find Your Next Shift'">Post a shift.</h3>
-                                <p class="text-sm" style="color: hsl(240 3.8% 46.1%);" x-text="formTab === 'business' ? 'We\'ll handle the rest.' : 'Browse shifts and start earning today'">We'll handle the rest.</p>
+                                <h3 class="text-lg font-semibold mb-2"
+                                    x-text="formTab === 'business' ? 'Post a shift.' : formTab === 'worker' ? 'Find your next shift.' : 'Scale your agency.'">
+                                    Post a shift.</h3>
+                                <p class="text-sm text-gray-500"
+                                    x-text="formTab === 'business' ? 'We\'ll handle the rest.' : formTab === 'worker' ? 'Browse shifts and start earning today' : 'Manage workers, clients, and placements'">
+                                    We'll handle the rest.</p>
                             </div>
 
                             <!-- Mock Form -->
-                            <div class="space-y-4">
+                            <div class="space-y-4" x-show="formTab !== 'agency'">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1.5" x-text="formTab === 'business' ? 'Job Title' : 'Your Skills'">Job Title</label>
-                                    <input type="text" :placeholder="formTab === 'business' ? 'e.g., Event Server, Warehouse Associate' : 'e.g., Server, Bartender, Retail'" class="w-full h-12 px-4 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
+                                    <label for="preview-title" class="block text-sm font-medium text-gray-700 mb-1.5"
+                                        x-text="formTab === 'business' ? 'Shift Title' : 'Skills'">Shift Title</label>
+                                    <input type="text" id="preview-title"
+                                        :placeholder="formTab === 'business' ? 'e.g., Event Server, Warehouse Associate' : 'e.g., Server, Bartender, Retail'"
+                                        class="w-full h-12 px-4 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none"
+                                        aria-label="Preview form field" disabled>
                                 </div>
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5" x-text="formTab === 'business' ? 'Date' : 'Location'">Date</label>
-                                        <input type="text" :placeholder="formTab === 'business' ? 'Select date' : 'City, State'" class="w-full h-12 px-4 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
+                                        <label for="preview-date" class="block text-sm font-medium text-gray-700 mb-1.5"
+                                            x-text="formTab === 'business' ? 'Date' : 'Location'">Date</label>
+                                        <input type="text" id="preview-date"
+                                            :placeholder="formTab === 'business' ? 'Select date' : 'City, State'"
+                                            class="w-full h-12 px-4 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none"
+                                            aria-label="Preview form field" disabled>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1.5" x-text="formTab === 'business' ? 'Workers' : 'Availability'">Workers</label>
-                                        <input type="text" :placeholder="formTab === 'business' ? '5' : 'Full-time'" class="w-full h-12 px-4 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none">
+                                        <label for="preview-workers" class="block text-sm font-medium text-gray-700 mb-1.5"
+                                            x-text="formTab === 'business' ? 'Workers' : 'Availability'">Workers</label>
+                                        <input type="text" id="preview-workers"
+                                            :placeholder="formTab === 'business' ? '5' : 'Full-time'"
+                                            class="w-full h-12 px-4 text-gray-900 bg-white border border-gray-200 rounded-lg transition-all duration-200 placeholder:text-gray-400 focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10 focus:outline-none"
+                                            aria-label="Preview form field" disabled>
                                     </div>
                                 </div>
-                                <a :href="formTab === 'business' ? '{{ route('register', ['type' => 'business']) }}' : '{{ route('register', ['type' => 'worker']) }}'" class="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg inline-flex items-center justify-center transition-all duration-200">
-                                    Get Started
-                                </a>
+                                @guest
+                                    <a :href="formTab === 'business' ? '{{ route('register', ['type' => 'business']) }}' : formTab === 'worker' ? '{{ route('register', ['type' => 'worker']) }}' : '{{ route('agency.register.index') }}'"
+                                        class="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg inline-flex items-center justify-center transition-all duration-200">
+                                        Get Started
+                                    </a>
+                                @endguest
+                            </div>
+
+                            <!-- Agency Content -->
+                            <div class="space-y-4" x-show="formTab === 'agency'" x-cloak>
+                                <div class="text-center space-y-3">
+                                    <p class="text-sm text-gray-600">Manage your worker pool, clients, and placements all in
+                                        one place.</p>
+                                    <ul class="text-left text-sm text-gray-600 space-y-2">
+                                        <li class="flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"
+                                                aria-hidden="true">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span>Worker pool management</span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"
+                                                aria-hidden="true">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span>Client & placement tracking</span>
+                                        </li>
+                                        <li class="flex items-center gap-2">
+                                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"
+                                                aria-hidden="true">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span>Commission tracking</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                                @guest
+                                    <a href="{{ route('agency.register.index') }}"
+                                        class="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg inline-flex items-center justify-center transition-all duration-200">
+                                        Register Agency
+                                    </a>
+                                @endguest
                             </div>
                         </div>
                     </div>
@@ -392,44 +177,19 @@
     </section>
 
     <!-- Trust Indicators Section -->
-    <section class="py-16 bg-white border-y" style="border-color: hsl(240 5.9% 90%);">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-2">Trusted worldwide.</h2>
-            </div>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-gray-900">500+</div>
-                    <div class="text-sm text-gray-600 mt-1">Businesses</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-gray-900">70+</div>
-                    <div class="text-sm text-gray-600 mt-1">Countries</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-gray-900">24/7</div>
-                    <div class="text-sm text-gray-600 mt-1">Support</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-gray-900">15min</div>
-                    <div class="text-sm text-gray-600 mt-1">to match</div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <x-trust-section background="white" class="border-y border-gray-200" />
 
     <!-- Live Shift Market Section -->
     <section id="live-market" class="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-12">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4" style="background: hsl(240 4.8% 95.9%); color: hsl(240 5.9% 10%);">
-                    <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
-                    LIVE
-                </span>
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                <x-ui.badge-pill color="green" class="mb-4">
+                    <span class="animate-pulse">LIVE</span>
+                </x-ui.badge-pill>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                     Open shifts. Right now.
                 </h2>
-                <p class="text-lg max-w-2xl mx-auto" style="color: hsl(240 3.8% 46.1%);">
+                <p class="text-lg text-gray-500 max-w-2xl mx-auto">
                     See them. Claim them.
                 </p>
             </div>
@@ -438,12 +198,13 @@
             <x-live-shift-market variant="landing" :limit="6" />
 
             <div class="text-center mt-8">
-                <a href="{{ route('register') }}" class="btn-primary text-base px-8 py-3">
+                <x-ui.button-primary href="{{ route('register', ['type' => 'worker']) }}" btnSize="lg">
                     Browse Shifts
                     <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
-                </a>
+                </x-ui.button-primary>
             </div>
         </div>
     </section>
@@ -452,427 +213,200 @@
     <section id="solutions" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                     Built for work that can't wait.
                 </h2>
             </div>
 
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Hospitality -->
-                <div class="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-gray-300 cursor-pointer bg-white border border-gray-200 rounded-lg p-6">
-                    <div class="w-12 h-12 rounded-md flex items-center justify-center mb-4 transition-colors" style="background: hsl(240 4.8% 95.9%);">
-                        <svg class="w-6 h-6 transition-colors group-hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                <x-ui.card-white hover class="cursor-pointer group" role="button" tabindex="0"
+                    aria-label="Browse hospitality shifts">
+                    <div
+                        class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors">
+                        <svg class="w-6 h-6 text-gray-500 group-hover:text-blue-600 transition-colors" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold">Hospitality</h3>
-                </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Hospitality</h3>
+                </x-ui.card-white>
 
                 <!-- Healthcare -->
-                <div class="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-gray-300 cursor-pointer bg-white border border-gray-200 rounded-lg p-6">
-                    <div class="w-12 h-12 rounded-md flex items-center justify-center mb-4 transition-colors" style="background: hsl(240 4.8% 95.9%);">
-                        <svg class="w-6 h-6 transition-colors group-hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                <x-ui.card-white hover class="cursor-pointer group" role="button" tabindex="0"
+                    aria-label="Browse healthcare shifts">
+                    <div
+                        class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors">
+                        <svg class="w-6 h-6 text-gray-500 group-hover:text-blue-600 transition-colors" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold">Healthcare</h3>
-                </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Healthcare</h3>
+                </x-ui.card-white>
 
                 <!-- Retail -->
-                <div class="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-gray-300 cursor-pointer bg-white border border-gray-200 rounded-lg p-6">
-                    <div class="w-12 h-12 rounded-md flex items-center justify-center mb-4 transition-colors" style="background: hsl(240 4.8% 95.9%);">
-                        <svg class="w-6 h-6 transition-colors group-hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                <x-ui.card-white hover class="cursor-pointer group" role="button" tabindex="0"
+                    aria-label="Browse retail shifts">
+                    <div
+                        class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors">
+                        <svg class="w-6 h-6 text-gray-500 group-hover:text-blue-600 transition-colors" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold">Retail</h3>
-                </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Retail</h3>
+                </x-ui.card-white>
 
                 <!-- Logistics -->
-                <div class="group transition-all duration-200 hover:shadow-lg hover:-translate-y-1 hover:border-gray-300 cursor-pointer bg-white border border-gray-200 rounded-lg p-6">
-                    <div class="w-12 h-12 rounded-md flex items-center justify-center mb-4 transition-colors" style="background: hsl(240 4.8% 95.9%);">
-                        <svg class="w-6 h-6 transition-colors group-hover:text-gray-900" style="color: hsl(240 3.8% 46.1%);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                <x-ui.card-white hover class="cursor-pointer group" role="button" tabindex="0"
+                    aria-label="Browse logistics shifts">
+                    <div
+                        class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center mb-4 group-hover:bg-blue-50 transition-colors">
+                        <svg class="w-6 h-6 text-gray-500 group-hover:text-blue-600 transition-colors" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold">Logistics</h3>
-                </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Logistics</h3>
+                </x-ui.card-white>
             </div>
         </div>
     </section>
 
     <!-- How It Works Section -->
-    <section id="how-it-works" class="py-20" style="background: hsl(240 4.8% 95.9% / 0.5);">
+    <section id="how-it-works" class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4" style="background: white; color: hsl(240 5.9% 10%); border: 1px solid hsl(240 5.9% 90%);">
-                    HOW IT WORKS
-                </span>
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">
+                <x-ui.badge-pill color="gray" :dot="false" class="mb-4">HOW IT WORKS</x-ui.badge-pill>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
                     Post. Match. Work. Pay.
                 </h2>
             </div>
 
-            <div class="grid md:grid-cols-4 gap-8">
+            <div class="grid md:grid-cols-4 gap-8" role="list">
                 <!-- Step 1 -->
-                <div class="text-center">
-                    <div class="w-14 h-14 rounded-md flex items-center justify-center mx-auto mb-4" style="background: hsl(240 5.9% 10%); color: hsl(0 0% 98%);">
+                <div class="text-center" role="listitem">
+                    <div class="w-14 h-14 rounded-lg bg-gray-900 text-white flex items-center justify-center mx-auto mb-4"
+                        aria-hidden="true">
                         <span class="text-xl font-bold">1</span>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">You post</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">You post</h3>
+                    <p class="text-sm text-gray-500">Create a shift listing in minutes</p>
                 </div>
 
                 <!-- Step 2 -->
-                <div class="text-center">
-                    <div class="w-14 h-14 rounded-md flex items-center justify-center mx-auto mb-4" style="background: hsl(240 5.9% 10%); color: hsl(0 0% 98%);">
+                <div class="text-center" role="listitem">
+                    <div class="w-14 h-14 rounded-lg bg-gray-900 text-white flex items-center justify-center mx-auto mb-4"
+                        aria-hidden="true">
                         <span class="text-xl font-bold">2</span>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">We match</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">We match</h3>
+                    <p class="text-sm text-gray-500">AI finds qualified workers instantly</p>
                 </div>
 
                 <!-- Step 3 -->
-                <div class="text-center">
-                    <div class="w-14 h-14 rounded-md flex items-center justify-center mx-auto mb-4" style="background: hsl(240 5.9% 10%); color: hsl(0 0% 98%);">
+                <div class="text-center" role="listitem">
+                    <div class="w-14 h-14 rounded-lg bg-gray-900 text-white flex items-center justify-center mx-auto mb-4"
+                        aria-hidden="true">
                         <span class="text-xl font-bold">3</span>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">They show up</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">They show up</h3>
+                    <p class="text-sm text-gray-500">Verified workers arrive on time</p>
                 </div>
 
                 <!-- Step 4 -->
-                <div class="text-center">
-                    <div class="w-14 h-14 rounded-md flex items-center justify-center mx-auto mb-4" style="background: hsl(240 5.9% 10%); color: hsl(0 0% 98%);">
+                <div class="text-center" role="listitem">
+                    <div class="w-14 h-14 rounded-lg bg-gray-900 text-white flex items-center justify-center mx-auto mb-4"
+                        aria-hidden="true">
                         <span class="text-xl font-bold">4</span>
                     </div>
-                    <h3 class="text-lg font-semibold mb-2">Everyone's paid</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Everyone's paid</h3>
+                    <p class="text-sm text-gray-500">Automatic same-day payments</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Security Section -->
-    <section id="security" class="py-20 stats-section text-white">
+    <section id="security" class="py-20 bg-gray-900 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+                <span
+                    class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-4 bg-white/10 border border-white/20">
                     SECURITY
                 </span>
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">
                     Your data. Protected.
                 </h2>
-                <p class="text-lg max-w-2xl mx-auto opacity-80">
+                <p class="text-lg max-w-2xl mx-auto text-gray-400">
                     Encrypted. Audited. Compliant.
                 </p>
             </div>
 
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                <div class="p-6 rounded-lg" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                    <div class="w-10 h-10 rounded-md flex items-center justify-center mb-4" style="background: rgba(255,255,255,0.1);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" role="list">
+                <div class="p-6 rounded-lg bg-white/5 border border-white/10" role="listitem">
+                    <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4" aria-hidden="true">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                     </div>
                     <h3 class="text-base font-semibold mb-2">ISO 27001</h3>
+                    <p class="text-sm text-gray-400">Certified security management</p>
                 </div>
 
-                <div class="p-6 rounded-lg" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                    <div class="w-10 h-10 rounded-md flex items-center justify-center mb-4" style="background: rgba(255,255,255,0.1);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                <div class="p-6 rounded-lg bg-white/5 border border-white/10" role="listitem">
+                    <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4" aria-hidden="true">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
                     <h3 class="text-base font-semibold mb-2">256-bit encrypted</h3>
+                    <p class="text-sm text-gray-400">Bank-level encryption</p>
                 </div>
 
-                <div class="p-6 rounded-lg" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                    <div class="w-10 h-10 rounded-md flex items-center justify-center mb-4" style="background: rgba(255,255,255,0.1);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                <div class="p-6 rounded-lg bg-white/5 border border-white/10" role="listitem">
+                    <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4" aria-hidden="true">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
                     <h3 class="text-base font-semibold mb-2">GDPR ready</h3>
+                    <p class="text-sm text-gray-400">EU data protection compliant</p>
                 </div>
 
-                <div class="p-6 rounded-lg" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
-                    <div class="w-10 h-10 rounded-md flex items-center justify-center mb-4" style="background: rgba(255,255,255,0.1);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                <div class="p-6 rounded-lg bg-white/5 border border-white/10" role="listitem">
+                    <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center mb-4" aria-hidden="true">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                         </svg>
                     </div>
                     <h3 class="text-base font-semibold mb-2">Every worker checked</h3>
+                    <p class="text-sm text-gray-400">Background verified</p>
                 </div>
             </div>
 
             <!-- Compliance Logos -->
-            <div class="flex flex-wrap justify-center items-center gap-8 pt-8 border-t" style="border-color: rgba(255,255,255,0.1);">
-                <span class="text-sm font-medium opacity-50">SOC 2 Type II</span>
-                <span class="text-sm font-medium opacity-50">PCI DSS</span>
-                <span class="text-sm font-medium opacity-50">HIPAA</span>
-                <span class="text-sm font-medium opacity-50">ISO 27001</span>
-                <span class="text-sm font-medium opacity-50">GDPR</span>
+            <div class="flex flex-wrap justify-center items-center gap-8 pt-8 border-t border-white/10">
+                <span class="text-sm font-medium text-gray-500">SOC 2 Type II</span>
+                <span class="text-sm font-medium text-gray-500">PCI DSS</span>
+                <span class="text-sm font-medium text-gray-500">HIPAA</span>
+                <span class="text-sm font-medium text-gray-500">ISO 27001</span>
+                <span class="text-sm font-medium text-gray-500">GDPR</span>
             </div>
         </div>
     </section>
-
-    <!-- CTA Section -->
-    <section id="pricing" class="py-20 bg-gray-900 text-white">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl md:text-4xl font-bold mb-4">
-                One shift.
-            </h2>
-            <p class="text-lg text-gray-300 mb-8">
-                See the difference.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="{{ route('register', ['type' => 'business']) }}" class="px-8 py-4 text-base font-medium text-white bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
-                    Find Staff
-                </a>
-                <a href="{{ route('register', ['type' => 'worker']) }}" class="px-8 py-4 text-base font-medium text-gray-900 bg-white rounded-lg hover:bg-gray-100 transition-colors">
-                    Find Shifts
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="border-t py-12" style="background: hsl(240 5.9% 10%); color: white;">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-5 gap-8 mb-8">
-                <!-- Logo Column -->
-                <div class="md:col-span-2">
-                    <a href="/" class="flex items-center gap-3 mb-4">
-                        <img src="/images/logo-dark.svg" alt="OvertimeStaff" class="h-8">
-                    </a>
-                    <p class="text-sm opacity-60 leading-relaxed">Shifts covered. Globally.</p>
-                </div>
-
-                <!-- For Businesses -->
-                <div>
-                    <h3 class="font-semibold mb-4 text-sm">For Businesses</h3>
-                    <ul class="space-y-2 text-sm opacity-60">
-                        <li><a href="{{ route('register', ['type' => 'business']) }}" class="hover:opacity-100 transition-opacity">Post Shifts</a></li>
-                        <li><a href="{{ route('register', ['type' => 'business']) }}" class="hover:opacity-100 transition-opacity">Find Workers</a></li>
-                        <li><a href="{{ route('pricing') }}" class="hover:opacity-100 transition-opacity">Pricing</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:opacity-100 transition-opacity">Enterprise</a></li>
-                    </ul>
-                </div>
-
-                <!-- For Workers -->
-                <div>
-                    <h3 class="font-semibold mb-4 text-sm">For Workers</h3>
-                    <ul class="space-y-2 text-sm opacity-60">
-                        <li><a href="{{ route('register', ['type' => 'worker']) }}" class="hover:opacity-100 transition-opacity">Find Shifts</a></li>
-                        <li><a href="{{ route('register', ['type' => 'worker']) }}" class="hover:opacity-100 transition-opacity">Get Verified</a></li>
-                        <li><a href="{{ route('features') }}" class="hover:opacity-100 transition-opacity">Instant Payouts</a></li>
-                        <li><a href="{{ route('register', ['type' => 'worker']) }}" class="hover:opacity-100 transition-opacity">Get Started</a></li>
-                    </ul>
-                </div>
-
-                <!-- Company -->
-                <div>
-                    <h3 class="font-semibold mb-4 text-sm">Company</h3>
-                    <ul class="space-y-2 text-sm opacity-60">
-                        <li><a href="{{ route('about') }}" class="hover:opacity-100 transition-opacity">About Us</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:opacity-100 transition-opacity">Contact</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:opacity-100 transition-opacity">Careers</a></li>
-                        <li><a href="{{ route('features') }}" class="hover:opacity-100 transition-opacity">Security</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <!-- Bottom Bar -->
-            <div class="border-t pt-8 flex flex-col md:flex-row justify-between items-center text-sm opacity-60" style="border-color: rgba(255,255,255,0.1);">
-                <p>&copy; {{ date('Y') }} OvertimeStaff. All rights reserved.</p>
-                <div class="flex gap-6 mt-4 md:mt-0">
-                    <a href="{{ route('terms') }}" class="hover:opacity-100">Terms</a>
-                    <a href="{{ route('privacy') }}" class="hover:opacity-100">Privacy</a>
-                </div>
-            </div>
-        </div>
-    </footer>
 
     <!-- Live Shift Market Alpine.js Component -->
-    <script>
-        // User role detection (for guests on landing page)
-        window.userRole = @json(auth()->check() ? auth()->user()->user_type : 'guest');
-
-        // Live Shift Market Component
-        window.liveShiftMarket = function(config = {}) {
-            return {
-                // Configuration
-                variant: config.variant || 'full',
-                limit: config.limit || 20,
-
-                // State
-                shifts: [],
-                statistics: {
-                    shifts_live: 247,
-                    total_value: 42500,
-                    avg_hourly_rate: 32,
-                    rate_change_percent: 3.2,
-                    filled_today: 89,
-                    workers_online: 1247
-                },
-                activityFeed: [],
-                loading: true,
-                isWorker: window.userRole === 'worker',
-                isAgency: window.userRole === 'agency',
-
-                // Modal state
-                showAssignModal: false,
-                selectedShift: null,
-                selectedWorkerId: '',
-
-                // Polling
-                pollInterval: null,
-                activityInterval: null,
-
-                /**
-                 * Initialize the component
-                 */
-                init() {
-                    this.fetchShifts();
-                    this.startPolling();
-                },
-
-                /**
-                 * Fetch shifts from API
-                 */
-                async fetchShifts() {
-                    this.loading = true;
-                    try {
-                        const response = await fetch(`/api/market?limit=${this.limit}`);
-                        const data = await response.json();
-
-                        if (data.success) {
-                            this.shifts = data.shifts || [];
-                            if (data.statistics) {
-                                this.statistics = { ...this.statistics, ...data.statistics };
-                            }
-                        }
-                    } catch (error) {
-                        console.debug('Market fetch error (demo mode):', error);
-                        // Use demo data on error
-                        this.generateDemoShifts();
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                /**
-                 * Generate demo shifts for landing page display
-                 */
-                generateDemoShifts() {
-                    const industries = ['Hospitality', 'Healthcare', 'Retail', 'Logistics'];
-                    const cities = ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'];
-                    const states = ['NY', 'CA', 'IL', 'TX', 'AZ'];
-                    const titles = ['Event Server', 'Warehouse Associate', 'Retail Associate', 'Healthcare Aide', 'Kitchen Staff'];
-                    const businesses = ['Grand Hotel', 'City Hospital', 'Metro Warehouse', 'Downtown Store', 'Premier Events'];
-
-                    this.shifts = Array.from({ length: this.limit }, (_, i) => ({
-                        id: i + 1,
-                        title: titles[i % titles.length],
-                        business_name: businesses[i % businesses.length],
-                        industry: industries[i % industries.length].toLowerCase(),
-                        location_city: cities[i % cities.length],
-                        location_state: states[i % states.length],
-                        shift_date: new Date(Date.now() + (i + 1) * 86400000).toISOString().split('T')[0],
-                        start_time: `${8 + (i % 8)}:00`,
-                        duration_hours: 4 + (i % 5),
-                        base_rate: 18 + (i % 15),
-                        effective_rate: 18 + (i % 15) + (i % 3 === 0 ? 5 : 0),
-                        surge_multiplier: i % 3 === 0 ? 1.25 : 1.0,
-                        required_workers: 3 + (i % 5),
-                        spots_remaining: 1 + (i % 3),
-                        fill_percentage: 30 + (i % 60),
-                        is_urgent: i % 4 === 0,
-                        instant_claim_enabled: i % 3 === 0,
-                        is_new: i < 3,
-                        is_demo: true,
-                        match_score: null,
-                        market_posted_at: '2 hours ago',
-                        market_views: 45 + (i * 12)
-                    }));
-                },
-
-                /**
-                 * Start polling for updates
-                 */
-                startPolling() {
-                    // Poll every 60 seconds (reduced frequency for landing)
-                    this.pollInterval = setInterval(() => {
-                        this.fetchShifts();
-                    }, 60000);
-                },
-
-                /**
-                 * Apply to a shift
-                 */
-                async applyToShift(shift) {
-                    if (shift.is_demo) {
-                        window.location.href = '{{ route("register") }}';
-                        return;
-                    }
-                    // Redirect to login if not authenticated
-                    if (window.userRole === 'guest') {
-                        window.location.href = '{{ route("login") }}';
-                        return;
-                    }
-                },
-
-                /**
-                 * Instant claim a shift
-                 */
-                async instantClaim(shift) {
-                    if (shift.is_demo) {
-                        window.location.href = '{{ route("register") }}';
-                        return;
-                    }
-                    if (window.userRole === 'guest') {
-                        window.location.href = '{{ route("login") }}';
-                        return;
-                    }
-                },
-
-                /**
-                 * Open agency assign modal
-                 */
-                openAgencyAssignModal(shift) {
-                    if (shift.is_demo) {
-                        window.location.href = '{{ route("register") }}';
-                        return;
-                    }
-                },
-
-                /**
-                 * Format shift time for display
-                 */
-                formatShiftTime(shift) {
-                    try {
-                        const date = new Date(shift.shift_date);
-                        const options = { month: 'short', day: 'numeric' };
-                        return date.toLocaleDateString('en-US', options) + ' ' + shift.start_time;
-                    } catch (e) {
-                        return shift.shift_date;
-                    }
-                },
-
-                /**
-                 * Calculate total earnings for a shift
-                 */
-                calculateEarnings(shift) {
-                    const total = shift.effective_rate * shift.duration_hours;
-                    return '$' + total.toFixed(2);
-                },
-
-                /**
-                 * Cleanup on destroy
-                 */
-                destroy() {
-                    if (this.pollInterval) clearInterval(this.pollInterval);
-                    if (this.activityInterval) clearInterval(this.activityInterval);
-                }
-            };
-        };
-    </script>
-</body>
-</html>
+    @push('scripts')
+        @include('partials.scripts.live-market')
+    @endpush
+@endsection

@@ -23,7 +23,19 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Application settings
-        $this->call(ChatSettingSeeder::class);
+        $this->call([
+            ChatSettingSeeder::class,
+            SystemSettingsSeeder::class,
+        ]);
+
+        // Onboarding configuration
+        $this->call(OnboardingStepSeeder::class);
+
+        // Business configuration
+        $this->call([
+            IndustriesSeeder::class,
+            BusinessTypesSeeder::class,
+        ]);
 
         // Development accounts - only seed in non-production environments
         if (app()->environment('local', 'development', 'testing')) {

@@ -19,7 +19,7 @@
     @else
         <!-- Fallback to Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
-        <script>
+        <script nonce="{{ $cspNonce ?? '' }}">
             tailwind.config = {
                 theme: {
                     extend: {
@@ -71,7 +71,8 @@
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <style>
+    {{-- CSP Nonce: All inline styles and scripts must include the nonce attribute --}}
+    <style nonce="{{ $cspNonce ?? '' }}">
         [x-cloak] { display: none !important; }
 
         /* Button styles - shadcn */
@@ -124,66 +125,11 @@
 </head>
 <body class="bg-muted/30 text-foreground font-sans antialiased min-h-screen" style="background-color: hsl(240 4.8% 95.9% / 0.3);">
     <div class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="bg-white border-b" style="border-color: hsl(240 5.9% 90%);">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <!-- Logo -->
-                    <a href="{{ url('/') }}" class="flex items-center gap-2">
-                        <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                                <rect x="14" y="14" width="7" height="7" rx="1"/>
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold tracking-tight">
-                            OVER<span class="text-blue-600">TIME</span>STAFF
-                        </span>
-                    </a>
-
-                    <!-- Navigation -->
-                    <nav class="hidden md:flex items-center space-x-6">
-                        <a href="{{ url('/') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Home</a>
-                        @guest
-                            <a href="{{ route('register', ['type' => 'worker']) }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Shifts</a>
-                            <a href="{{ route('register', ['type' => 'business']) }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Staff</a>
-                        @else
-                            @if(auth()->user()->user_type === 'worker')
-                                <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Shifts</a>
-                            @elseif(auth()->user()->user_type === 'business')
-                                <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Staff</a>
-                            @else
-                                <a href="{{ route('shifts.index') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Shifts</a>
-                                <a href="{{ route('shifts.create') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Find Staff</a>
-                            @endif
-                        @endguest
-                        <a href="{{ route('about') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
-                        <a href="{{ route('contact') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">Contact</a>
-                    </nav>
-
-                    <!-- Auth Links -->
-                    <div class="flex items-center space-x-3">
-                        @guest
-                        <a href="{{ route('login') }}" class="text-sm font-medium transition-colors" style="color: hsl(240 3.8% 46.1%);">
-                            Sign In
-                        </a>
-                        <a href="{{ route('register') }}" class="btn-primary">
-                            Get Started
-                        </a>
-                        @else
-                        <a href="{{ route('dashboard') }}" class="btn-primary">
-                            Dashboard
-                        </a>
-                        @endguest
-                    </div>
-                </div>
-            </div>
-        </header>
+        <!-- Clean Navigation -->
+        @include('components.clean-navbar')
 
         <!-- Main Content -->
-        <main class="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <main class="flex-1">
             @yield('content')
         </main>
 
@@ -195,6 +141,9 @@
                         &copy; {{ date('Y') }} OvertimeStaff. All rights reserved.
                     </p>
                     <div class="flex items-center space-x-6">
+                        <a href="{{ route('features') }}" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Features</a>
+                        <a href="{{ route('pricing') }}" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Pricing</a>
+                        <a href="{{ route('about') }}" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
                         <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Privacy</a>
                         <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Terms</a>
                         <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Contact</a>

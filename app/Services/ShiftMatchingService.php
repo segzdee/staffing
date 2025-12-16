@@ -11,15 +11,61 @@ use Illuminate\Support\Facades\DB;
 class ShiftMatchingService
 {
     /**
+     * Calculate enhanced AI-powered match score between worker and shift
+     * SL-002: AI-Powered Worker Matching & Ranking
+     * Returns score from 0-100 with detailed breakdown
+     */
+    public function calculateWorkerShiftMatch(User $worker, Shift $shift)
+    {
+        $scoreBreakdown = [
+            'skills_match' => $this->calculateSkillsMatch($worker, $shift),
+            'proximity_score' => $this->calculateLocationMatch($worker->workerProfile, $shift),
+            'reliability_score' => $this->getReliabilityScore($worker),
+            'rating_score' => $this->calculateRatingMatch($worker),
+            'recency_score' => $this->calculateRecencyScore($worker),
+            'role_experience' => $this->calculateRoleExperience($worker, $shift),
+            'availability_match' => $this->calculateAvailabilityMatch($worker->workerProfile, $shift)
+        ];
+
+        // Apply weighted scoring
+        $weights = [
+            'skills_match' => 0.25,
+            'proximity_score' => 0.20,
+            'reliability_score' => 0.30, // Highest weight - reliability is key
+            'rating_score' => 0.15,
+            'recency_score' => 0.05,
+            'role_experience' => 0.03,
+            'availability_match' => 0.02
+        ];
+
+        $baseScore = 0;
+        foreach ($scoreBreakdown as $component => $score) {
+            $baseScore += $score * $weights[$component];
+        }
+
+        // Apply bonus factors
+        $bonusScore = $this->calculateBonusFactors($worker, $shift);
+
+        // Combine and cap at 100
+        $finalScore = min(100, $baseScore + $bonusScore);
+
+        return [
+            'final_score' => round($finalScore, 1),
+            'breakdown' => $scoreBreakdown,
+            'weights' => $weights,
+            'bonus_points' => $bonusScore
+        ];
+    }
+
+    /**
      * Match and rank shifts for a specific worker.
      * Returns shifts sorted by match score (highest first).
+     *
+     * @param User $worker
+     * @return \Illuminate\Support\Collection
      */
     public function matchShiftsForWorker(User $worker)
     {
-        if (!$worker->isWorker()) {
-            return collect([]);
-        }
-
         $workerProfile = $worker->workerProfile;
         if (!$workerProfile) {
             return collect([]);
@@ -67,43 +113,6 @@ class ShiftMatchingService
     }
 
     /**
-     * Calculate match score between a worker and a shift (0-100).
-     *
-     * Scoring breakdown:
-     * - Skills match: 40 points
-     * - Location proximity: 25 points
-     * - Availability: 20 points
-     * - Industry experience: 10 points
-     * - Rating: 5 points
-     */
-    public function calculateWorkerShiftMatch(User $worker, Shift $shift)
-    {
-        $workerProfile = $worker->workerProfile;
-        if (!$workerProfile) {
-            return 0;
-        }
-
-        $score = 0;
-
-        // 1. Skills Match (40 points)
-        $score += $this->calculateSkillsMatch($worker, $shift);
-
-        // 2. Location Proximity (25 points)
-        $score += $this->calculateLocationMatch($workerProfile, $shift);
-
-        // 3. Availability (20 points)
-        $score += $this->calculateAvailabilityMatch($workerProfile, $shift);
-
-        // 4. Industry Experience (10 points)
-        $score += $this->calculateIndustryMatch($workerProfile, $shift);
-
-        // 5. Rating (5 points)
-        $score += $this->calculateRatingMatch($worker);
-
-        return round($score, 2);
-    }
-
-    /**
      * Calculate skills match score (0-40 points).
      */
     protected function calculateSkillsMatch(User $worker, Shift $shift)
@@ -132,8 +141,10 @@ class ShiftMatchingService
     protected function calculateLocationMatch(WorkerProfile $workerProfile, Shift $shift)
     {
         // If no location data, return neutral score
-        if (!$workerProfile->location_lat || !$workerProfile->location_lng ||
-            !$shift->location_lat || !$shift->location_lng) {
+        if (
+            !$workerProfile->location_lat || !$workerProfile->location_lng ||
+            !$shift->location_lat || !$shift->location_lng
+        ) {
             return 15;
         }
 
@@ -329,8 +340,8 @@ class ShiftMatchingService
         $lngDiff = deg2rad($lng2 - $lng1);
 
         $a = sin($latDiff / 2) * sin($latDiff / 2) +
-             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-             sin($lngDiff / 2) * sin($lngDiff / 2);
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($lngDiff / 2) * sin($lngDiff / 2);
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
@@ -356,7 +367,7 @@ class ShiftMatchingService
 
         if ($date) {
             $query->where('availability_broadcasts.available_from', '<=', $date)
-                  ->where('availability_broadcasts.available_to', '>=', $date);
+                ->where('availability_broadcasts.available_to', '>=', $date);
         }
 
         return $query->select('users.*', 'availability_broadcasts.*')->get();
@@ -400,5 +411,268 @@ class ShiftMatchingService
         } else {
             return 'slow'; // More than 24 hours
         }
+    }
+
+    /**
+     * Get worker reliability score
+     * SL-002: Reliability scoring (30% weight)
+     */
+    protected function getReliabilityScore(User $worker): float
+    {
+        $profile = $worker->workerProfile;
+        return $profile ? $profile->reliability_score ?? 80 : 80; // Default to 80 for new workers
+    }
+
+    /**
+     * Calculate recency score based on recent activity
+     * SL-002: Recency scoring (10% weight)
+     */
+    protected function calculateRecencyScore(User $worker): float
+    {
+        $lastActive = $worker->last_active_at ?? $worker->updated_at;
+        $daysSinceActive = $lastActive ? Carbon::now()->diffInDays($lastActive) : 30;
+
+        return max(0, 100 - ($daysSinceActive * 10));
+    }
+
+    /**
+     * Calculate role-specific experience score
+     */
+    protected function calculateRoleExperience(User $worker, Shift $shift): float
+    {
+        $roleShifts = $worker->shiftAssignments()
+            ->whereHas('shift', function ($query) use ($shift) {
+                $query->where('role_type', $shift->role_type);
+            })
+            ->where('status', 'completed')
+            ->count();
+
+        // Scale: 0 for no experience, 100 for 20+ shifts in role
+        return min(100, ($roleShifts / 20) * 100);
+    }
+
+    /**
+     * Calculate bonus factors for enhanced matching
+     */
+    protected function calculateBonusFactors(User $worker, Shift $shift): float
+    {
+        $bonus = 0;
+
+        // Favorite bonus (10 points)
+        if ($this->isFavoriteWorker($worker, $shift)) {
+            $bonus += 10;
+        }
+
+        // Repeat business bonus (5 points)
+        if ($this->hasWorkedForBusiness($worker, $shift->business_id)) {
+            $bonus += 5;
+        }
+
+        // Tier bonus
+        $tierBonus = $this->getTierBonus($worker);
+        $bonus += $tierBonus;
+
+        // Certification bonus (up to 5 points)
+        $certBonus = $this->getCertificationBonus($worker, $shift);
+        $bonus += $certBonus;
+
+        // Language bonus (up to 3 points)
+        $langBonus = $this->getLanguageBonus($worker, $shift);
+        $bonus += $langBonus;
+
+        return $bonus;
+    }
+
+    /**
+     * Check if worker is favorite for this business
+     */
+    protected function isFavoriteWorker(User $worker, Shift $shift): bool
+    {
+        return DB::table('business_worker_roster')
+            ->where('business_id', $shift->business_id)
+            ->where('worker_id', $worker->id)
+            ->where('status', 'favorite')
+            ->exists();
+    }
+
+    /**
+     * Check if worker has worked for this business before
+     */
+    protected function hasWorkedForBusiness(User $worker, int $businessId): bool
+    {
+        return $worker->shiftAssignments()
+            ->whereHas('shift', function ($query) use ($businessId) {
+                $query->where('business_id', $businessId);
+            })
+            ->where('status', 'completed')
+            ->exists();
+    }
+
+    /**
+     * Get tier-based bonus points
+     */
+    protected function getTierBonus(User $worker): float
+    {
+        $tier = $worker->tier ?? 'bronze';
+
+        return match ($tier) {
+            'platinum' => 8,
+            'gold' => 5,
+            'silver' => 2,
+            default => 0
+        };
+    }
+
+    /**
+     * Get certification bonus for shift requirements
+     */
+    protected function getCertificationBonus(User $worker, Shift $shift): float
+    {
+        $requiredCerts = $shift->required_certifications ?? [];
+        $workerCerts = $worker->certifications()->where('status', 'verified')->pluck('type')->toArray();
+
+        $matchingCerts = array_intersect($requiredCerts, $workerCerts);
+
+        // 1 point per matching certification, max 5 points
+        return min(5, count($matchingCerts));
+    }
+
+    /**
+     * Get language bonus for shift requirements
+     */
+    protected function getLanguageBonus(User $worker, Shift $shift): float
+    {
+        $requiredLangs = $shift->required_languages ?? ['en'];
+        $workerLangs = $worker->languages ?? ['en'];
+
+        $matchingLangs = array_intersect($requiredLangs, $workerLangs);
+
+        // 1 point per matching language, max 3 points
+        return min(3, count($matchingLangs));
+    }
+
+    /**
+     * Advanced supply/demand calculation for surge pricing
+     * SL-008: Dynamic Surge Pricing Engine
+     */
+    public function calculateDemandSurge(Shift $shift): array
+    {
+        // Get available workers for this role in area
+        $availableWorkers = User::where('type', 'worker')
+            ->whereHas('skills', function ($query) use ($shift) {
+                $query->whereIn('skill_id', $shift->required_skills ?? []);
+            })
+            ->where('status', 'active')
+            ->whereHas('workerProfile', function ($query) use ($shift) {
+                $query->where('preferred_city', $shift->location_city);
+            })
+            ->count();
+
+        // Get competing shifts in same timeframe
+        $competingShifts = Shift::where('role_type', $shift->role_type)
+            ->where('location_city', $shift->location_city)
+            ->where('shift_date', $shift->shift_date)
+            ->where('status', 'open')
+            ->where('id', '!=', $shift->id)
+            ->count();
+
+        $supplyDemandRatio = max(0.1, $availableWorkers / max(1, $competingShifts));
+
+        // Calculate surge based on ratio
+        $demandSurge = match (true) {
+            $supplyDemandRatio > 3.0 => 0.00, // Oversupply
+            $supplyDemandRatio > 2.0 => 0.00,
+            $supplyDemandRatio > 1.5 => 0.05,
+            $supplyDemandRatio > 1.0 => 0.10,
+            $supplyDemandRatio > 0.5 => 0.15,
+            default => 0.25 // Severe undersupply
+        };
+
+        return [
+            'surge_multiplier' => $demandSurge,
+            'available_workers' => $availableWorkers,
+            'competing_shifts' => $competingShifts,
+            'supply_demand_ratio' => $supplyDemandRatio,
+            'market_tightness' => $supplyDemandRatio < 1.0 ? 'tight' : 'loose'
+        ];
+    }
+
+    /**
+     * Predict shift fill probability
+     * SL-002: Performance Targets
+     */
+    public function predictFillProbability(Shift $shift): array
+    {
+        $matchAnalysis = $this->calculateDemandSurge($shift);
+
+        // Calculate base probability from demand/supply
+        $baseProbability = min(95, max(5, ($matchAnalysis['available_workers'] / max(1, $shift->required_workers)) * 100));
+
+        // Adjust for time factors
+        $timeUntilShift = Carbon::parse($shift->shift_date . ' ' . $shift->start_time)->diffInHours(now());
+
+        if ($timeUntilShift < 24) {
+            $baseProbability *= 0.7; // Harder to fill last minute
+        } elseif ($timeUntilShift > 168) { // More than a week
+            $baseProbability *= 0.9; // Slightly harder due to commitment
+        }
+
+        // Adjust for rate competitiveness
+        $avgRate = $this->getAverageRateForRole($shift->role_type, $shift->location_city);
+        $rateCompetitiveness = $shift->final_rate / max(1, $avgRate);
+
+        if ($rateCompetitiveness < 0.9) {
+            $baseProbability *= 0.8; // Below market rate
+        } elseif ($rateCompetitiveness > 1.1) {
+            $baseProbability *= 1.1; // Above market rate
+        }
+
+        return [
+            'probability' => round(min(100, max(0, $baseProbability)), 1),
+            'confidence' => $matchAnalysis['available_workers'] > 10 ? 'high' : 'medium',
+            'factors' => [
+                'demand_supply' => $matchAnalysis['supply_demand_ratio'],
+                'time_factor' => $timeUntilShift,
+                'rate_competitiveness' => $rateCompetitiveness
+            ],
+            'recommendations' => $this->getFillRecommendations($shift, $baseProbability)
+        ];
+    }
+
+    /**
+     * Get recommendations to improve fill probability
+     */
+    protected function getFillRecommendations(Shift $shift, float $probability): array
+    {
+        $recommendations = [];
+
+        if ($probability < 50) {
+            $recommendations[] = 'Consider increasing the rate by 10-20%';
+            $recommendations[] = 'Post shift at least 72 hours in advance';
+            $recommendations[] = 'Reduce required skills if possible';
+        } elseif ($probability < 75) {
+            $recommendations[] = 'Consider a small rate increase (5-10%)';
+            $recommendations[] = 'Highlight any premium features of the shift';
+        }
+
+        return $recommendations;
+    }
+
+    /**
+     * Get average market rate for role in location
+     */
+    protected function getAverageRateForRole(string $role, string $city): float
+    {
+        // In production, this would query historical shift data
+        // For now, return mock data
+        $marketRates = [
+            'server' => 15.00,
+            'bartender' => 18.00,
+            'host' => 14.00,
+            'cook' => 16.00,
+            'cleaner' => 13.00
+        ];
+
+        return $marketRates[$role] ?? 15.00;
     }
 }

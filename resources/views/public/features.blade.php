@@ -1,38 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Features | OvertimeStaff</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#FFF7ED',
-                            100: '#FFEDD5',
-                            200: '#FED7AA',
-                            300: '#FDBA74',
-                            400: '#FB923C',
-                            500: '#F97316',
-                            600: '#EA580C',
-                            700: '#C2410C',
-                            800: '#9A3412',
-                            900: '#7C2D12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="font-sans" x-data="{ mobileMenuOpen: false }">
-    <!-- Navigation -->
-    @include('partials.public-navbar')
+@extends('layouts.marketing')
+
+@section('title', 'Features | OvertimeStaff')
+@section('meta_description', 'Discover powerful features for modern staffing. Real-time matching, instant payouts, verified workers, GPS tracking, and advanced analytics.')
+
+@section('content')
 
     <!-- Hero -->
     <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-20">
@@ -109,54 +80,17 @@
         </div>
     </div>
 
-    <!-- CTA -->
-    <div class="bg-gray-900 text-white py-20">
-        <div class="max-w-4xl mx-auto text-center px-4">
-            <h2 class="text-4xl font-bold mb-4">Ready to Get Started?</h2>
-            <p class="text-xl text-gray-400 mb-8">Join thousands of businesses and workers using OvertimeStaff.</p>
-            <a href="{{ route('register') }}" class="inline-block px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 text-lg font-semibold">
-                Create Free Account
-            </a>
+    <!-- CTA Section -->
+    <section class="py-16 lg:py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
+            <p class="text-lg text-gray-600 mb-8">Join thousands of businesses and workers using OvertimeStaff.</p>
+            <x-ui.button-primary href="{{ route('register') }}" btnSize="lg">
+                Get Started
+                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                </svg>
+            </x-ui.button-primary>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <h3 class="font-bold text-lg mb-4"><span class="text-white">Over</span><span class="text-blue-500">TIME</span><span class="text-white">Staff</span></h3>
-                    <p class="text-gray-400 text-sm">Enterprise shift marketplace connecting businesses with verified workers worldwide.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold mb-4">Product</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('features') }}" class="hover:text-white">Features</a></li>
-                        <li><a href="{{ route('pricing') }}" class="hover:text-white">Pricing</a></li>
-                        <li><a href="{{ route('register') }}" class="hover:text-white">Get Started</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-semibold mb-4">Company</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('about') }}" class="hover:text-white">About</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:text-white">Contact</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-semibold mb-4">Legal</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('terms') }}" class="hover:text-white">Terms</a></li>
-                        <li><a href="{{ route('privacy') }}" class="hover:text-white">Privacy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
-                <p>&copy; {{ date('Y') }} OvertimeStaff. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <style>[x-cloak] { display: none !important; }</style>
-</body>
-</html>
+    </section>
+@endsection

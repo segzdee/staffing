@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Models\BusinessProfile;
 use App\Models\AgencyProfile;
-use App\Models\AiAgentProfile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -79,10 +78,6 @@ class CleanupExpiredDevUsers extends Command
                 }
                 if ($user->agencyProfile) {
                     $user->agencyProfile->delete();
-                    $profilesDeleted++;
-                }
-                if ($user->aiAgentProfile) {
-                    $user->aiAgentProfile->delete();
                     $profilesDeleted++;
                 }
                 $deletedProfiles += $profilesDeleted;

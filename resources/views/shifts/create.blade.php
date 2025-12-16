@@ -4,7 +4,7 @@
 @section('page-title', 'Post a New Shift')
 
 @section('sidebar-nav')
-<a href="{{ route('dashboard') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+<a href="{{ route('dashboard.index') }}" class="flex items-center space-x-3 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
     </svg>
@@ -136,6 +136,7 @@
               method="POST"
               class="bg-white rounded-xl border border-gray-200 p-8 space-y-8"
               x-data="shiftForm()"
+              x-init="if (form.venue_id) { handleVenueSelection(); }"
               @submit="handleSubmit"
               novalidate>
             @csrf
@@ -405,6 +406,27 @@
             <div>
                 <h2 class="text-xl font-bold text-gray-900 mb-6">Location</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @if($venues->count() > 0)
+                    <div class="md:col-span-2">
+                        <label for="venue_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            Select Venue (Optional)
+                        </label>
+                        <select id="venue_id"
+                                name="venue_id"
+                                x-model="form.venue_id"
+                                @change="handleVenueSelection()"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                            <option value="">-- Select a venue or enter address manually --</option>
+                            @foreach($venues as $venue)
+                            <option value="{{ $venue->id }}" {{ old('venue_id') == $venue->id ? 'selected' : '' }}>
+                                {{ $venue->name }} - {{ $venue->address }}, {{ $venue->city }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Selecting a venue will auto-fill the address fields below</p>
+                    </div>
+                    @endif
+
                     <div class="md:col-span-2">
                         <label for="location_address" class="block text-sm font-medium text-gray-700 mb-2">
                             Street Address <span class="text-red-500" aria-hidden="true">*</span>
@@ -687,6 +709,16 @@
 <script>
 function shiftForm() {
     return {
+        venues: @json($venues->map(function($venue) {
+            return [
+                'id' => $venue->id,
+                'name' => $venue->name,
+                'address' => $venue->address,
+                'city' => $venue->city,
+                'state' => $venue->state,
+                'postal_code' => $venue->postal_code,
+            ];
+        })),
         form: {
             title: '{{ old('title') }}',
             description: '{{ old('description') }}',
@@ -696,6 +728,7 @@ function shiftForm() {
             workers_needed: '{{ old('workers_needed', 1) }}',
             start_time: '{{ old('start_time') }}',
             end_time: '{{ old('end_time') }}',
+            venue_id: '{{ old('venue_id') }}',
             location_address: '{{ old('location_address') }}',
             location_city: '{{ old('location_city') }}',
             location_state: '{{ old('location_state') }}',
@@ -916,6 +949,27 @@ function shiftForm() {
                 setTimeout(() => {
                     announcer.textContent = '';
                 }, 3000);
+            }
+        },
+
+        handleVenueSelection() {
+            const venueId = this.form.venue_id;
+            if (!venueId) {
+                return;
+            }
+
+            const venue = this.venues.find(v => v.id == venueId);
+            if (venue) {
+                this.form.location_address = venue.address || '';
+                this.form.location_city = venue.city || '';
+                this.form.location_state = venue.state || '';
+                this.form.location_zip = venue.postal_code || '';
+                
+                // Trigger validation for filled fields
+                if (venue.address) this.validateField('location_address');
+                if (venue.city) this.validateField('location_city');
+                if (venue.state) this.validateField('location_state');
+                if (venue.postal_code) this.validateField('location_zip');
             }
         }
     };

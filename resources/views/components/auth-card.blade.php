@@ -189,7 +189,7 @@
 
         <form action="{{ route('register') }}" method="POST" class="space-y-4">
             @csrf
-            <input type="hidden" name="user_type" x-model="accountType">
+            <input type="hidden" name="user_type" :value="accountType">
 
             <div class="grid grid-cols-2 gap-3">
                 <div>

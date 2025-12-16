@@ -137,6 +137,15 @@ class AgencyProfile extends Model
         'managed_workers',
         'total_shifts_managed',
         'total_workers_managed',
+        // Contact & Location
+        'phone',
+        'address',
+        'city',
+        'state',
+        'zip_code',
+        'country',
+        'description',
+        'website',
         // Stripe Connect fields
         'stripe_connect_account_id',
         'stripe_onboarding_complete',
@@ -152,6 +161,34 @@ class AgencyProfile extends Model
         'last_payout_status',
         'total_payouts_count',
         'total_payouts_amount',
+        // AGY-REG-005: Go-Live & Compliance fields
+        'is_live',
+        'activated_at',
+        'activated_by',
+        'go_live_requested_at',
+        'compliance_score',
+        'compliance_grade',
+        'compliance_last_checked',
+        'license_verified_at',
+        'license_expires_at',
+        'tax_id',
+        'tax_verified',
+        'tax_verified_at',
+        'background_check_status',
+        'background_check_passed',
+        'background_check_initiated_at',
+        'background_check_completed_at',
+        'references',
+        'agreement_signed',
+        'agreement_signed_at',
+        'agreement_version',
+        'agreement_signer_name',
+        'agreement_signer_title',
+        'agreement_signer_ip',
+        'test_shift_completed',
+        'test_shift_id',
+        'manual_verifications',
+        'is_complete',
     ];
 
     protected $casts = [
@@ -171,6 +208,25 @@ class AgencyProfile extends Model
         'last_payout_amount' => 'decimal:2',
         'total_payouts_count' => 'integer',
         'total_payouts_amount' => 'decimal:2',
+        // AGY-REG-005: Go-Live & Compliance casts
+        'is_live' => 'boolean',
+        'activated_at' => 'datetime',
+        'go_live_requested_at' => 'datetime',
+        'compliance_score' => 'decimal:2',
+        'compliance_last_checked' => 'datetime',
+        'license_verified_at' => 'datetime',
+        'license_expires_at' => 'date',
+        'tax_verified' => 'boolean',
+        'tax_verified_at' => 'datetime',
+        'background_check_passed' => 'boolean',
+        'background_check_initiated_at' => 'datetime',
+        'background_check_completed_at' => 'datetime',
+        'references' => 'array',
+        'agreement_signed' => 'boolean',
+        'agreement_signed_at' => 'datetime',
+        'test_shift_completed' => 'boolean',
+        'manual_verifications' => 'array',
+        'is_complete' => 'boolean',
     ];
 
     public function user()
@@ -383,5 +439,181 @@ class AgencyProfile extends Model
         $this->update([
             'last_payout_status' => 'failed',
         ]);
+    }
+
+    // =========================================================================
+    // AGY-REG-005: GO-LIVE CHECKLIST & COMPLIANCE METHODS
+    // =========================================================================
+
+    /**
+     * Get agency documents (compliance documents).
+     * Note: Uses AgencyDocument model if application_id relationship exists,
+     * otherwise returns empty collection.
+     */
+    public function documents()
+    {
+        // Try to find documents via agency_application if it exists
+        if (class_exists(\App\Models\AgencyDocument::class)) {
+            // Check if there's an agency application for this user
+            if (class_exists(\App\Models\AgencyApplication::class)) {
+                $application = \App\Models\AgencyApplication::where('user_id', $this->user_id)->first();
+                if ($application) {
+                    return \App\Models\AgencyDocument::where('application_id', $application->id);
+                }
+            }
+        }
+
+        // Return an empty query builder if no documents model or relationship exists
+        return \App\Models\AgencyDocument::whereRaw('1 = 0');
+    }
+
+    /**
+     * Check if agency is live and active.
+     */
+    public function isLive(): bool
+    {
+        return $this->is_live ?? false;
+    }
+
+    /**
+     * Check if agency has completed go-live process.
+     */
+    public function hasCompletedGoLive(): bool
+    {
+        return $this->is_live && $this->activated_at !== null;
+    }
+
+    /**
+     * Check if agency is pending go-live review.
+     */
+    public function isPendingGoLiveReview(): bool
+    {
+        return $this->verification_status === 'pending_review';
+    }
+
+    /**
+     * Get compliance grade badge class.
+     */
+    public function getComplianceGradeClassAttribute(): string
+    {
+        return match ($this->compliance_grade ?? 'F') {
+            'A' => 'bg-green-100 text-green-800',
+            'B' => 'bg-blue-100 text-blue-800',
+            'C' => 'bg-yellow-100 text-yellow-800',
+            'D' => 'bg-orange-100 text-orange-800',
+            'F' => 'bg-red-100 text-red-800',
+            default => 'bg-gray-100 text-gray-800',
+        };
+    }
+
+    /**
+     * Get compliance grade label.
+     */
+    public function getComplianceGradeLabelAttribute(): string
+    {
+        return match ($this->compliance_grade ?? 'F') {
+            'A' => 'Excellent',
+            'B' => 'Good',
+            'C' => 'Acceptable',
+            'D' => 'Poor',
+            'F' => 'Non-Compliant',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Check if background check is required.
+     */
+    public function requiresBackgroundCheck(): bool
+    {
+        return $this->background_check_status === 'pending' ||
+               $this->background_check_status === null;
+    }
+
+    /**
+     * Check if background check has passed.
+     */
+    public function hasPassedBackgroundCheck(): bool
+    {
+        return $this->background_check_status === 'completed' &&
+               $this->background_check_passed === true;
+    }
+
+    /**
+     * Check if agreement is signed.
+     */
+    public function hasSignedAgreement(): bool
+    {
+        return $this->agreement_signed === true;
+    }
+
+    /**
+     * Get days until license expires.
+     */
+    public function getLicenseExpiresInDaysAttribute(): ?int
+    {
+        if (!$this->license_expires_at) {
+            return null;
+        }
+
+        return now()->diffInDays($this->license_expires_at, false);
+    }
+
+    /**
+     * Check if license is expiring soon (within 30 days).
+     */
+    public function isLicenseExpiringSoon(): bool
+    {
+        $daysUntilExpiry = $this->license_expires_in_days;
+
+        return $daysUntilExpiry !== null && $daysUntilExpiry <= 30 && $daysUntilExpiry > 0;
+    }
+
+    /**
+     * Check if license has expired.
+     */
+    public function isLicenseExpired(): bool
+    {
+        if (!$this->license_expires_at) {
+            return false;
+        }
+
+        return now()->isAfter($this->license_expires_at);
+    }
+
+    /**
+     * Get profile completeness percentage.
+     */
+    public function getProfileCompletenessAttribute(): int
+    {
+        $requiredFields = [
+            'agency_name',
+            'phone',
+            'address',
+            'city',
+            'state',
+            'zip_code',
+            'country',
+            'description',
+        ];
+
+        $completedCount = 0;
+        foreach ($requiredFields as $field) {
+            if (!empty($this->$field)) {
+                $completedCount++;
+            }
+        }
+
+        return count($requiredFields) > 0
+            ? round(($completedCount / count($requiredFields)) * 100)
+            : 0;
+    }
+
+    /**
+     * Check if profile is complete.
+     */
+    public function isProfileComplete(): bool
+    {
+        return $this->profile_completeness >= 100;
     }
 }

@@ -6,7 +6,7 @@
 <div class="container py-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Dashboard</a></li>
             <li class="breadcrumb-item"><a href="{{ route('business.shifts.index') }}">My Shifts</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ $shift->title }}</li>
         </ol>
@@ -79,13 +79,29 @@
                         </div>
                         <div class="col-md-6">
                             <h6><i class="fas fa-map-marker-alt me-2"></i>Location</h6>
-                            <p class="mb-0">{{ $shift->location_name ?? 'N/A' }}</p>
-                            <p class="text-muted small">
-                                {{ $shift->location_address ?? '' }}
-                                @if($shift->location_city)
-                                    <br>{{ $shift->location_city }}, {{ $shift->location_state }} {{ $shift->location_zip ?? '' }}
-                                @endif
-                            </p>
+                            @if($shift->venue)
+                                <p class="mb-1">
+                                    <strong>{{ $shift->venue->name }}</strong>
+                                    @if($shift->venue->type)
+                                        <span class="badge bg-secondary ms-2">{{ ucfirst(str_replace('_', ' ', $shift->venue->type)) }}</span>
+                                    @endif
+                                </p>
+                                <p class="text-muted small mb-0">
+                                    {{ $shift->venue->address }}
+                                    @if($shift->venue->address_line_2)
+                                        <br>{{ $shift->venue->address_line_2 }}
+                                    @endif
+                                    <br>{{ $shift->venue->city }}, {{ $shift->venue->state }} {{ $shift->venue->postal_code }}
+                                </p>
+                            @else
+                                <p class="mb-0">{{ $shift->location_name ?? 'N/A' }}</p>
+                                <p class="text-muted small">
+                                    {{ $shift->location_address ?? '' }}
+                                    @if($shift->location_city)
+                                        <br>{{ $shift->location_city }}, {{ $shift->location_state }} {{ $shift->location_zip ?? '' }}
+                                    @endif
+                                </p>
+                            @endif
                         </div>
                     </div>
 

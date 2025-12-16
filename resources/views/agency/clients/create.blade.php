@@ -8,7 +8,7 @@
         <div class="col-md-8">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Dashboard</a></li>
                     <li class="breadcrumb-item"><a href="{{ route('agency.clients.index') }}">Clients</a></li>
                     <li class="breadcrumb-item active" aria-current="page">Add Client</li>
                 </ol>

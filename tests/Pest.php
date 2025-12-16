@@ -13,7 +13,21 @@
 
 pest()->extend(Tests\TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+   ->in('Feature');
+
+// Global beforeEach for Pest tests using DatabaseMigrationsWithTransactions
+beforeEach(function () {
+    if (in_array(\Tests\Traits\DatabaseMigrationsWithTransactions::class, class_uses_recursive($this))) {
+        $this->initializeMigrations();
+    }
+});
+
+// Global afterEach for Pest tests using DatabaseMigrationsWithTransactions
+afterEach(function () {
+    if (in_array(\Tests\Traits\DatabaseMigrationsWithTransactions::class, class_uses_recursive($this))) {
+        $this->cleanupMigrations();
+    }
+});
 
 /*
 |--------------------------------------------------------------------------

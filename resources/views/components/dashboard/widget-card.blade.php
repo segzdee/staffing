@@ -5,7 +5,7 @@
     'icon' => null,
 ])
 
-<div class="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+<div {{ $attributes->merge(['class' => 'bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow']) }}>
     @if($title || $action)
     <div class="p-6 border-b border-gray-200 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -21,7 +21,7 @@
 
         @if($action)
         <a href="{{ $action }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-            {{ $actionLabel }} →
+            {{ $actionLabel }} &rarr;
         </a>
         @endif
     </div>

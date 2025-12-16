@@ -1,7 +1,7 @@
 /**
  * OvertimeStaff Main Stylesheet
- * shadcn/ui Inspired Clean Design
- * Version: 3.0
+ * Preline UI + Tailwind Forms
+ * Version: 4.0
  */
 
 /* Tailwind CSS Layers */
@@ -20,3 +20,25 @@
 
 /* Inter Font Import */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Base Styles */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* OvertimeStaff Brand Colors */
+@layer base {
+  :root {
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-500: #3b82f6;
+    --color-brand-600: #2563eb;
+    --color-brand-700: #1d4ed8;
+    --color-brand-900: #1e3a8a;
+    --color-dark: #0f172a;
+    --color-gray: #64748b;
+  }
+}

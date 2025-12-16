@@ -35,7 +35,7 @@
                 </a>
 
                 @auth
-                    <a href="{{ route('dashboard') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                    <a href="{{ route('dashboard.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
                         Dashboard
                     </a>
                 @else

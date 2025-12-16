@@ -5,6 +5,7 @@ export default {
     './resources/**/*.blade.php',
     './resources/**/*.js',
     './resources/**/*.vue',
+    './node_modules/preline/preline.js',
   ],
   theme: {
     container: {
@@ -105,5 +106,7 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
 }

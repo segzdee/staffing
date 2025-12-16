@@ -31,8 +31,8 @@ class ShiftPolicy
      */
     public function create(User $user): bool
     {
-        // Only businesses and AI agents can create shifts
-        return $user->isBusiness() || $user->isAiAgent();
+        // Only businesses can create shifts
+        return $user->isBusiness();
     }
 
     /**
@@ -40,16 +40,12 @@ class ShiftPolicy
      */
     public function update(User $user, Shift $shift): bool
     {
-        // Business owner, AI agent who posted it, or admin
+        // Business owner or admin
         if ($user->isAdmin()) {
             return true;
         }
 
         if ($shift->business_id === $user->id && $user->isBusiness()) {
-            return true;
-        }
-
-        if ($shift->agent_id === $user->id && $user->isAiAgent()) {
             return true;
         }
 

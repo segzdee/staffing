@@ -21,7 +21,8 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         // \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
-        \App\Http\Middleware\SecurityHeaders::class, // Security headers for XSS, clickjacking, etc.
+        \App\Http\Middleware\SecurityHeaders::class, // Security headers for XSS, clickjacking, Permissions-Policy, etc.
+        \App\Http\Middleware\ContentSecurityPolicy::class, // Nonce-based CSP (replaces inline unsafe-inline/unsafe-eval)
     ];
 
     /**
@@ -46,6 +47,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
@@ -68,7 +70,7 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
-        'role' => \App\Http\Middleware\Role::class,
+        'role' => \App\Http\Middleware\RoleMiddleware::class,
         'language' => \App\Http\Middleware\Language::class,
         'private.content' => \App\Http\Middleware\PrivateContent::class,
         'live' => \App\Http\Middleware\OnlineUsersLive::class,
@@ -77,5 +79,9 @@ class Kernel extends HttpKernel
         'agency' => \App\Http\Middleware\AgencyMiddleware::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'team.permission' => \App\Http\Middleware\CheckTeamPermission::class, // BIZ-003: Team permission checking
+        'worker.activated' => \App\Http\Middleware\EnsureWorkerActivated::class, // STAFF-REG-011: Worker activation gate
+        'business.activated' => \App\Http\Middleware\EnsureBusinessActivated::class, // BIZ-REG-011: Business activation gate
+        'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class, // SECURITY: Webhook signature verification
+        'two-factor' => \App\Http\Middleware\EnsureTwoFactorVerified::class, // SECURITY: Two-factor authentication verification
     ];
 }

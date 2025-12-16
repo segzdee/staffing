@@ -1,90 +1,60 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Us | OvertimeStaff</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#FFF7ED',
-                            100: '#FFEDD5',
-                            200: '#FED7AA',
-                            300: '#FDBA74',
-                            400: '#FB923C',
-                            500: '#F97316',
-                            600: '#EA580C',
-                            700: '#C2410C',
-                            800: '#9A3412',
-                            900: '#7C2D12',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="font-sans" x-data="{ mobileMenuOpen: false }">
-    <!-- Navigation -->
-    @include('partials.public-navbar')
+@extends('layouts.marketing')
 
+@section('title', 'Contact Us | OvertimeStaff')
+@section('meta_description', 'Have questions? We're here to help. Reach out to our team anytime via email, phone, or live chat.')
+
+@section('content')
     <!-- Hero -->
-    <div class="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-20">
+    <section class="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-5xl font-bold mb-6">Contact Us</h1>
-            <p class="text-xl text-brand-100 max-w-3xl mx-auto">
+            <h1 class="text-5xl font-bold mb-6">Get in Touch</h1>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto">
                 Have questions? We're here to help. Reach out to our team anytime.
             </p>
         </div>
-    </div>
+    </section>
 
     <!-- Contact Section -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div class="grid md:grid-cols-3 gap-8 mb-16">
             <!-- Email -->
             <div class="bg-white p-8 rounded-xl border border-gray-200 text-center">
-                <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Email</h3>
                 <p class="text-gray-600 mb-4">Our team typically responds within 24 hours</p>
-                <a href="mailto:support@overtimestaff.com" class="text-brand-600 hover:text-brand-700 font-medium">
+                <a href="mailto:support@overtimestaff.com" class="text-blue-600 hover:text-blue-700 font-medium">
                     support@overtimestaff.com
                 </a>
             </div>
 
             <!-- Phone -->
             <div class="bg-white p-8 rounded-xl border border-gray-200 text-center">
-                <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Phone</h3>
                 <p class="text-gray-600 mb-4">Mon-Fri from 8am to 6pm EST</p>
-                <a href="tel:+18555555555" class="text-brand-600 hover:text-brand-700 font-medium">
+                <a href="tel:+18555555555" class="text-blue-600 hover:text-blue-700 font-medium">
                     1-855-555-5555
                 </a>
             </div>
 
             <!-- Live Chat -->
             <div class="bg-white p-8 rounded-xl border border-gray-200 text-center">
-                <div class="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                     </svg>
                 </div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Live Chat</h3>
                 <p class="text-gray-600 mb-4">Available 24/7 for urgent issues</p>
-                <button class="text-brand-600 hover:text-brand-700 font-medium">
+                <button class="text-blue-600 hover:text-blue-700 font-medium">
                     Start Chat
                 </button>
             </div>
@@ -100,31 +70,31 @@
                         <div>
                             <label for="first_name" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                             <input type="text" id="first_name" name="first_name" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                         <div>
                             <label for="last_name" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
                             <input type="text" id="last_name" name="last_name" required
-                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         </div>
                     </div>
 
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                         <input type="email" id="email" name="email" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
 
                     <div>
                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone (Optional)</label>
                         <input type="tel" id="phone" name="phone"
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
 
                     <div>
                         <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">I am a...</label>
                         <select id="user_type" name="user_type" required
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                             <option value="">Select an option</option>
                             <option value="worker">Worker</option>
                             <option value="business">Business</option>
@@ -136,17 +106,17 @@
                     <div>
                         <label for="subject" class="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                         <input type="text" id="subject" name="subject" required
-                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent">
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
 
                     <div>
                         <label for="message" class="block text-sm font-medium text-gray-700 mb-2">Message</label>
                         <textarea id="message" name="message" rows="6" required
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"></textarea>
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
                     </div>
 
                     <div>
-                        <button type="submit" class="w-full px-6 py-3 bg-brand-600 text-white rounded-lg hover:bg-brand-700 font-semibold">
+                        <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors">
                             Send Message
                         </button>
                     </div>
@@ -176,45 +146,5 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-4 gap-8 mb-8">
-                <div>
-                    <h3 class="font-bold text-lg mb-4"><span class="text-white">Over</span><span class="text-blue-500">TIME</span><span class="text-white">Staff</span></h3>
-                    <p class="text-gray-400 text-sm">Enterprise shift marketplace connecting businesses with verified workers worldwide.</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold mb-4">Product</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('features') }}" class="hover:text-white">Features</a></li>
-                        <li><a href="{{ route('pricing') }}" class="hover:text-white">Pricing</a></li>
-                        <li><a href="{{ route('register') }}" class="hover:text-white">Get Started</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-semibold mb-4">Company</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('about') }}" class="hover:text-white">About</a></li>
-                        <li><a href="{{ route('contact') }}" class="hover:text-white">Contact</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="font-semibold mb-4">Legal</h3>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li><a href="{{ route('terms') }}" class="hover:text-white">Terms</a></li>
-                        <li><a href="{{ route('privacy') }}" class="hover:text-white">Privacy</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
-                <p>&copy; {{ date('Y') }} OvertimeStaff. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
-
-    <style>[x-cloak] { display: none !important; }</style>
-</body>
-</html>
+    </section>
+@endsection

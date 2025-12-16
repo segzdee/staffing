@@ -6,9 +6,9 @@ use App\Models\ShiftAssignment;
 use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Models\BusinessProfile;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
 
-uses(RefreshDatabase::class);
+uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
     // Create worker

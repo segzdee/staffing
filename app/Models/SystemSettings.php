@@ -676,13 +676,6 @@ class SystemSettings extends Model
                 'data_type' => self::DATA_TYPE_BOOLEAN,
                 'is_public' => false,
             ],
-            'feature_ai_agents' => [
-                'value' => '1',
-                'category' => self::CATEGORY_FEATURES,
-                'description' => 'Enable AI agent API access',
-                'data_type' => self::DATA_TYPE_BOOLEAN,
-                'is_public' => false,
-            ],
             'maintenance_mode' => [
                 'value' => '0',
                 'category' => self::CATEGORY_FEATURES,

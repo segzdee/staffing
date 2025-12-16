@@ -548,6 +548,10 @@ class ShiftManagementController extends Controller
         // Top performing workers
         $topWorkers = DB::table('shift_assignments')
             ->join('users', 'shift_assignments.worker_id', '=', 'users.id')
+            ->leftJoin('ratings', function($join) {
+                $join->on('shift_assignments.id', '=', 'ratings.shift_assignment_id')
+                     ->where('ratings.rater_type', '=', 'business');
+            })
             ->whereIn('shift_assignments.worker_id', function($q) use ($agency) {
                 $q->select('worker_id')
                     ->from('agency_workers')
@@ -556,8 +560,8 @@ class ShiftManagementController extends Controller
             ->where('shift_assignments.status', 'completed')
             ->select(
                 'users.name',
-                DB::raw('COUNT(*) as shifts_completed'),
-                DB::raw('AVG(shift_assignments.rating_from_business) as avg_rating')
+                DB::raw('COUNT(DISTINCT shift_assignments.id) as shifts_completed'),
+                DB::raw('AVG(ratings.rating) as avg_rating')
             )
             ->groupBy('users.id', 'users.name')
             ->orderByDesc('shifts_completed')

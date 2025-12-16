@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\ShiftMatchingService;
+use App\Services\ComplianceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -14,11 +15,13 @@ use Carbon\Carbon;
 class ShiftController extends Controller
 {
     protected $matchingService;
+    protected $complianceService;
 
-    public function __construct(ShiftMatchingService $matchingService)
+    public function __construct(ShiftMatchingService $matchingService, ComplianceService $complianceService)
     {
         $this->middleware('auth');
         $this->matchingService = $matchingService;
+        $this->complianceService = $complianceService;
     }
 
     /**
@@ -54,15 +57,15 @@ class ShiftController extends Controller
         // Filter by urgency
         if ($request->has('urgent') && $request->urgent) {
             $query->where('urgency_level', 'urgent')
-                  ->orWhere('urgency_level', 'critical');
+                ->orWhere('urgency_level', 'critical');
         }
 
         // Search by keywords
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', "%{$search}%")
-                  ->orWhere('description', 'LIKE', "%{$search}%");
+                    ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
 
@@ -74,12 +77,12 @@ class ShiftController extends Controller
                 break;
             case 'urgent':
                 $query->orderBy('urgency_level', 'desc')
-                      ->orderBy('shift_date', 'asc');
+                    ->orderBy('shift_date', 'asc');
                 break;
             case 'date':
             default:
                 $query->orderBy('shift_date', 'asc')
-                      ->orderBy('start_time', 'asc');
+                    ->orderBy('start_time', 'asc');
                 break;
         }
 
@@ -103,7 +106,8 @@ class ShiftController extends Controller
     {
         $shift = Shift::with([
             'business.businessProfile',
-            'applications' => function($query) {
+            'venue',
+            'applications' => function ($query) {
                 $query->where('worker_id', Auth::id());
             },
             'assignments',
@@ -139,62 +143,79 @@ class ShiftController extends Controller
             abort(403, 'Only businesses and agencies can post shifts.');
         }
 
-        return view('shifts.create');
+        // Get venues for the business (if business user)
+        $venues = collect();
+        if (Auth::user()->isBusiness() && Auth::user()->businessProfile) {
+            $venues = \App\Models\Venue::forBusiness(Auth::user()->businessProfile->id)
+                ->active()
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('shifts.create', compact('venues'));
     }
 
     /**
      * Store a newly created shift.
      */
-    public function store(Request $request)
+    /**
+     * Store a newly created shift.
+     */
+    public function store(\App\Http\Requests\StoreShiftRequest $request)
     {
-        // Check authorization
-        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
-            abort(403, 'Only businesses and agencies can post shifts.');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'industry' => 'required|in:hospitality,healthcare,retail,events,warehouse,professional',
-            'location_address' => 'required|string',
-            'location_city' => 'required|string',
-            'location_state' => 'required|string',
-            'location_country' => 'required|string',
-            'shift_date' => 'required|date|after_or_equal:today',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
-            'base_rate' => 'required|numeric|min:0',
-            'required_workers' => 'required|integer|min:1|max:100',
-            'urgency_level' => 'sometimes|in:normal,urgent,critical',
-            'requirements' => 'sometimes|array',
-            'dress_code' => 'sometimes|string|max:255',
-            'parking_info' => 'sometimes|string',
-            'break_info' => 'sometimes|string',
-            'special_instructions' => 'sometimes|string',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
         // Calculate duration
         $startTime = Carbon::parse($request->shift_date . ' ' . $request->start_time);
         $endTime = Carbon::parse($request->shift_date . ' ' . $request->end_time);
         $duration = $startTime->diffInHours($endTime, true);
 
-        // ===== SL-001: Cost Calculation & Business Logic =====
-
         // Detect shift timing characteristics for surge pricing
         $shiftDateTime = Carbon::parse($request->shift_date . ' ' . $request->start_time);
         $isWeekend = $shiftDateTime->isWeekend();
         $isNightShift = $shiftDateTime->hour >= 22 || $shiftDateTime->hour < 6;
-        $isPublicHoliday = $this->isPublicHoliday($shiftDateTime);
+        $isPublicHoliday = app(\App\Services\ShiftPricingService::class)->isPublicHoliday($shiftDateTime);
+
+        // ===== GLO-001: Jurisdiction Compliance Validation =====
+        $tempShift = new Shift([
+            'business_id' => Auth::id(),
+            'title' => $request->title,
+            'description' => $request->description,
+            'industry' => $request->industry,
+            'location_country' => $request->location_country,
+            'location_state' => $request->location_state,
+            'base_rate' => $request->base_rate,
+            'role_type' => $request->role_type ?? 'general',
+            'shift_date' => $request->shift_date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'duration_hours' => $duration
+        ]);
+
+        // Validate compliance
+        $complianceResult = $this->complianceService->validateShiftCreation($tempShift);
+
+        if (!$complianceResult['compliant']) {
+            return redirect()->back()
+                ->withErrors(['compliance' => $complianceResult['violations']])
+                ->withInput()
+                ->with('compliance_warnings', $complianceResult['warnings'] ?? []);
+        }
+
+        // If venue_id is provided, validate it belongs to the business
+        $venueId = null;
+        if ($request->venue_id) {
+            if (Auth::user()->isBusiness() && Auth::user()->businessProfile) {
+                $venue = \App\Models\Venue::forBusiness(Auth::user()->businessProfile->id)
+                    ->find($request->venue_id);
+                if ($venue) {
+                    $venueId = $venue->id;
+                }
+            }
+        }
 
         // Create shift with business logic fields
         $shift = Shift::create([
             'business_id' => Auth::id(),
+            'venue_id' => $venueId,
             'title' => $request->title,
             'description' => $request->description,
             'industry' => $request->industry,
@@ -218,16 +239,16 @@ class ShiftController extends Controller
             'parking_info' => $request->parking_info,
             'break_info' => $request->break_info,
             'special_instructions' => $request->special_instructions,
-            'posted_by_agent' => Auth::user()->isAiAgent(),
-            'agent_id' => Auth::user()->isAiAgent() ? Auth::id() : null,
+            'posted_by_agent' => false,
+            'agent_id' => null,
 
             // SL-001: Business logic fields
             'role_type' => $request->role_type,
             'required_skills' => $request->required_skills,
             'required_certifications' => $request->required_certifications,
-            'platform_fee_rate' => 35.00, // Default 35%
-            'vat_rate' => 18.00, // Default 18% (Malta)
-            'contingency_buffer_rate' => 5.00, // Default 5%
+            'platform_fee_rate' => config('overtimestaff.financial.platform_fee_rate'),
+            'vat_rate' => config('overtimestaff.financial.vat_rate'),
+            'contingency_buffer_rate' => config('overtimestaff.financial.contingency_buffer_rate'),
 
             // SL-008: Surge pricing flags
             'is_weekend' => $isWeekend,
@@ -235,9 +256,9 @@ class ShiftController extends Controller
             'is_public_holiday' => $isPublicHoliday,
 
             // SL-005: Clock-in verification defaults
-            'geofence_radius' => $request->geofence_radius ?? 100, // 100m default
-            'early_clockin_minutes' => 15,
-            'late_grace_minutes' => 10,
+            'geofence_radius' => $request->geofence_radius ?? config('overtimestaff.operations.default_geofence_radius'),
+            'early_clockin_minutes' => config('overtimestaff.operations.early_clockin_minutes'),
+            'late_grace_minutes' => config('overtimestaff.operations.late_grace_minutes'),
         ]);
 
         // Calculate all costs including surge pricing (SL-001 + SL-008)
@@ -422,43 +443,35 @@ class ShiftController extends Controller
     /**
      * Get recommended shifts for a worker.
      */
-    public function recommended()
+    public function recommended(Request $request)
     {
         if (!Auth::user()->isWorker()) {
             abort(403, 'Only workers can view recommendations.');
         }
 
-        $shifts = $this->matchingService
-            ->matchShiftsForWorker(Auth::user())
-            ->paginate(20);
+        // Get matched shifts collection from service
+        $matchedShifts = $this->matchingService->matchShiftsForWorker(Auth::user());
+
+        // Manual pagination since we need to sort by match_score first
+        $perPage = 20;
+        $currentPage = $request->get('page', 1);
+        $offset = ($currentPage - 1) * $perPage;
+
+        // Slice the collection for current page
+        $paginatedItems = $matchedShifts->slice($offset, $perPage)->values();
+
+        // Create a LengthAwarePaginator instance
+        $shifts = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedItems,
+            $matchedShifts->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('shifts.recommended', compact('shifts'));
     }
 
-    /**
-     * Check if a given date is a public holiday (Malta).
-     * TODO: Move to a dedicated HolidayService for multi-region support.
-     */
-    protected function isPublicHoliday(Carbon $date)
-    {
-        // Malta public holidays 2025
-        $holidays = [
-            '2025-01-01', // New Year's Day
-            '2025-02-10', // St. Paul's Shipwreck
-            '2025-03-19', // St. Joseph's Day
-            '2025-03-31', // Freedom Day
-            '2025-04-18', // Good Friday
-            '2025-05-01', // Worker's Day
-            '2025-06-07', // Sette Giugno
-            '2025-06-29', // St. Peter & St. Paul
-            '2025-08-15', // Assumption Day
-            '2025-09-08', // Our Lady of Victories
-            '2025-09-21', // Independence Day
-            '2025-12-08', // Immaculate Conception
-            '2025-12-13', // Republic Day
-            '2025-12-25', // Christmas Day
-        ];
+    // Protected helper methods removed in favor of ShiftPricingService and Config
 
-        return in_array($date->toDateString(), $holidays);
-    }
 }

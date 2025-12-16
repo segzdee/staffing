@@ -38,6 +38,15 @@ class MessagesController extends Controller
 
         $conversations = $query->get();
 
+        // Eager load unread message counts to avoid N+1 queries
+        $conversationIds = $conversations->pluck('id');
+        $unreadCounts = \App\Models\Message::whereIn('conversation_id', $conversationIds)
+            ->where('to_user_id', Auth::id())
+            ->whereNull('read_at')
+            ->selectRaw('conversation_id, COUNT(*) as count')
+            ->groupBy('conversation_id')
+            ->pluck('count', 'conversation_id');
+
         // Add other_party_name to each conversation
         foreach ($conversations as $conv) {
             if (Auth::user()->isWorker()) {
@@ -48,11 +57,8 @@ class MessagesController extends Controller
                 $conv->last_message = $conv->lastMessage->message ?? 'No messages yet';
             }
 
-            // Add unread count for this conversation
-            $conv->unread_count = $conv->messages()
-                ->where('to_user_id', Auth::id())
-                ->whereNull('read_at')
-                ->count();
+            // Add unread count from pre-loaded data
+            $conv->unread_count = $unreadCounts->get($conv->id, 0);
         }
 
         // Get unread count

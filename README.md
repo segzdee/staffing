@@ -31,17 +31,17 @@ OvertimeStaff is an advanced shift marketplace platform that connects businesses
 
 ## 🛠 Tech Stack
 
-- **Framework**: Laravel 8.12
+- **Framework**: Laravel 11.x
 - **Database**: MySQL
 - **Payment Processing**: Stripe Connect + Stripe Instant Payouts
-- **Real-time Features**: Laravel Echo + Pusher/Redis
-- **Frontend**: Bootstrap 5, jQuery, FullCalendar.js
-- **Queue System**: Laravel Queues for background jobs
+- **Real-time Features**: Laravel Reverb + Laravel Echo
+- **Frontend**: Tailwind CSS, Preline UI, Vite
+- **Queue System**: Laravel Horizon
 
 ## 📋 Requirements
 
-- PHP >= 7.3
-- MySQL >= 5.7
+- PHP >= 8.2
+- MySQL >= 8.0
 - Composer
 - Node.js & NPM
 - Stripe Account (for payments)

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Artisan;
 use Carbon\Carbon;
 
 class DevLoginController extends Controller
@@ -29,7 +30,6 @@ class DevLoginController extends Controller
             'worker' => 'dev.worker@overtimestaff.io',
             'business' => 'dev.business@overtimestaff.io',
             'agency' => 'dev.agency@overtimestaff.io',
-            'agent' => 'dev.agent@overtimestaff.io',
             'admin' => 'dev.admin@overtimestaff.io',
         ];
 
@@ -61,22 +61,11 @@ class DevLoginController extends Controller
         // Login the user
         Auth::login($user, true);
 
-        // Redirect to appropriate dashboard
-        if ($type === 'agent') {
-            // AI Agents have a dashboard showing API usage
-            return redirect()->route('agent.dashboard')
-                ->with('success', "Logged in as Dev AI Agent.");
-        }
+        // Use the redirect resolver for consistent behavior
+        $redirectUrl = $this->resolveRedirectUrl($user);
 
-        $redirectMap = [
-            'worker' => route('dashboard'),
-            'business' => route('dashboard'),
-            'agency' => route('dashboard'),
-            'admin' => route('admin.dashboard'), // Admin uses separate route: /panel/admin
-        ];
-
-        return redirect($redirectMap[$type] ?? route('home'))
-            ->with('success', "Logged in as Dev {$type}");
+        return redirect($redirectUrl)
+            ->with('success', "Logged in as Dev " . ucfirst($type));
     }
 
     /**
@@ -88,8 +77,8 @@ class DevLoginController extends Controller
         // Handle POST request to refresh credentials
         if ($request->isMethod('post') && $request->input('action') === 'refresh') {
             try {
-                \Artisan::call('db:seed', ['--class' => 'DevCredentialsSeeder']);
-                $output = \Artisan::output();
+                Artisan::call('db:seed', ['--class' => 'DevCredentialsSeeder']);
+                $output = Artisan::output();
                 
                 return redirect()->route('dev.credentials')
                     ->with('success', 'Dev credentials refreshed successfully! Expiration extended by 7 days.');
@@ -103,32 +92,29 @@ class DevLoginController extends Controller
                 'email' => 'dev.worker@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Worker',
-                'dashboard' => route('dashboard'),
+                'dashboard' => route('dashboard.worker'),
+                'role' => 'worker',
             ],
             'business' => [
                 'email' => 'dev.business@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Business',
-                'dashboard' => route('dashboard'),
+                'dashboard' => route('dashboard.company'),
+                'role' => 'business',
             ],
             'agency' => [
                 'email' => 'dev.agency@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Agency',
-                'dashboard' => route('dashboard'),
-            ],
-            'agent' => [
-                'email' => 'dev.agent@overtimestaff.io',
-                'password' => 'Dev007!',
-                'name' => 'Dev AI Agent',
-                'dashboard' => route('agent.dashboard'),
-                'api_info' => 'Use API endpoints at /api/agent/* with X-Agent-API-Key header',
+                'dashboard' => route('dashboard.agency'),
+                'role' => 'agency',
             ],
             'admin' => [
                 'email' => 'dev.admin@overtimestaff.io',
                 'password' => 'Dev007!',
                 'name' => 'Dev Admin',
-                'dashboard' => route('admin.dashboard'),
+                'dashboard' => route('dashboard.admin'),
+                'role' => 'admin',
             ],
         ];
 
@@ -159,6 +145,39 @@ class DevLoginController extends Controller
         }
 
         return view('dev.credentials', compact('credentials'));
+    }
+
+    /**
+     * Resolve the correct redirect URL based on user state
+     * Implements the redirect logic: email verify → role select → dashboard
+     */
+    protected function resolveRedirectUrl(User $user): string
+    {
+        // If email not verified, redirect to verification
+        if (!$user->email_verified_at) {
+            return route('verification.notice');
+        }
+
+        // If verified but role missing, redirect to dashboard (which will handle role selection)
+        if (!$user->user_type) {
+            return route('dashboard.index');
+        }
+
+        // Otherwise redirect to role-specific dashboard
+        $dashboardRoutes = [
+            'worker' => 'dashboard.worker',
+            'business' => 'dashboard.company',
+            'agency' => 'dashboard.agency',
+        ];
+
+        // Check user_type instead of role for admin
+        if ($user->user_type === 'admin') {
+            return route('dashboard.admin');
+        }
+
+        $routeName = $dashboardRoutes[$user->user_type] ?? 'dashboard.index';
+
+        return route($routeName);
     }
 }
 

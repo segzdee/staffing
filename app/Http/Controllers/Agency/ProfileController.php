@@ -34,11 +34,11 @@ class ProfileController extends Controller
         // Calculate profile completeness
         $profileCompleteness = $this->calculateProfileCompleteness($user);
 
-        // Get agency statistics with null safety
+        // Get agency statistics
         $stats = [
-            'total_workers' => optional($user->agencyWorkers())->count() ?? 0,
-            'active_workers' => optional($user->agencyWorkers())->where('status', 'active')->count() ?? 0,
-            'total_clients' => optional($user->agencyClients())->count() ?? 0,
+            'total_workers' => $user->agencyWorkers()->count(),
+            'active_workers' => $user->agencyWorkers()->where('agency_workers.status', 'active')->count(),
+            'total_clients' => $user->agencyClients()->count(),
         ];
 
         return view('agency.profile.show', compact('user', 'profile', 'profileCompleteness', 'stats'));

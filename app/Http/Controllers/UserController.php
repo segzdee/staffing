@@ -96,12 +96,6 @@ class UserController extends Controller
                 $data['shifts_filled'] = $user->agencyProfile->shifts_filled_count ?? 0;
                 break;
 
-            case 'ai_agent':
-                $data['profile'] = $user->aiAgentProfile;
-                $data['shifts_managed'] = $user->aiAgentProfile->shifts_created_count ?? 0;
-                $data['api_calls'] = $user->aiAgentProfile->api_calls_count ?? 0;
-                break;
-
             default:
                 $data['profile'] = null;
                 break;

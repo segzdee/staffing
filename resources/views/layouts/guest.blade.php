@@ -128,8 +128,7 @@
     @stack('styles')
 </head>
 
-<body class="bg-muted/30 text-foreground font-sans antialiased min-h-screen"
-    style="background-color: hsl(240 4.8% 95.9% / 0.3);">
+<body class="bg-background text-foreground font-sans antialiased min-h-screen">
     <div class="min-h-screen flex flex-col">
         <!-- Clean Navigation -->
         @include('components.clean-navbar')
@@ -147,12 +146,10 @@
                         &copy; {{ date('Y') }} OvertimeStaff. All rights reserved.
                     </p>
                     <div class="flex items-center space-x-6">
-                        <a href="#" class="text-sm transition-colors"
-                            style="color: hsl(240 3.8% 46.1%);">Features</a>
+                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Features</a>
                         <a href="{{ route('business.pricing') }}" class="text-sm transition-colors"
                             style="color: hsl(240 3.8% 46.1%);">Pricing</a>
-                        <a href="#" class="text-sm transition-colors"
-                            style="color: hsl(240 3.8% 46.1%);">About</a>
+                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
                         <a href="{{ route('privacy') }}" class="text-sm transition-colors"
                             style="color: hsl(240 3.8% 46.1%);">Privacy</a>
                         <a href="{{ route('terms') }}" class="text-sm transition-colors"

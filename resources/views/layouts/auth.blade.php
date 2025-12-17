@@ -82,10 +82,36 @@
         </div>
 
         {{-- Right Panel - Form --}}
-        <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
-            <div class="w-full max-w-md">
-                @yield('form')
+        <div class="w-full lg:w-1/2 flex flex-col min-h-screen bg-background">
+            <div class="flex-1 flex items-center justify-center p-8">
+                <div class="w-full max-w-md space-y-8">
+                    @yield('form')
+                </div>
             </div>
+
+            {{-- Auth Footer --}}
+            <footer
+                class="py-6 border-t border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+                <div class="container flex flex-col items-center justify-center gap-4 md:h-12 md:flex-row">
+                    <p class="text-xs text-muted-foreground text-center">
+                        &copy; {{ date('Y') }} OvertimeStaff. All rights reserved.
+                    </p>
+                    <nav class="flex gap-4 sm:gap-6">
+                        <a href="{{ route('terms') }}"
+                            class="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors">
+                            Terms
+                        </a>
+                        <a href="{{ route('privacy') }}"
+                            class="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors">
+                            Privacy
+                        </a>
+                        <a href="{{ route('contact') }}"
+                            class="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors">
+                            Help
+                        </a>
+                    </nav>
+                </div>
+            </footer>
         </div>
     </div>
 

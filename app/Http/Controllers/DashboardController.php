@@ -131,15 +131,7 @@ class DashboardController extends Controller
         return view('agency.dashboard', compact('stats'));
     }
 
-    /**
-     * Agency Assignments
-     */
-    public function agencyAssignments()
-    {
-        $user = Auth::user();
-        $assignments = []; // Placeholder for now
-        return view('agency.assignments', compact('assignments'));
-    }
+
 
     /**
      * User Profile
@@ -167,34 +159,7 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact('stats', 'recentUsers'));
     }
-    public function agencyShiftsBrowse()
-    {
-        return view('agency.assignments'); // Placeholder
-    }
 
-    public function agencyShiftsView($id)
-    {
-        return view('agency.assignments'); // Placeholder
-    }
 
-    public function agencyWorkersIndex()
-    {
-        return view('agency.assignments'); // Placeholder
-    }
 
-    public function agencyCommissions()
-    {
-        return view('agency.assignments'); // Placeholder
-    }
-
-    public function storeShift()
-    {
-        return redirect()->back(); // Placeholder
-    }
-
-    public function createShift()
-    {
-        $venues = collect([]); // Placeholder
-        return view('shifts.create', compact('venues'));
-    }
 }

@@ -1,71 +1,49 @@
-@extends('layouts.authenticated')
+@extends('layouts.auth')
 
-@section('title') {{trans('auth.password_recover')}} -@endsection
+@section('title', 'Reset Password - OvertimeStaff')
+@section('brand-headline', 'Reset Password')
+@section('brand-subtext', 'Enter your email to receive password reset instructions.')
 
-@section('css')
-  <script type="text/javascript">
-      var error_scrollelement = {{ count($errors) > 0 ? 'true' : 'false' }};
-  </script>
-@endsection
+@section('form')
+  <div class="space-y-6">
+    <div class="space-y-2 text-center lg:text-left">
+      <h2 class="text-2xl font-bold tracking-tight text-foreground">Forgot password?</h2>
+      <p class="text-sm text-muted-foreground">
+        No worries, we'll send you reset instructions.
+      </p>
+    </div>
 
-@section('content')
-  <div class="jumbotron home m-0 bg-gradient">
-    <div class="container pt-lg-md">
-      <div class="row justify-content-center">
-        <div class="col-lg-5">
-          <div class="card bg-white shadow border-0">
-
-              <h4 class="text-center mb-0 font-weight-bold pt-4 px-4">
-                {{trans('auth.password_recover')}}
-              </h4>
-              <small class="btn-block text-center mt-2 px-4">{{ trans('auth.recover_pass_subtitle') }}</small>
-
-            <div class="card-body px-lg-5 py-lg-5">
-              @if (session('status'))
-                      <div class="alert alert-success">
-                        {{{ session('status') }}}
-                      </div>
-                    @endif
-
-              @include('errors.errors-forms')
-
-              <form method="POST" action="{{ route('password.email') }}">
-                  @csrf
-
-                  @if($settings->captcha == 'on')
-                    @captcha
-                  @endif
-
-                <div class="form-group mb-3">
-                  <div class="input-group input-group-alternative">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="feather icon-mail"></i></span>
-                    </div>
-                    <input class="form-control @if (count($errors) > 0) is-invalid @endif" value="{{ old('email')}}" placeholder="{{trans('auth.email')}}" name="email" required type="text">
-
-                  </div>
-                </div>
-
-                <div class="text-center">
-                  <button type="submit" class="btn btn-primary my-4 w-100">{{trans('auth.send_pass_reset')}}</button>
-                </div>
-              </form>
-
-              @if ($settings->captcha == 'on')
-                <small class="btn-block text-center">{{trans('auth.protected_recaptcha')}} <a href="https://policies.google.com/privacy" target="_blank">{{trans('general.privacy')}}</a> - <a href="https://policies.google.com/terms" target="_blank">{{trans('general.terms')}}</a></small>
-              @endif
-
-            </div>
-          </div>
-          <div class="row mt-3">
-            <div class="col-6">
-              <a href="{{ url()->previous() }}" class="text-light">
-                <small><i class="fas fa-arrow-left"></i> {{trans('general.go_back')}}</small>
-              </a>
-            </div>
-          </div>
-        </div>
+    @if (session('status'))
+      <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+        {{ session('status') }}
       </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
+      @csrf
+
+      <div class="space-y-2">
+        <x-ui.label for="email" value="Email address" />
+        <x-ui.input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="name@example.com"
+          required autofocus />
+        @error('email')
+          <p class="text-sm text-destructive">{{ $message }}</p>
+        @enderror
+      </div>
+
+      <x-ui.button type="submit" class="w-full">
+        {{ __('Send Password Reset Link') }}
+      </x-ui.button>
+    </form>
+
+    <div class="text-center text-sm">
+      <a href="{{ route('login') }}"
+        class="font-medium text-primary hover:text-primary/90 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to sign in
+      </a>
     </div>
   </div>
 @endsection

@@ -2,21 +2,21 @@
     x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0"
     x-transition:leave-end="-translate-x-full"
-    class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform lg:translate-x-0 lg:static lg:inset-0 lg:block custom-scrollbar overflow-y-auto flex flex-col"
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform lg:translate-x-0 lg:static lg:inset-0 lg:block custom-scrollbar overflow-y-auto flex flex-col"
     @click.away="if (window.innerWidth < 1024) { sidebarOpen = false }">
     <!-- Logo -->
-    <div class="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
+    <div class="flex items-center justify-between h-16 px-6 border-b border-border flex-shrink-0">
         <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-gray-900 rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-primary-foreground" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="3" y="3" width="7" height="7" rx="1" />
                     <rect x="14" y="3" width="7" height="7" rx="1" />
                     <rect x="3" y="14" width="7" height="7" rx="1" />
                     <rect x="14" y="14" width="7" height="7" rx="1" />
                 </svg>
             </div>
-            <span class="text-lg font-bold tracking-tight text-gray-900">
-                OVERTIME<span class="text-gray-600">STAFF</span>
+            <span class="text-lg font-bold tracking-tight text-foreground">
+                OVERTIME<span class="text-muted-foreground">STAFF</span>
             </span>
         </a>
         <button @click="sidebarOpen = false"
@@ -28,16 +28,17 @@
     </div>
 
     <!-- User Info -->
-    <div class="p-4 border-b border-gray-200 flex-shrink-0">
+    <div class="p-4 border-b border-border flex-shrink-0">
         <div class="flex items-center gap-3">
             <div
-                class="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-semibold flex-shrink-0">
                 {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
             </div>
             <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</p>
-                <p class="text-xs text-gray-600 truncate">
-                    {{ config('dashboard.roles.' . auth()->user()->user_type . '.badge', 'User') }}</p>
+                <p class="text-sm font-semibold text-foreground truncate">{{ auth()->user()->name }}</p>
+                <p class="text-xs text-muted-foreground truncate">
+                    {{ config('dashboard.roles.' . auth()->user()->user_type . '.badge', 'User') }}
+                </p>
             </div>
         </div>
     </div>
@@ -56,7 +57,7 @@
             @endphp
             <a href="{{ route($item['route']) }}"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                        {{ $isActive ? 'bg-gray-900 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100' }}">
+                            {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}" />
                 </svg>

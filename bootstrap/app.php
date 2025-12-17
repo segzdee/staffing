@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'business' => \App\Http\Middleware\BusinessMiddleware::class,
             'agency' => \App\Http\Middleware\AgencyMiddleware::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'worker.activated' => \App\Http\Middleware\EnsureWorkerActivated::class,
+            'business.activated' => \App\Http\Middleware\EnsureBusinessActivated::class,
             // 'api.agent' => \App\Http\Middleware\ApiAgentMiddleware::class,
         ]);
 

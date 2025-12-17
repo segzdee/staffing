@@ -101,9 +101,9 @@
     <!-- Live Shift Market -->
     <x-dashboard.widget-card title="Live Shift Market" :action="route('shifts.index')" actionLabel="Browse all">
         <div class="flex items-center justify-between mb-4 -mt-2">
-            <p class="text-sm text-gray-500">Real-time shifts with instant claim opportunities</p>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                <span class="w-2 h-2 rounded-full bg-gray-600 mr-2 animate-pulse"></span>
+            <p class="text-sm text-muted-foreground">Real-time shifts with instant claim opportunities</p>
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                <span class="w-2 h-2 rounded-full bg-foreground mr-2 animate-pulse"></span>
                 LIVE
             </span>
         </div>
@@ -138,7 +138,7 @@
             @if(($profileCompleteness ?? 0) < 100)
                 <x-dashboard.sidebar-section title="Complete Your Profile">
                     <x-dashboard.progress-bar label="" :value="$profileCompleteness ?? 0" :max="100" class="mb-4" />
-                    <p class="text-sm text-gray-600 mb-4">Complete your profile to increase your chances of getting hired.</p>
+                    <p class="text-sm text-muted-foreground mb-4">Complete your profile to increase your chances of getting hired.</p>
                     <x-dashboard.quick-action href="{{ route('worker.profile') }}" variant="primary">
                         Update Profile
                     </x-dashboard.quick-action>
@@ -154,7 +154,7 @@
             ['label' => 'Applications', 'value' => ($recentApplications ?? collect())->count()],
         ]" :dividers="false" />
                 <div class="mt-4 px-4">
-                    <a href="#" class="text-xs text-brand-600 hover:underline">How is this calculated?</a>
+                    <a href="#" class="text-xs text-primary hover:underline">How is this calculated?</a>
                 </div>
             </x-dashboard.sidebar-section>
 
@@ -166,9 +166,9 @@
                         @foreach(($recentApplications ?? collect())->take(3) as $application)
                             <div class="flex items-center justify-between">
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                    <p class="text-sm font-medium text-foreground truncate">
                                         {{ $application->shift->title ?? 'Untitled Shift' }}</p>
-                                    <p class="text-xs text-gray-500">
+                                    <p class="text-xs text-muted-foreground">
                                         {{ $application->created_at ? \Carbon\Carbon::parse($application->created_at)->diffForHumans() : 'Recently' }}
                                     </p>
                                 </div>

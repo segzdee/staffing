@@ -1,87 +1,59 @@
-@extends('layouts.authenticated')
+@extends('layouts.auth')
 
-@section('css')
-  <script type="text/javascript">
-      var error_scrollelement = {{ count($errors) > 0 ? 'true' : 'false' }};
-  </script>
-@endsection
+@section('title', 'Set New Password - OvertimeStaff')
+@section('brand-headline', 'Set new password')
+@section('brand-subtext', 'Create a strong password for your account.')
 
-@section('content')
-  <div class="jumbotron home m-0 bg-gradient">
-    <div class="container pt-lg-md">
-      <div class="row justify-content-center">
-        <div class="col-lg-5">
-          <div class="card bg-white shadow border-0">
-
-            <div class="p-4">
-              <h4 class="text-center mb-0 font-weight-bold">
-                {{trans('auth.reset_password')}}
-              </h4>
-              <small class="btn-block text-center mt-2">{{ trans('auth.reset_pass_subtitle') }}</small>
-            </div>
-
-            <div class="card-body px-lg-5 py-lg-5">
-
-              @if (session('status'))
-                      <div class="alert alert-success">
-                        {{ session('status') }}
-                      </div>
-                    @endif
-
-              @include('errors.errors-forms')
-
-              <form method="POST" action="{{url('password/reset')}}">
-                  @csrf
-
-                  @if($settings->captcha == 'on')
-                    @captcha
-                  @endif
-
-                  <input type="hidden" name="token" value="{{$token}}">
-
-                <div class="form-group mb-3">
-                  <div class="input-group input-group-alternative">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="feather icon-mail"></i></span>
-                    </div>
-                    <input class="form-control" value="{{ old('email')}}" placeholder="{{trans('auth.email')}}" name="email" required type="text">
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <div class="input-group input-group-alternative" id="showHidePassword">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="iconmoon icon-Key"></i></span>
-                    </div>
-                    <input name="password" type="password" class="form-control" required placeholder="{{trans('auth.password')}}">
-                    <div class="input-group-append">
-                      <span class="input-group-text c-pointer"><i class="feather icon-eye-off"></i></span>
-                  </div>
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <div class="input-group input-group-alternative">
-                    <div class="input-group-prepend">
-                      <span class="input-group-text"><i class="iconmoon icon-Key"></i></span>
-                    </div>
-                    <input name="password_confirmation" type="password" class="form-control" required placeholder="{{trans('auth.confirm_password')}}">
-                  </div>
-                </div>
-
-                <div class="text-center">
-                  <button type="submit" class="btn btn-primary my-4 w-100">{{trans('auth.reset_password')}}</button>
-                </div>
-              </form>
-
-              @if ($settings->captcha == 'on')
-                <small class="btn-block text-center">{{trans('auth.protected_recaptcha')}} <a href="https://policies.google.com/privacy" target="_blank">{{trans('general.privacy')}}</a> - <a href="https://policies.google.com/terms" target="_blank">{{trans('general.terms')}}</a></small>
-              @endif
-
-            </div>
-          </div>
-        </div>
-      </div>
+@section('form')
+  <div class="space-y-6">
+    <div class="space-y-2 text-center lg:text-left">
+      <h2 class="text-2xl font-bold tracking-tight text-foreground">Set new password</h2>
+      <p class="text-sm text-muted-foreground">
+        Your new password must be different from previously used passwords.
+      </p>
     </div>
+
+    @if (session('status'))
+      <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-600">
+        {{ session('status') }}
+      </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.update') }}" class="space-y-4">
+      @csrf
+
+      <input type="hidden" name="token" value="{{ $token }}">
+
+      {{-- Email --}}
+      <div class="space-y-2">
+        <x-ui.label for="email" value="Email address" />
+        <x-ui.input type="email" id="email" name="email" value="{{ $email ?? old('email') }}"
+          placeholder="name@example.com" required autofocus />
+        @error('email')
+          <p class="text-sm text-destructive">{{ $message }}</p>
+        @enderror
+      </div>
+
+      {{-- New Password --}}
+      <div class="space-y-2">
+        <x-ui.label for="password" value="New password" />
+        <x-ui.input type="password" id="password" name="password" placeholder="Enter new password" required
+          autocomplete="new-password" />
+        @error('password')
+          <p class="text-sm text-destructive">{{ $message }}</p>
+        @enderror
+      </div>
+
+      {{-- Confirm Password --}}
+      <div class="space-y-2">
+        <x-ui.label for="password_confirmation" value="Confirm password" />
+        <x-ui.input type="password" id="password_confirmation" name="password_confirmation"
+          placeholder="Confirm new password" required autocomplete="new-password" />
+      </div>
+
+      <x-ui.button type="submit" class="w-full">
+        {{ __('Reset Password') }}
+      </x-ui.button>
+    </form>
   </div>
 @endsection

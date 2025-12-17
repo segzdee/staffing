@@ -98,7 +98,7 @@
     @stack('styles')
 </head>
 
-<body class="font-sans antialiased bg-gray-50">
+<body class="font-sans antialiased bg-muted/30">
     <div class="min-h-screen">
         <!-- Sidebar -->
         @include('partials.dashboard.sidebar')
@@ -136,8 +136,8 @@
                     </p>
 
                     <!-- Onboarding Progress (if provided) -->
-                    @if(isset($onboardingProgress) && $onboardingProgress < 100)
-                    <div class="mt-4 p-4 bg-white border border-gray-200 rounded-lg">
+                    @if(isset($onboardingProgress) && $onboardingProgress < 100) <div
+                        class="mt-4 p-4 bg-white border border-gray-200 rounded-lg">
                         <div class="flex items-center justify-between mb-2">
                             <p class="text-sm font-medium text-gray-900">Complete your profile</p>
                             <span class="text-sm font-semibold text-gray-900">{{ $onboardingProgress }}%</span>
@@ -147,13 +147,13 @@
                                 style="width: {{ $onboardingProgress }}%"></div>
                         </div>
                         @php
-        $userType = auth()->user()->user_type ?? 'worker';
-        $profileEditRoute = match ($userType) {
-            'worker' => 'worker.profile.complete',
-            'business' => 'business.profile.complete',
-            'agency' => 'agency.profile.edit',
-            default => 'settings.index'
-        };
+                        $userType = auth()->user()->user_type ?? 'worker';
+                        $profileEditRoute = match ($userType) {
+                        'worker' => 'worker.profile.complete',
+                        'business' => 'business.profile.complete',
+                        'agency' => 'agency.profile.edit',
+                        default => 'settings.index'
+                        };
                         @endphp
                         @if(Route::has($profileEditRoute))
                         <a href="{{ route($profileEditRoute) }}"
@@ -165,59 +165,58 @@
                             </svg>
                         </a>
                         @endif
-                    </div>
-                    @endif
                 </div>
                 @endif
-
-                <!-- Metrics Grid -->
-                @if(isset($metrics) && count($metrics) > 0)
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    @foreach($metrics as $metric)
-                    <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-sm font-medium text-gray-600">{{ $metric['label'] }}</h3>
-                            <div class="p-2 bg-gray-100 rounded-lg">
-                                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="{{ $metric['icon'] }}" />
-                                </svg>
-                            </div>
-                        </div>
-                        <p class="text-3xl font-bold text-gray-900">{{ $metric['value'] }}</p>
-                        @if(isset($metric['subtitle']) && $metric['subtitle'])
-                        <p class="text-sm text-gray-500 mt-2">{{ $metric['subtitle'] }}</p>
-                        @endif
-                        @if(isset($metric['trend']) && $metric['trend'])
-                        <div
-                            class="mt-2 flex items-center gap-1 text-sm {{ $metric['trend'] > 0 ? 'text-green-600' : 'text-red-600' }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                @if($metric['trend'] > 0)
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                @else
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
-                                @endif
-                            </svg>
-                            <span class="font-medium">{{ abs($metric['trend']) }}%</span>
-                        </div>
-                        @endif
-                    </div>
-                    @endforeach
-                </div>
-                @endif
-
-                <!-- Flash Messages -->
-                @include('partials.alerts')
-
-                <!-- Page Content -->
-                <div class="max-w-7xl">
-                    @yield('content')
-                </div>
-            </main>
         </div>
+        @endif
+
+        <!-- Metrics Grid -->
+        @if(isset($metrics) && count($metrics) > 0)
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            @foreach($metrics as $metric)
+            <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-medium text-gray-600">{{ $metric['label'] }}</h3>
+                    <div class="p-2 bg-gray-100 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="{{ $metric['icon'] }}" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">{{ $metric['value'] }}</p>
+                @if(isset($metric['subtitle']) && $metric['subtitle'])
+                <p class="text-sm text-gray-500 mt-2">{{ $metric['subtitle'] }}</p>
+                @endif
+                @if(isset($metric['trend']) && $metric['trend'])
+                <div
+                    class="mt-2 flex items-center gap-1 text-sm {{ $metric['trend'] > 0 ? 'text-green-600' : 'text-red-600' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        @if($metric['trend'] > 0)
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        @else
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                        @endif
+                    </svg>
+                    <span class="font-medium">{{ abs($metric['trend']) }}%</span>
+                </div>
+                @endif
+            </div>
+            @endforeach
+        </div>
+        @endif
+
+        <!-- Flash Messages -->
+        @include('partials.alerts')
+
+        <!-- Page Content -->
+        <div class="max-w-7xl">
+            @yield('content')
+        </div>
+        </main>
+    </div>
     </div>
 
     @stack('scripts')

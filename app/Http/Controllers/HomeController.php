@@ -43,7 +43,7 @@ class HomeController extends Controller
 
         // If user is logged in, redirect to their dashboard
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return redirect()->route('dashboard.index');
         }
 
         // Guest users see the welcome page with shift marketplace info

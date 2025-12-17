@@ -1,0 +1,31 @@
+
+  [30;43;1m WARN [39;49;22m Your XML configuration validates against a deprecated schema. Migrate your XML configuration using "--migrate-configuration"!
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\DashboardAuditTest::worker_can_access_all_dashboard_routes(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\DashboardAuditTest::worker_debug_web_middleware(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\DashboardAuditTest::business_can_access_all_dashboard_routes(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+   WARN  Metadata found in doc-comment for method Tests\Feature\DashboardAuditTest::agency_can_access_all_dashboard_routes(). Metadata in doc-comments is deprecated and will no longer be supported in PHPUnit 12. Update your test code to use attributes instead.
+
+Testing /debug-no-web...
+DEBUG: RoleMiddleware: Passed for role worker
+ Status: 200
+Testing /debug-with-web...
+DEBUG: RoleMiddleware: Passed for role worker
+ Status: 200
+Testing /dashboard/debug-nested...
+DEBUG: RoleMiddleware: Passed for role worker
+ Status: 200
+Testing Real /dashboard/worker...
+DEBUG: RoleMiddleware: Passed for role worker
+
+DEBUG: DashboardController: Entered workerDashboard
+ Status: 200
+   PASS  Tests\Feature\DashboardAuditTest
+  ✓ worker debug web middleware                                          0.93s  
+
+  Tests:    1 passed (1 assertions)
+  Duration: 1.00s
+

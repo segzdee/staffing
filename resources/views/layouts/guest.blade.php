@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +12,8 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Vite Assets -->
     @if(file_exists(public_path('build/manifest.json')))
@@ -73,7 +75,9 @@
 
     {{-- CSP Nonce: All inline styles and scripts must include the nonce attribute --}}
     <style nonce="{{ $cspNonce ?? '' }}">
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
 
         /* Button styles - shadcn */
         .btn-primary {
@@ -123,7 +127,9 @@
 
     @stack('styles')
 </head>
-<body class="bg-muted/30 text-foreground font-sans antialiased min-h-screen" style="background-color: hsl(240 4.8% 95.9% / 0.3);">
+
+<body class="bg-muted/30 text-foreground font-sans antialiased min-h-screen"
+    style="background-color: hsl(240 4.8% 95.9% / 0.3);">
     <div class="min-h-screen flex flex-col">
         <!-- Clean Navigation -->
         @include('components.clean-navbar')
@@ -141,11 +147,16 @@
                         &copy; {{ date('Y') }} OvertimeStaff. All rights reserved.
                     </p>
                     <div class="flex items-center space-x-6">
-                        <a href="{{ route('features') }}" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Features</a>
-                        <a href="{{ route('pricing') }}" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Pricing</a>
-                        <a href="{{ route('about') }}" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
-                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Privacy</a>
-                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Terms</a>
+                        <a href="#" class="text-sm transition-colors"
+                            style="color: hsl(240 3.8% 46.1%);">Features</a>
+                        <a href="{{ route('business.pricing') }}" class="text-sm transition-colors"
+                            style="color: hsl(240 3.8% 46.1%);">Pricing</a>
+                        <a href="#" class="text-sm transition-colors"
+                            style="color: hsl(240 3.8% 46.1%);">About</a>
+                        <a href="{{ route('privacy') }}" class="text-sm transition-colors"
+                            style="color: hsl(240 3.8% 46.1%);">Privacy</a>
+                        <a href="{{ route('terms') }}" class="text-sm transition-colors"
+                            style="color: hsl(240 3.8% 46.1%);">Terms</a>
                         <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Contact</a>
                     </div>
                 </div>
@@ -155,4 +166,5 @@
 
     @stack('scripts')
 </body>
+
 </html>

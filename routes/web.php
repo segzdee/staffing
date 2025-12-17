@@ -155,10 +155,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('role:agency')
         ->name('agency.commissions');
 
-    // Business Shift Management
-    Route::post('/shifts', [App\Http\Controllers\DashboardController::class, 'storeShift'])->name('shifts.store');
-
-    Route::get('/dashboard/profile', [App\Http\Controllers\DashboardController::class, 'profile'])->name('dashboard.profile');
+    // Business routes
+    Route::get('/shifts/create', [App\Http\Controllers\Shift\ShiftController::class, 'create'])->name('shifts.create');
+    Route::post('/shifts', [App\Http\Controllers\Shift\ShiftController::class, 'store'])->name('shifts.store');
 });
 
 // ============================================================================
@@ -192,8 +191,8 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Keep existing live market and shift application routes
 Route::middleware(['auth'])->group(function () {
-    Route::view('/shifts', 'shifts.index')->name('shifts.index');
-    Route::get('/shifts/create', [App\Http\Controllers\DashboardController::class, 'createShift'])->name('shifts.create');
+    Route::get('/shifts', [App\Http\Controllers\Shift\ShiftController::class, 'index'])->name('shifts.index');
+    // Route::get('/shifts/create', [App\Http\Controllers\DashboardController::class, 'createShift'])->name('shifts.create'); // This route is now handled by ShiftController
 
     // Business Shifts Management
     Route::prefix('business')->name('business.')->middleware('role:business')->group(function () {

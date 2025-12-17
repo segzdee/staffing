@@ -6,12 +6,11 @@
     'color' => 'gray',
     'size' => 'md', // sm, md, lg
 ])
-
 @php
     $percentage = $max > 0 ? min(100, ($value / $max) * 100) : 0;
 
     $barColors = [
-        'gray' => 'bg-gray-900',
+        'gray' => 'bg-foreground',
         'green' => 'bg-green-600',
         'blue' => 'bg-blue-600',
         'yellow' => 'bg-yellow-500',
@@ -30,16 +29,17 @@
 
 <div {{ $attributes }}>
     @if($label || $showPercentage)
-    <div class="flex items-center justify-between text-sm mb-2">
-        @if($label)
-        <span class="text-gray-600">{{ $label }}</span>
-        @endif
-        @if($showPercentage)
-        <span class="font-semibold text-gray-900">{{ round($percentage) }}%</span>
-        @endif
-    </div>
+        <div class="flex items-center justify-between text-sm mb-2">
+            @if($label)
+                <span class="text-muted-foreground">{{ $label }}</span>
+            @endif
+
+                       @if($showPercentage)
+                        <span class="font-semibold text-foreground">{{ round($percentage) }}%</span>
+                    @endif
+        </div>
     @endif
-    <div class="w-full bg-gray-200 rounded-full {{ $height }}">
+    <div class="w-full bg-secondary rounded-full {{ $height }}">
         <div class="{{ $barColor }} {{ $height }} rounded-full transition-all duration-300" style="width: {{ $percentage }}%"></div>
     </div>
 </div>

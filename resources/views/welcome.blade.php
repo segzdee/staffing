@@ -46,7 +46,7 @@
                         </p>
                     </div>
 
-                    <x-market-board />
+                    <x-live-shift-market variant="wallstreet" :limit="12" endpoint="/api/market/public" />
 
                     <div class="mt-6 text-center">
                         <x-ui.button variant="secondary" as="a" href="{{ route('register') }}?type=worker">

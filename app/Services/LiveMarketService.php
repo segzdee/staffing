@@ -61,7 +61,7 @@ class LiveMarketService
         }
 
         if (!empty($filters['min_rate'])) {
-            $query->where('final_rate', '>=', $filters['min_rate']);
+            $query->where('final_rate', '>=', $filters['min_rate'] * 100);
         }
 
         if (!empty($filters['instant_claim'])) {

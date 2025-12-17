@@ -196,9 +196,22 @@ class ProfileController extends Controller
 
         $completion = $this->profileService->getProfileCompletion($businessProfile);
 
-        return view('business.profile.setup', [
+        $missingFields = collect($completion['missing_fields'] ?? [])->map(function ($field) {
+            $label = $this->profileService->getFieldLabels()[$field['field']] ?? ucwords(str_replace('_', ' ', $field['field']));
+            return array_merge($field, [
+                'label' => $label,
+                'description' => "Please provide your {$label}",
+                'priority' => $field['required'] ? 'high' : 'medium',
+            ]);
+        })->toArray();
+
+        return view('business.onboarding.complete-profile', [
             'profile' => $businessProfile,
-            'completion' => $completion,
+            'user' => $user,
+            'completeness' => $completion['percentage'] ?? 0,
+            'missingFields' => $missingFields,
+            'progress' => $completion, // Ensure progress is also passed if needed
+            'completion' => $completion, // Keep for backward compatibility if any
             'business_types' => BusinessType::forSelect(),
             'industries' => Industry::forSelect(),
             'company_sizes' => $this->getCompanySizes(),
@@ -225,7 +238,12 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'data' => Industry::active()->topLevel()->ordered()->with('children')->get([
-                'id', 'code', 'name', 'description', 'icon', 'parent_id'
+                'id',
+                'code',
+                'name',
+                'description',
+                'icon',
+                'parent_id'
             ]),
         ]);
     }

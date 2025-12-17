@@ -16,11 +16,13 @@ use Stripe\Exception\ApiErrorException;
 class ShiftPaymentService
 {
     protected $stripe;
+    protected $platformFeePercentage;
 
     public function __construct()
     {
         $stripeSecret = config('services.stripe.secret');
         $this->stripe = $stripeSecret ? new StripeClient($stripeSecret) : null;
+        $this->platformFeePercentage = config('platform.fee_rate', 0.35);
     }
 
     /**
@@ -40,8 +42,12 @@ class ShiftPaymentService
 
             // ===== SL-004: Use pre-calculated shift costs from SL-001 =====
             $escrowAmount = $shift->escrow_amount; // Total cost + 5% buffer
+            $amountGross = $shift->total_business_cost; // Total before buffer
             $hoursEstimated = $shift->duration_hours;
             $hourlyRate = $shift->final_rate; // Includes surge pricing
+            if (is_object($hourlyRate) && method_exists($hourlyRate, 'getAmount')) {
+                $hourlyRate = ((float) $hourlyRate->getAmount()) / 100;
+            }
             $workerPayPerHour = $hourlyRate;
             $workerPayEstimated = $hoursEstimated * $workerPayPerHour;
             $platformFeeAmount = $shift->platform_fee_amount; // Already calculated in shift
@@ -74,7 +80,7 @@ class ShiftPaymentService
                 'assignment_id' => $assignment->id,
                 'worker_id' => $worker->id,
                 'business_id' => $business->id,
-                'amount_gross' => $shift->total_business_cost, // Total before buffer
+                'amount_gross' => $amountGross,
                 'platform_fee' => $platformFeeAmount,
                 'vat_amount' => $vatAmount,
                 'amount_net' => $workerPayEstimated, // Worker's share
@@ -251,7 +257,11 @@ class ShiftPaymentService
             $workerProfile = $worker->workerProfile;
             if ($workerProfile) {
                 $workerProfile->increment('total_shifts_completed');
-                $workerProfile->increment('total_earnings', $shiftPayment->amount_net);
+                $amount = $shiftPayment->amount_net;
+                if (is_object($amount) && method_exists($amount, 'getAmount')) {
+                    $amount = (int) $amount->getAmount();
+                }
+                $workerProfile->increment('total_earnings', $amount);
                 $workerProfile->updateReliabilityScore();
             }
 
@@ -451,7 +461,7 @@ class ShiftPaymentService
     /**
      * Refund amount to business (for overpayment or disputes).
      */
-    protected function refundToBusiness(ShiftPayment $shiftPayment, float $amount)
+    protected function refundToBusiness(ShiftPayment $shiftPayment, $amount)
     {
         try {
             $business = $shiftPayment->business;
@@ -668,12 +678,17 @@ class ShiftPaymentService
     /**
      * Validate amount and convert to cents, preventing -INF/INF casting errors.
      *
-     * @param float|int|null $amount
+     * @param float|int|\Money\Money|null $amount
      * @return int
      * @throws \InvalidArgumentException
      */
     protected function validateAndConvertToCents($amount)
     {
+        // Check if it's a Money object
+        if (is_object($amount) && method_exists($amount, 'getAmount')) {
+            return (int) $amount->getAmount();
+        }
+
         // Check for null or invalid values
         if ($amount === null || $amount === '') {
             throw new \InvalidArgumentException('Amount cannot be null or empty');

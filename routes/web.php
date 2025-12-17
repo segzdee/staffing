@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 
+
+
 /*
 |--------------------------------------------------------------------------
 | OvertimeStaff Web Routes - Clean Separated Structure
@@ -110,21 +112,81 @@ Route::prefix('dashboard')
     ->name('dashboard.')
     ->group(function () {
 
-        // Main Dashboard Redirect (Role-based)
+        // Main Dashboard Redirect
         Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('index');
 
-        // Role-specific Dashboard Routes
-        Route::get('/worker', [App\Http\Controllers\DashboardController::class, 'workerDashboard'])
-            ->middleware(['role:worker'])
-            ->name('worker');
+        // STAFF / WORKER ROUTES
+        Route::prefix('staff')->name('staff.')->middleware('role:worker')->group(function () {
+            Route::get('/overview', [App\Http\Controllers\DashboardController::class, 'workerDashboard'])->name('overview');
+            Route::get('/marketplace', [App\Http\Controllers\Shift\ShiftController::class, 'index'])->name('marketplace'); // Find Shifts
+            Route::get('/my-shifts', [App\Http\Controllers\Worker\ShiftApplicationController::class, 'myApplications'])->name('my-shifts');
+            Route::get('/schedule', [App\Http\Controllers\Worker\AvailabilityController::class, 'index'])->name('schedule');
+            Route::view('/earnings', 'dashboard.staff.earnings')->name('earnings');
+            Route::view('/reputation', 'dashboard.staff.reputation')->name('reputation');
+            Route::view('/agencies', 'dashboard.staff.agencies')->name('agencies');
+            Route::view('/loyalty', 'dashboard.staff.loyalty')->name('loyalty');
+            Route::view('/verification', 'dashboard.staff.verification')->name('verification');
+            Route::view('/documents', 'dashboard.staff.documents')->name('documents');
+            Route::view('/availability', 'dashboard.staff.availability')->name('availability');
+        });
 
-        Route::get('/company', [App\Http\Controllers\DashboardController::class, 'businessDashboard'])
-            ->middleware(['auth', 'verified', 'role:business'])
-            ->name('company');
+        // COMPANY ROUTES
+        Route::prefix('company')->name('company.')->middleware('role:business')->group(function () {
+            Route::get('/overview', [App\Http\Controllers\DashboardController::class, 'businessDashboard'])->name('overview');
+            Route::get('/post-shift', [App\Http\Controllers\Shift\ShiftController::class, 'create'])->name('post-shift');
+            Route::get('/shifts', [App\Http\Controllers\Business\ShiftManagementController::class, 'myShifts'])->name('shifts'); // Manage Shifts
+            Route::view('/applications', 'dashboard.company.applications')->name('applications');
+            Route::view('/calendar', 'dashboard.company.calendar')->name('calendar');
+            Route::view('/attendance', 'dashboard.company.attendance')->name('attendance');
+            Route::view('/workers', 'dashboard.company.workers')->name('workers');
+            Route::view('/staff-lists', 'dashboard.company.staff-lists')->name('staff-lists');
+            Route::view('/templates', 'dashboard.company.templates')->name('templates');
+            Route::view('/payments', 'dashboard.company.payments')->name('payments');
+            Route::view('/analytics', 'dashboard.company.analytics')->name('analytics');
+            Route::view('/reports', 'dashboard.company.reports')->name('reports');
+            Route::view('/compliance', 'dashboard.company.compliance')->name('compliance');
+        });
 
-        Route::get('/agency', [App\Http\Controllers\DashboardController::class, 'agencyDashboard'])
-            ->middleware(['auth', 'verified', 'role:agency'])
-            ->name('agency');
+        // AGENCY ROUTES
+        Route::prefix('agency')->name('agency.')->middleware('role:agency')->group(function () {
+            Route::get('/overview', [App\Http\Controllers\DashboardController::class, 'agencyDashboard'])->name('overview');
+            Route::view('/clients', 'dashboard.agency.clients')->name('clients');
+            Route::get('/staff-pool', [App\Http\Controllers\DashboardController::class, 'agencyWorkersIndex'])->name('staff-pool');
+            Route::get('/placements', [App\Http\Controllers\DashboardController::class, 'agencyAssignments'])->name('placements');
+            Route::get('/shifts', [App\Http\Controllers\DashboardController::class, 'agencyShiftsBrowse'])->name('shifts');
+            Route::get('/commissions', [App\Http\Controllers\DashboardController::class, 'agencyCommissions'])->name('commissions');
+            Route::view('/invoices', 'dashboard.agency.invoices')->name('invoices');
+            Route::view('/analytics', 'dashboard.agency.analytics')->name('analytics');
+            Route::view('/compliance', 'dashboard.agency.compliance')->name('compliance');
+        });
+
+        // ADMIN ROUTES
+        Route::prefix('admin')->name('admin.')->group(function () {
+            // Main
+            Route::view('/overview', 'dashboard.admin.overview')->name('overview');
+            Route::view('/system', 'dashboard.admin.system')->name('system');
+
+            // Users
+            Route::view('/users', 'dashboard.admin.users')->name('users');
+            Route::view('/companies', 'dashboard.admin.companies')->name('companies');
+            Route::view('/verification', 'dashboard.admin.verification')->name('verification');
+
+            // Operations
+            Route::view('/all-shifts', 'dashboard.admin.all-shifts')->name('all-shifts');
+            Route::view('/disputes', 'dashboard.admin.disputes')->name('disputes');
+            Route::view('/financial', 'dashboard.admin.financial')->name('financial');
+
+            // Platform
+            Route::view('/analytics', 'dashboard.admin.analytics')->name('analytics');
+            Route::view('/agents', 'dashboard.admin.agents')->name('agents');
+            Route::view('/features', 'dashboard.admin.features')->name('features');
+            Route::view('/audit-logs', 'dashboard.admin.audit-logs')->name('audit-logs');
+            Route::view('/announcements', 'dashboard.admin.announcements')->name('announcements');
+
+            // Compliance
+            Route::view('/compliance', 'dashboard.admin.compliance')->name('compliance');
+            Route::view('/security', 'dashboard.admin.security')->name('security');
+        });
 
         // Shared Authenticated Routes
         Route::view('/notifications', 'notifications.index')->name('notifications');
@@ -160,6 +222,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Business routes
     Route::get('/shifts/create', [App\Http\Controllers\Shift\ShiftController::class, 'create'])->name('shifts.create');
     Route::post('/shifts', [App\Http\Controllers\Shift\ShiftController::class, 'store'])->name('shifts.store');
+
+    Route::get('/business/profile/complete', [App\Http\Controllers\Business\ProfileController::class, 'showSetup'])
+        ->middleware('role:business')
+        ->name('business.profile.complete');
 });
 
 // ============================================================================
@@ -257,26 +323,4 @@ Route::prefix('register/agency')->name('agency.register.')->group(function () {
     Route::get('/confirmation/{id}', [App\Http\Controllers\Agency\RegistrationController::class, 'confirmation'])->name('confirmation');
 });
 
-// ============================================================================
-// DEV ROUTES - Local/Development Only
-// ============================================================================
-if (app()->environment('local', 'development')) {
-    Route::get('/dev/login/{type}', [App\Http\Controllers\Dev\DevLoginController::class, 'login'])
-        ->name('dev.login')
-        ->where('type', 'worker|business|agency|admin');
-
-    Route::match(['get', 'post'], '/dev/credentials', [App\Http\Controllers\Dev\DevLoginController::class, 'showCredentials'])
-        ->name('dev.credentials');
-
-    Route::get('/home', function () {
-        return redirect('/');
-    });
-
-    Route::get('/clear-cache', function () {
-        Artisan::call('cache:clear');
-        Artisan::call('view:clear');
-        Artisan::call('config:clear');
-        Artisan::call('route:clear');
-        return 'Cache cleared!';
-    });
-}
+// Dev routes removed per request

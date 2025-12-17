@@ -358,6 +358,8 @@ class Shift extends Model
         'shift_date' => 'date',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'start_datetime' => 'datetime',
+        'end_datetime' => 'datetime',
         'duration_hours' => 'decimal:2',
         'dynamic_rate' => 'decimal:2',
         'required_workers' => 'integer',
@@ -842,7 +844,16 @@ class Shift extends Model
      */
     public function getEffectiveRateAttribute()
     {
-        return $this->final_rate ?? ($this->base_rate * ($this->surge_multiplier ?? 1.0));
+        $rateObj = $this->base_rate;
+        $rate = 0;
+
+        if (is_numeric($rateObj)) {
+            $rate = (float) $rateObj;
+        } elseif (is_object($rateObj) && method_exists($rateObj, 'getAmount')) {
+            $rate = ((float) $rateObj->getAmount()) / 100;
+        }
+
+        return $this->final_rate ?? ($rate * ($this->surge_multiplier ?? 1.0));
     }
 
     /**
@@ -906,7 +917,15 @@ class Shift extends Model
                 ->avg('base_rate') ?? 25;
         });
 
-        $rate = $this->base_rate ?? 0;
+        $rateObj = $this->base_rate;
+        $rate = 0;
+
+        if (is_numeric($rateObj)) {
+            $rate = (float) $rateObj;
+        } elseif (is_object($rateObj) && method_exists($rateObj, 'getAmount')) {
+            $rate = ((float) $rateObj->getAmount()) / 100;
+        }
+
         if (!$rate || $avgRate == 0) {
             return 'gray';
         }
@@ -931,12 +950,22 @@ class Shift extends Model
     public function getRateChangeAttribute(): float
     {
         $avgRate = Cache::remember('market_avg_rate', 300, function () {
-            return Shift::where('status', 'open')
+            $avgCents = Shift::where('status', 'open')
                 ->where('shift_date', '>=', now())
-                ->avg('base_rate') ?? 25;
+                ->avg('base_rate');
+
+            return $avgCents ? ($avgCents / 100) : 25;
         });
 
-        $rate = $this->base_rate ?? 0;
+        $rateObj = $this->final_rate ?? $this->base_rate;
+        $rate = 0;
+
+        if (is_numeric($rateObj)) {
+            $rate = (float) $rateObj;
+        } elseif (is_object($rateObj) && method_exists($rateObj, 'getAmount')) {
+            $rate = ((float) $rateObj->getAmount()) / 100;
+        }
+
         if (!$rate || $avgRate == 0) {
             return 0;
         }

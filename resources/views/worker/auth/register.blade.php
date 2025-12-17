@@ -242,15 +242,16 @@
             @endif
 
             <!-- Name Field -->
-            <div class="form-group" :class="{ 'has-error': errors.name }">
-                <label for="name" class="form-label">Full Name <span class="required">*</span></label>
-                <div class="form-input-wrapper">
-                    <div class="form-input-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div class="space-y-2" :class="{ 'has-error': errors.name }">
+                <x-ui.label for="name" value="Full Name" />
+                <div class="relative">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
                     </div>
-                    <input type="text"
+                    <x-ui.input
+                           type="text"
                            id="name"
                            name="name"
                            x-model="name"
@@ -259,28 +260,24 @@
                            required
                            autofocus
                            autocomplete="name"
-                           class="form-input"
-                           :class="{ 'form-input-error': errors.name }"
-                           placeholder="John Doe">
+                           class="pl-10"
+                           :class="{ 'border-destructive focus-visible:ring-destructive': errors.name }"
+                           placeholder="John Doe" />
                 </div>
-                <div x-show="errors.name" class="validation-message validation-message-error show" role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.name"></span>
-                </div>
+                <p x-show="errors.name" x-text="errors.name" class="text-sm text-destructive mt-1" role="alert"></p>
             </div>
 
             <!-- Email Field (shown when email tab active) -->
-            <div class="form-group" x-show="registrationMethod === 'email'" :class="{ 'has-error': errors.email }">
-                <label for="email" class="form-label">Email Address <span class="required">*</span></label>
-                <div class="form-input-wrapper">
-                    <div class="form-input-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div class="space-y-2" x-show="registrationMethod === 'email'" :class="{ 'has-error': errors.email }">
+                <x-ui.label for="email" value="Email Address" />
+                <div class="relative">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
                         </svg>
                     </div>
-                    <input type="email"
+                    <x-ui.input
+                           type="email"
                            id="email"
                            name="email"
                            x-model="email"
@@ -288,34 +285,32 @@
                            value="{{ $invitationInfo['invitee_email'] ?? old('email') }}"
                            :required="registrationMethod === 'email'"
                            autocomplete="email"
-                           class="form-input"
-                           :class="{ 'form-input-error': errors.email }"
-                           placeholder="you@example.com">
+                           class="pl-10"
+                           :class="{ 'border-destructive focus-visible:ring-destructive': errors.email }"
+                           placeholder="you@example.com" />
                 </div>
-                <div x-show="errors.email" class="validation-message validation-message-error show" role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.email"></span>
-                </div>
+                <p x-show="errors.email" x-text="errors.email" class="text-sm text-destructive mt-1" role="alert"></p>
             </div>
 
             <!-- Phone Field (shown when phone tab active) -->
-            <div class="form-group" x-show="registrationMethod === 'phone'" :class="{ 'has-error': errors.phone }">
-                <label for="phone" class="form-label">Phone Number <span class="required">*</span></label>
-                <div class="phone-input-group">
-                    <select name="phone_country_code" x-model="phoneCountryCode" class="form-input country-code-select">
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+61">+61 (AU)</option>
-                        <option value="+91">+91 (IN)</option>
-                        <option value="+234">+234 (NG)</option>
-                        <option value="+27">+27 (ZA)</option>
-                        <option value="+49">+49 (DE)</option>
-                        <option value="+33">+33 (FR)</option>
-                    </select>
-                    <div class="form-input-wrapper phone-number-input">
-                        <input type="tel"
+            <div class="space-y-2" x-show="registrationMethod === 'phone'" :class="{ 'has-error': errors.phone }">
+                <x-ui.label for="phone" value="Phone Number" />
+                <div class="flex gap-2">
+                    <div class="w-32 shrink-0">
+                        <select name="phone_country_code" x-model="phoneCountryCode" class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                            <option value="+1">+1 (US)</option>
+                            <option value="+44">+44 (UK)</option>
+                            <option value="+61">+61 (AU)</option>
+                            <option value="+91">+91 (IN)</option>
+                            <option value="+234">+234 (NG)</option>
+                            <option value="+27">+27 (ZA)</option>
+                            <option value="+49">+49 (DE)</option>
+                            <option value="+33">+33 (FR)</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <x-ui.input
+                               type="tel"
                                id="phone"
                                name="phone"
                                x-model="phone"
@@ -323,29 +318,24 @@
                                value="{{ $invitationInfo['invitee_phone'] ?? old('phone') }}"
                                :required="registrationMethod === 'phone'"
                                autocomplete="tel"
-                               class="form-input"
-                               :class="{ 'form-input-error': errors.phone }"
-                               placeholder="(555) 123-4567">
+                               :class="{ 'border-destructive focus-visible:ring-destructive': errors.phone }"
+                               placeholder="(555) 123-4567" />
                     </div>
                 </div>
-                <div x-show="errors.phone" class="validation-message validation-message-error show" role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.phone"></span>
-                </div>
+                <p x-show="errors.phone" x-text="errors.phone" class="text-sm text-destructive mt-1" role="alert"></p>
             </div>
 
             <!-- Password Fields -->
-            <div class="form-group" :class="{ 'has-error': errors.password }">
-                <label for="password" class="form-label">Password <span class="required">*</span></label>
-                <div class="form-input-wrapper">
-                    <div class="form-input-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div class="space-y-2" :class="{ 'has-error': errors.password }">
+                <x-ui.label for="password" value="Password" />
+                <div class="relative">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
                     </div>
-                    <input type="password"
+                    <x-ui.input
+                           type="password"
                            id="password"
                            name="password"
                            x-model="password"
@@ -353,136 +343,129 @@
                            @input="checkPasswordStrength"
                            required
                            autocomplete="new-password"
-                           class="form-input"
-                           :class="{ 'form-input-error': errors.password }"
-                           placeholder="Min 8 chars, 1 number, 1 special">
+                           class="pl-10"
+                           :class="{ 'border-destructive focus-visible:ring-destructive': errors.password }"
+                           placeholder="Min 8 chars, 1 number, 1 special" />
                 </div>
 
                 <!-- Password Strength Indicator -->
-                <div class="password-strength" x-show="password.length > 0">
-                    <div class="password-strength-label">
+                <div class="flex items-center gap-2 mt-2" x-show="password.length > 0">
+                    <div class="text-xs text-muted-foreground">
                         <span>Strength:</span>
-                        <span x-text="passwordStrengthLabel" :style="{ color: passwordStrengthColor }"></span>
+                        <span x-text="passwordStrengthLabel" :style="{ color: passwordStrengthColor }" class="font-medium"></span>
                     </div>
-                    <div class="password-strength-meter">
-                        <div class="password-strength-fill" :class="passwordStrength"></div>
+                    <div class="flex-1 h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div class="h-full transition-all duration-300" :class="{
+                            'bg-destructive': passwordStrength === 'weak',
+                            'bg-warning': passwordStrength === 'fair',
+                            'bg-primary': passwordStrength === 'good',
+                            'bg-success': passwordStrength === 'strong'
+                        }" :style="{ width: passwordStrength === 'weak' ? '25%' : (passwordStrength === 'fair' ? '50%' : (passwordStrength === 'good' ? '75%' : '100%')) }"></div>
                     </div>
                 </div>
 
-                <div x-show="errors.password" class="validation-message validation-message-error show" role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.password"></span>
-                </div>
+                <p x-show="errors.password" x-text="errors.password" class="text-sm text-destructive mt-1" role="alert"></p>
             </div>
 
-            <div class="form-group" :class="{ 'has-error': errors.password_confirmation }">
-                <label for="password_confirmation" class="form-label">Confirm Password <span class="required">*</span></label>
-                <div class="form-input-wrapper">
-                    <div class="form-input-icon">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <div class="space-y-2" :class="{ 'has-error': errors.password_confirmation }">
+                <x-ui.label for="password_confirmation" value="Confirm Password" />
+                <div class="relative">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <input type="password"
+                    <x-ui.input
+                           type="password"
                            id="password_confirmation"
                            name="password_confirmation"
                            x-model="password_confirmation"
                            @blur="validatePasswordConfirmation"
                            required
                            autocomplete="new-password"
-                           class="form-input"
-                           :class="{ 'form-input-error': errors.password_confirmation }"
-                           placeholder="Confirm your password">
+                           class="pl-10"
+                           :class="{ 'border-destructive focus-visible:ring-destructive': errors.password_confirmation }"
+                           placeholder="Confirm your password" />
                 </div>
-                <div x-show="errors.password_confirmation" class="validation-message validation-message-error show" role="alert">
-                    <svg class="validation-message-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span x-text="errors.password_confirmation"></span>
-                </div>
+                <p x-show="errors.password_confirmation" x-text="errors.password_confirmation" class="text-sm text-destructive mt-1" role="alert"></p>
             </div>
 
             <!-- Referral Code (if not already provided) -->
             @if(!$referralInfo)
-            <div class="form-group" x-show="showReferralField">
-                <label for="referral_code" class="form-label">Referral Code (Optional)</label>
-                <div class="form-input-wrapper">
-                    <input type="text"
+            <div class="space-y-2" x-show="showReferralField">
+                <x-ui.label for="referral_code" value="Referral Code (Optional)" />
+                <div class="relative">
+                     <x-ui.input
+                           type="text"
                            id="referral_code"
                            name="referral_code"
                            x-model="referralCode"
                            @blur="validateReferralCode"
-                           class="form-input"
-                           :class="{ 'form-input-error': errors.referral_code, 'form-input-valid': referralValid }"
-                           placeholder="Enter code">
+                           class=""
+                           :class="{ 'border-destructive focus-visible:ring-destructive': errors.referral_code, 'border-success focus-visible:ring-success': referralValid }"
+                           placeholder="Enter code" />
                 </div>
-                <div x-show="errors.referral_code" class="validation-message validation-message-error show" role="alert">
-                    <span x-text="errors.referral_code"></span>
-                </div>
-                <div x-show="referralValid" class="validation-message validation-message-success show">
-                    <span x-text="referralMessage"></span>
-                </div>
+                <p x-show="errors.referral_code" x-text="errors.referral_code" class="text-sm text-destructive mt-1" role="alert"></p>
+                <p x-show="referralValid" x-text="referralMessage" class="text-sm text-success mt-1"></p>
             </div>
             <button type="button"
                     x-show="!showReferralField"
                     @click="showReferralField = true"
-                    class="text-sm text-blue-600 hover:text-blue-700 mb-4">
+                    class="text-sm text-primary hover:underline mb-4 font-medium">
                 Have a referral code?
             </button>
             @endif
 
             <!-- Terms Agreement -->
-            <div class="auth-terms-box" :class="{ 'has-error': errors.terms }">
-                <label class="form-checkbox-wrapper">
-                    <input type="checkbox"
-                           x-model="termsAccepted"
-                           @change="privacyAccepted = termsAccepted"
-                           required
-                           class="form-checkbox">
-                    <span class="form-checkbox-label">
-                        I agree to the
-                        <a href="/terms" target="_blank" class="auth-link">Terms of Service</a>
-                        and
-                        <a href="/privacy" target="_blank" class="auth-link">Privacy Policy</a>
-                    </span>
+            <div class="flex items-start space-x-2" :class="{ 'text-destructive': errors.terms }">
+                <input type="checkbox"
+                       id="terms"
+                       x-model="termsAccepted"
+                       @change="privacyAccepted = termsAccepted"
+                       required
+                       class="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-ring">
+                <label for="terms" class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    I agree to the
+                    <a href="/terms" target="_blank" class="font-medium text-primary hover:underline">Terms of Service</a>
+                    and
+                    <a href="/privacy" target="_blank" class="font-medium text-primary hover:underline">Privacy Policy</a>
                 </label>
-                <div x-show="errors.terms" class="validation-message validation-message-error show" role="alert" style="margin-top: 8px;">
-                    <span x-text="errors.terms"></span>
-                </div>
             </div>
+            <p x-show="errors.terms" x-text="errors.terms" class="text-sm text-destructive mt-1 ml-6" role="alert"></p>
 
             <!-- Marketing Consent -->
-            <div class="form-group">
-                <label class="form-checkbox-wrapper">
-                    <input type="checkbox"
-                           name="marketing_consent"
-                           x-model="marketingConsent"
-                           class="form-checkbox">
-                    <span class="form-checkbox-label text-sm text-gray-600">
-                        Send me updates about new shifts and features (optional)
-                    </span>
+            <div class="flex items-start space-x-2 mt-4">
+                <input type="checkbox"
+                       id="marketing_consent"
+                       name="marketing_consent"
+                       x-model="marketingConsent"
+                       class="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-ring">
+                <label for="marketing_consent" class="text-sm text-muted-foreground leading-snug">
+                    Send me updates about new shifts and features (optional)
                 </label>
             </div>
 
             <!-- Submit Button -->
-            <button type="submit"
-                    class="btn-form-primary"
-                    :class="{ 'validating': isSubmitting }"
-                    :disabled="isSubmitting">
+            <x-ui.button type="submit"
+                    class="w-full mt-6"
+                    ::disabled="isSubmitting">
                 <span x-show="!isSubmitting">Create Account</span>
                 <span x-show="isSubmitting">Creating account...</span>
-            </button>
+            </x-ui.button>
         </form>
 
         <!-- Divider -->
-        <div class="auth-divider">
-            <span>Already have an account?</span>
+        <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+                <span class="w-full border-t border-border"></span>
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+                <span class="bg-card px-2 text-muted-foreground">Or register with</span>
+            </div>
         </div>
 
         <!-- Login Link -->
-        <a href="{{ route('login') }}" class="btn-form-secondary">
+        <a href="{{ route('login') }}" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full">
             Sign In Instead
         </a>
     </div>

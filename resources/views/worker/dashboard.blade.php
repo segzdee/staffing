@@ -107,7 +107,7 @@
                 LIVE
             </span>
         </div>
-        <x-live-shift-market variant="full" :limit="20" />
+        <x-live-shift-market variant="compact" :limit="4" />
     </x-dashboard.widget-card>
 
     <!-- Two Column Layout -->

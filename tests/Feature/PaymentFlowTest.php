@@ -9,7 +9,7 @@ use App\Models\WorkerProfile;
 use App\Support\Money;
 use Tests\Traits\DatabaseMigrationsWithTransactions;
 
-uses(DatabaseMigrationsWithTransactions::class);
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 beforeEach(function () {
     $this->business = User::factory()->create(['user_type' => 'business']);

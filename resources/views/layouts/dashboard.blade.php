@@ -149,9 +149,9 @@
                         @php
                         $userType = auth()->user()->user_type ?? 'worker';
                         $profileEditRoute = match ($userType) {
-                        'worker' => 'worker.profile.complete',
-                        'business' => 'business.profile.complete',
-                        'agency' => 'agency.profile.edit',
+                        'worker' => 'worker.profile',
+                        'business' => 'settings.index',
+                        'agency' => 'settings.index',
                         default => 'settings.index'
                         };
                         @endphp

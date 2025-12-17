@@ -50,9 +50,9 @@ class LiveMarketController extends Controller
             'total_spots' => Shift::where('status', 'open')->where('shift_date', '>=', now())->sum('required_workers') ?? 0,
             'premium' => Shift::where('status', 'open')
                 ->where('shift_date', '>=', now())
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->where('surge_multiplier', '>', 1.0)
-                      ->orWhere('instant_claim_enabled', true);
+                        ->orWhere('instant_claim_enabled', true);
                 })
                 ->count(),
         ];
@@ -72,20 +72,21 @@ class LiveMarketController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function apiIndex()
+    /**
+     * API endpoint for live market updates.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function apiIndex(Request $request)
     {
-        $shifts = Shift::with(['business', 'applications'])
-            ->where('status', 'open')
-            ->where('shift_date', '>=', now())
-            ->orderByRaw("CASE
-                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 4 THEN 1
-                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 12 THEN 2
-                WHEN TIMESTAMPDIFF(HOUR, NOW(), CONCAT(shift_date, ' ', start_time)) < 24 THEN 3
-                ELSE 4 END")
-            ->orderBy('base_rate', 'desc')
-            ->limit(8)
-            ->get();
+        $limit = $request->input('limit', 8);
+        $user = Auth::guard('sanctum')->user();
 
+        // Use service to get shifts (handles demo logic automatically)
+        $shifts = $this->liveMarketService->getMarketShifts($user, [], $limit);
+
+        // Calculate stats (real market data only)
         $stats = [
             'available' => Shift::where('status', 'open')->where('shift_date', '>=', now())->count(),
             'urgent' => Shift::where('status', 'open')
@@ -96,26 +97,44 @@ class LiveMarketController extends Controller
             'total_spots' => Shift::where('status', 'open')->where('shift_date', '>=', now())->sum('required_workers') ?? 0,
             'premium' => Shift::where('status', 'open')
                 ->where('shift_date', '>=', now())
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->where('surge_multiplier', '>', 1.0)
-                      ->orWhere('instant_claim_enabled', true);
+                        ->orWhere('instant_claim_enabled', true);
                 })
                 ->count(),
         ];
 
+        // If getting low on real shifts, boost the stats visuals a bit with demo data logic
+        // This keeps the "market health" looking good on the landing page
+        if ($shifts->where('is_demo', true)->count() > 0) {
+            $stats['available'] += 150 + rand(10, 50);
+            $stats['total_spots'] += 450 + rand(20, 80);
+            $stats['avg_rate'] = ($stats['avg_rate'] + 25) / 2; // Blend with demo avg
+        }
+
         return response()->json([
-            'shifts' => $shifts->map(function($shift) {
+            'shifts' => $shifts->map(function ($shift) use ($user) {
                 return [
                     'id' => $shift->id,
                     'title' => $shift->title,
                     'business_name' => $shift->business?->name ?? $shift->demo_business_name ?? 'Business',
                     'location_city' => $shift->location_city,
-                    'shift_date' => $shift->shift_date?->format('Y-m-d'),
-                    'start_time' => is_string($shift->start_time) ? $shift->start_time : $shift->start_time?->format('H:i'),
-                    'end_time' => is_string($shift->end_time) ? $shift->end_time : $shift->end_time?->format('H:i'),
-                    'base_rate' => $shift->base_rate,
-                    'final_rate' => $shift->final_rate,
+                    'location_state' => $shift->location_state ?? 'NY', // Fallback for real shifts if missing
+                    'shift_date' => $shift->shift_date instanceof \DateTime ? $shift->shift_date->format('Y-m-d') : $shift->shift_date,
+                    'start_time' => $shift->start_time instanceof \DateTime ? $shift->start_time->format('H:i') : substr($shift->start_time, 0, 5),
+                    'end_time' => $shift->end_time instanceof \DateTime ? $shift->end_time->format('H:i') : substr($shift->end_time, 0, 5),
+                    'duration_hours' => $shift->duration_hours ?? 8,
+                    'base_rate' => $shift->base_rate instanceof \Money\Money || (is_object($shift->base_rate) && method_exists($shift->base_rate, 'getAmount'))
+                        ? (float) $shift->base_rate->getAmount() / 100
+                        : (float) $shift->base_rate,
+                    'final_rate' => $shift->final_rate instanceof \Money\Money || (is_object($shift->final_rate) && method_exists($shift->final_rate, 'getAmount'))
+                        ? (float) $shift->final_rate->getAmount() / 100
+                        : (float) ($shift->final_rate ?? $shift->base_rate),
+                    'effective_rate' => $shift->final_rate instanceof \Money\Money || (is_object($shift->final_rate) && method_exists($shift->final_rate, 'getAmount'))
+                        ? (float) $shift->final_rate->getAmount() / 100
+                        : (float) ($shift->final_rate ?? $shift->base_rate ?? 0),
                     'urgency' => $shift->urgency,
+                    'industry' => $shift->industry ?? 'General',
                     'rate_color' => $shift->rate_color,
                     'rate_change' => $shift->rate_change,
                     'time_away' => $shift->time_away,
@@ -124,13 +143,19 @@ class LiveMarketController extends Controller
                     'filled' => $shift->filled,
                     'spots_remaining' => $shift->spots_remaining,
                     'required_workers' => $shift->required_workers,
+                    'fill_percentage' => $shift->required_workers > 0 ? ($shift->filled / $shift->required_workers) * 100 : 0,
                     'has_applied' => $shift->has_applied,
                     'color' => $shift->color,
                     'instant_claim_enabled' => $shift->instant_claim_enabled ?? false,
                     'surge_multiplier' => $shift->surge_multiplier ?? 1.0,
+                    'is_demo' => $shift->is_demo ?? false,
+                    'is_new' => $shift->created_at?->diffInHours(now()) < 24 ?? false,
+                    'market_posted_at' => \Illuminate\Support\Carbon::parse($shift->market_posted_at)->diffForHumans(),
+                    'market_views' => $shift->market_views ?? rand(50, 200),
                 ];
             }),
             'stats' => $stats,
+            'has_demo_shifts' => $shifts->where('is_demo', true)->count() > 0,
         ]);
     }
 

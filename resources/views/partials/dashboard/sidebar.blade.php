@@ -50,25 +50,66 @@
             $navigation = config('dashboard.navigation.' . $userType, []);
         @endphp
 
-        @foreach($navigation as $item)
-            @php
-                $isActive = in_array(Route::currentRouteName(), $item['active'] ?? []);
-                $hasBadge = isset($item['badge']) && isset(${$item['badge']}) && ${$item['badge']} > 0;
-            @endphp
-            <a href="{{ route($item['route']) }}"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                            {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}" />
-                </svg>
-                <span class="flex-1">{{ $item['label'] }}</span>
-                @if($hasBadge)
-                    <span
-                        class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
-                        {{ ${$item['badge']} }}
-                    </span>
-                @endif
-            </a>
+        @foreach($navigation as $key => $item)
+            @if(is_string($key) && is_array($item))
+                {{-- Section Header --}}
+                <div class="px-3 mb-2 mt-4 first:mt-0">
+                    <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{{ $key }}</p>
+                </div>
+                {{-- Group Items --}}
+                @foreach($item as $subItem)
+                    @php
+                        $isActive = in_array(Route::currentRouteName(), $subItem['active'] ?? []);
+                        $hasBadge = isset($subItem['badge']) && isset(${$subItem['badge']}) && ${$subItem['badge']} > 0;
+                        // Determine badge value if variable exists, otherwise use count or string
+                        $badgeValue = $hasBadge ? ${$subItem['badge']} : ($subItem['badge'] ?? null);
+                        // If badge is a static string (like 'Live') and not a variable name
+                        if (!$hasBadge && isset($subItem['badge']) && !isset(${$subItem['badge']})) {
+                            $badgeValue = $subItem['badge'];
+                            $hasBadge = true;
+                        }
+                    @endphp
+                    <a href="{{ Route::has($subItem['route']) ? route($subItem['route']) : '#' }}"
+                        class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors mb-1
+                                            {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $subItem['icon'] }}" />
+                        </svg>
+                        <span class="flex-1">{{ $subItem['label'] }}</span>
+                        @if($hasBadge)
+                            <span
+                                class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+                                {{ $badgeValue }}
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            @else
+                {{-- Flat Item --}}
+                @php
+                    $isActive = in_array(Route::currentRouteName(), $item['active'] ?? []);
+                    $hasBadge = isset($item['badge']) && isset(${$item['badge']}) && ${$item['badge']} > 0;
+                    $badgeValue = $hasBadge ? ${$item['badge']} : ($item['badge'] ?? null);
+                    if (!$hasBadge && isset($item['badge']) && !isset(${$item['badge']})) {
+                        $badgeValue = $item['badge'];
+                        $hasBadge = true;
+                    }
+                @endphp
+                <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
+                    class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors mb-1
+                                        {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}" />
+                    </svg>
+                    <span class="flex-1">{{ $item['label'] }}</span>
+                    @if($hasBadge)
+                        <span
+                            class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+                            {{ $badgeValue }}
+                        </span>
+                    @endif
+                </a>
+            @endif
         @endforeach
     </nav>
 

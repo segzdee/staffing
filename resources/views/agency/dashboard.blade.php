@@ -6,6 +6,13 @@
 
 @section('content')
 
+<!-- Live Market Widget -->
+<div class="mb-6">
+    <x-dashboard.widget-card title="Live Market Activity" :action="route('agency.shifts.browse')" actionLabel="Browse Shifts">
+        <x-live-shift-market variant="compact" :limit="4" />
+    </x-dashboard.widget-card>
+</div>
+
 <!-- Main Content Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- Main Content (2 columns) -->

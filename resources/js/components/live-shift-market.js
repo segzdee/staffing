@@ -3,11 +3,14 @@
  * Real-time shift marketplace with demo fallback
  */
 
-window.liveShiftMarket = function(config = {}) {
+window.liveShiftMarket = function (config = {}) {
     return {
         // Configuration
         variant: config.variant || 'full',
+        // Configuration
+        variant: config.variant || 'full',
         limit: config.limit || 20,
+        endpoint: config.endpoint || '/api/market/live',
 
         // State
         shifts: [],
@@ -48,7 +51,7 @@ window.liveShiftMarket = function(config = {}) {
         async fetchShifts() {
             this.loading = true;
             try {
-                const response = await fetch(`/api/market?limit=${this.limit}`);
+                const response = await fetch(`${this.endpoint}?limit=${this.limit}`);
                 const data = await response.json();
 
                 if (data.success) {
@@ -211,7 +214,15 @@ window.liveShiftMarket = function(config = {}) {
                     })
                 });
 
-                const data = await response.json();
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('CRITICAL API ERROR: Expected JSON but got:', text.substring(0, 500));
+                        throw e;
+                    }
+                });
 
                 if (data.success) {
                     alert('Worker assigned successfully!');

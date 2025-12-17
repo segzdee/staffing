@@ -15,14 +15,23 @@ class ShiftMatchingService
      * SL-002: AI-Powered Worker Matching & Ranking
      * Returns score from 0-100 with detailed breakdown
      */
-    public function calculateWorkerShiftMatch(User $worker, Shift $shift)
+    public function calculateWorkerShiftMatch(User $worker, Shift $shift, array $preCalc = [])
     {
+        if (!$worker->workerProfile) {
+            return [
+                'final_score' => 0,
+                'breakdown' => [],
+                'weights' => [],
+                'bonus_points' => 0
+            ];
+        }
+
         $scoreBreakdown = [
             'skills_match' => $this->calculateSkillsMatch($worker, $shift),
             'proximity_score' => $this->calculateLocationMatch($worker->workerProfile, $shift),
-            'reliability_score' => $this->getReliabilityScore($worker),
-            'rating_score' => $this->calculateRatingMatch($worker),
-            'recency_score' => $this->calculateRecencyScore($worker),
+            'reliability_score' => $preCalc['reliability'] ?? $this->getReliabilityScore($worker),
+            'rating_score' => $preCalc['rating'] ?? $this->calculateRatingMatch($worker),
+            'recency_score' => $preCalc['recency'] ?? $this->calculateRecencyScore($worker),
             'role_experience' => $this->calculateRoleExperience($worker, $shift),
             'availability_match' => $this->calculateAvailabilityMatch($worker->workerProfile, $shift)
         ];
@@ -77,9 +86,18 @@ class ShiftMatchingService
             ->upcoming()
             ->get();
 
+        // Pre-calculate worker metrics to avoid N+1 recalculation in the loop
+        $workerReliability = $this->getReliabilityScore($worker);
+        $workerRating = $this->calculateRatingMatch($worker);
+        $workerRecency = $this->calculateRecencyScore($worker);
+
         // Calculate match score for each shift
-        $rankedShifts = $shifts->map(function ($shift) use ($worker, $workerProfile) {
-            $matchScore = $this->calculateWorkerShiftMatch($worker, $shift);
+        $rankedShifts = $shifts->map(function ($shift) use ($worker, $workerProfile, $workerReliability, $workerRating, $workerRecency) {
+            $matchScore = $this->calculateWorkerShiftMatch($worker, $shift, [
+                'reliability' => $workerReliability,
+                'rating' => $workerRating,
+                'recency' => $workerRecency
+            ]);
             $shift->match_score = $matchScore;
             return $shift;
         });

@@ -50,7 +50,7 @@ class EscrowService
 
             // Calculate escrow requirement
             $escrowCalculation = $this->calculateEscrowRequirement($shift);
-            
+
             // Create payment intent for escrow capture
             $paymentIntent = $this->stripe->paymentIntents->create([
                 'amount' => $escrowCalculation['total_cents'],
@@ -202,7 +202,7 @@ class EscrowService
 
             $worker = $payment->worker;
             $business = $payment->business;
-            
+
             // Calculate final settlement amounts
             $settlement = $this->calculateFinalSettlement($payment, $settlementDetails);
 
@@ -391,7 +391,11 @@ class EscrowService
     private function calculateEscrowRequirement(Shift $shift): array
     {
         // Base worker pay
-        $workerPayCents = $shift->final_rate * $shift->duration_hours * 100;
+        $finalRate = $shift->final_rate;
+        if (is_object($finalRate) && method_exists($finalRate, 'getAmount')) {
+            $finalRate = ((float) $finalRate->getAmount()) / 100;
+        }
+        $workerPayCents = $finalRate * $shift->duration_hours * 100;
 
         // Add premiums
         $holidayPremiumCents = $workerPayCents * ($shift->is_public_holiday ? 0.50 : 0);
@@ -429,10 +433,10 @@ class EscrowService
     private function calculateFinalSettlement(ShiftPayment $payment, array $details): array
     {
         $hourlyRateCents = $payment->worker_pay_cents / $payment->shift->duration_hours;
-        
+
         // Calculate actual pay based on verified hours
         $actualWorkerPayCents = $hourlyRateCents * $details['verified_hours'];
-        
+
         // Add overtime premium if applicable
         $overtimePremiumCents = 0;
         if ($details['overtime_hours'] > 0) {
@@ -476,7 +480,7 @@ class EscrowService
     public function reconcileEscrowBalances(): array
     {
         $reconciliation = [];
-        
+
         try {
             // Get Stripe escrow balance
             $stripeBalance = $this->stripe->balance->retrieve([

@@ -1,8 +1,10 @@
-/**
- * OvertimeStaff Component Styles
- * shadcn/ui Inspired Clean Components
- * Version: 3.0
- */
+@layer base {
+  :root {
+    /* ... existing content ... */
+    --ring: 217 91% 60%; /* Ensure this is high contrast */
+    /* ... */
+  }
+}
 
 /* ============================================
    BUTTONS - shadcn style

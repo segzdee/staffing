@@ -20,7 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 // Demo route for development only - displays PHP configuration
 if (app()->environment('local', 'development')) {
-    Route::get("/demo", function(){
+    Route::get("/demo", function () {
         return response()->json([
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
@@ -31,7 +31,7 @@ if (app()->environment('local', 'development')) {
 }
 
 // Dashboard API (for live updates)
-Route::middleware('auth:sanctum')->group(function() {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('dashboard/stats', [App\Http\Controllers\Api\DashboardController::class, 'stats']);
     Route::get('dashboard/notifications/count', [App\Http\Controllers\Api\DashboardController::class, 'notificationsCount']);
 
@@ -44,8 +44,13 @@ Route::middleware('auth:sanctum')->group(function() {
 });
 
 // Live Market API (for real-time updates)
-Route::middleware('auth:sanctum')->prefix('market')->group(function() {
+Route::middleware('auth:sanctum')->prefix('market')->group(function () {
     Route::get('/live', [App\Http\Controllers\LiveMarketController::class, 'apiIndex'])->name('api.market.live');
+});
+
+// Public Market API
+Route::prefix('market')->group(function () {
+    Route::get('/public', [App\Http\Controllers\LiveMarketController::class, 'apiIndex'])->name('api.market.public');
 });
 
 // ============================================================================
@@ -54,7 +59,7 @@ Route::middleware('auth:sanctum')->prefix('market')->group(function() {
 
 // Public business registration routes (no auth required)
 // SECURITY: Enhanced rate limiting for authentication routes
-Route::prefix('business')->name('api.business.')->group(function() {
+Route::prefix('business')->name('api.business.')->group(function () {
     // Registration - 5 attempts per hour per IP
     Route::post('/register', [App\Http\Controllers\Business\RegistrationController::class, 'register'])
         ->name('register')
@@ -98,7 +103,7 @@ Route::prefix('business')->name('api.business.')->group(function() {
 });
 
 // Authenticated business profile routes
-Route::prefix('business')->name('api.business.')->middleware(['auth:sanctum', 'business'])->group(function() {
+Route::prefix('business')->name('api.business.')->middleware(['auth:sanctum', 'business'])->group(function () {
     // Profile management
     Route::get('/profile', [App\Http\Controllers\Business\ProfileController::class, 'getProfile'])
         ->name('profile');
@@ -113,7 +118,7 @@ Route::prefix('business')->name('api.business.')->middleware(['auth:sanctum', 'b
         ->name('profile.completion');
 
     // Onboarding Progress (BIZ-REG-010)
-    Route::prefix('onboarding')->name('onboarding.')->group(function() {
+    Route::prefix('onboarding')->name('onboarding.')->group(function () {
         Route::get('/progress', [App\Http\Controllers\Business\OnboardingController::class, 'getProgress'])
             ->name('progress');
         Route::get('/next-step', [App\Http\Controllers\Business\OnboardingController::class, 'getNextStep'])
@@ -134,7 +139,7 @@ Route::prefix('business')->name('api.business.')->middleware(['auth:sanctum', 'b
         ->name('accept-terms');
 
     // BIZ-REG-011: Business Account Activation
-    Route::prefix('activation')->name('activation.')->group(function() {
+    Route::prefix('activation')->name('activation.')->group(function () {
         Route::get('/status', [App\Http\Controllers\Business\ActivationController::class, 'getActivationStatus'])
             ->name('status');
         Route::post('/activate', [App\Http\Controllers\Business\ActivationController::class, 'activateAccount'])
@@ -150,7 +155,7 @@ Route::prefix('business')->name('api.business.')->middleware(['auth:sanctum', 'b
 
 // Public registration routes (no auth required)
 // SECURITY: Enhanced rate limiting for authentication routes
-Route::prefix('worker')->name('api.worker.')->group(function() {
+Route::prefix('worker')->name('api.worker.')->group(function () {
     // Registration - 5 attempts per hour per IP
     Route::post('/register', [App\Http\Controllers\Worker\RegistrationController::class, 'register'])
         ->name('register')
@@ -170,7 +175,7 @@ Route::prefix('worker')->name('api.worker.')->group(function() {
 
 // Authenticated verification routes
 // SECURITY: Enhanced rate limiting for verification endpoints
-Route::prefix('worker')->name('api.worker.')->middleware('auth:sanctum')->group(function() {
+Route::prefix('worker')->name('api.worker.')->middleware('auth:sanctum')->group(function () {
     // Email verification - 5 attempts per 10 minutes per user
     Route::post('/verify-email', [App\Http\Controllers\Worker\RegistrationController::class, 'verifyEmail'])
         ->name('verify-email')
@@ -192,7 +197,7 @@ Route::prefix('worker')->name('api.worker.')->middleware('auth:sanctum')->group(
 });
 
 // Social Authentication API Routes
-Route::prefix('auth/social')->name('api.auth.social.')->group(function() {
+Route::prefix('auth/social')->name('api.auth.social.')->group(function () {
     Route::get('/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirect'])
         ->name('redirect')
         ->where('provider', 'google|apple|facebook');
@@ -202,7 +207,7 @@ Route::prefix('auth/social')->name('api.auth.social.')->group(function() {
 });
 
 // Authenticated social account management
-Route::prefix('auth/social')->name('api.auth.social.')->middleware('auth:sanctum')->group(function() {
+Route::prefix('auth/social')->name('api.auth.social.')->middleware('auth:sanctum')->group(function () {
     Route::delete('/{provider}/disconnect', [App\Http\Controllers\Auth\SocialAuthController::class, 'disconnect'])
         ->name('disconnect')
         ->where('provider', 'google|apple|facebook');
@@ -214,10 +219,10 @@ Route::prefix('auth/social')->name('api.auth.social.')->middleware('auth:sanctum
 // STAFF-REG-009 & 010: Worker Availability & Onboarding API Routes
 // ============================================================================
 
-Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worker'])->group(function() {
+Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worker'])->group(function () {
 
     // Availability Management (STAFF-REG-009)
-    Route::prefix('availability')->name('availability.')->group(function() {
+    Route::prefix('availability')->name('availability.')->group(function () {
         Route::get('/', [App\Http\Controllers\Worker\AvailabilityController::class, 'getAvailability'])
             ->name('index');
         Route::put('/schedule', [App\Http\Controllers\Worker\AvailabilityController::class, 'setWeeklySchedule'])
@@ -239,7 +244,7 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
     });
 
     // Onboarding Progress (STAFF-REG-010)
-    Route::prefix('onboarding')->name('onboarding.')->group(function() {
+    Route::prefix('onboarding')->name('onboarding.')->group(function () {
         Route::get('/progress', [App\Http\Controllers\Worker\OnboardingController::class, 'getProgress'])
             ->name('progress');
         Route::get('/next-step', [App\Http\Controllers\Worker\OnboardingController::class, 'getNextStep'])
@@ -253,7 +258,7 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
     });
 
     // Activation (STAFF-REG-010)
-    Route::prefix('activation')->name('activation.')->group(function() {
+    Route::prefix('activation')->name('activation.')->group(function () {
         Route::get('/eligibility', [App\Http\Controllers\Worker\ActivationController::class, 'checkEligibility'])
             ->name('eligibility');
         Route::post('/activate', [App\Http\Controllers\Worker\ActivationController::class, 'activate'])
@@ -265,7 +270,7 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
     });
 
     // Profile Management (STAFF-REG-003)
-    Route::prefix('profile')->name('profile.')->group(function() {
+    Route::prefix('profile')->name('profile.')->group(function () {
         // Get profile
         Route::get('/', [App\Http\Controllers\Worker\ProfileController::class, 'show'])
             ->name('show');
@@ -300,7 +305,7 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
     });
 
     // Skills Management (STAFF-REG-007)
-    Route::prefix('skills')->name('skills.')->group(function() {
+    Route::prefix('skills')->name('skills.')->group(function () {
         // Available skills
         Route::get('/available', [App\Http\Controllers\Worker\SkillsController::class, 'getAvailableSkills'])
             ->name('available');
@@ -343,7 +348,7 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
     });
 
     // Certification Management (STAFF-REG-007)
-    Route::prefix('certifications')->name('certifications.')->group(function() {
+    Route::prefix('certifications')->name('certifications.')->group(function () {
         // Available certification types
         Route::get('/types', [App\Http\Controllers\Worker\CertificationController::class, 'getAvailableTypes'])
             ->name('types');

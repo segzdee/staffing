@@ -47,7 +47,7 @@
     @stack('styles')
 </head>
 
-<body class="bg-white text-gray-900 font-sans antialiased">
+<body class="bg-background text-foreground font-sans antialiased">
     {{-- Split Screen Container --}}
     <div class="flex min-h-screen">
         {{-- Left Panel - Brand --}}

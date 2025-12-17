@@ -47,6 +47,7 @@
                     <th class="p-2 font-normal text-right">BID (RATE)</th>
                     <th class="p-2 font-normal text-right hidden sm:table-cell">VOL (HRS)</th>
                     <th class="p-2 font-normal text-right">CHG</th>
+                    <th class="p-2 font-normal text-right">ACTION</th>
                 </tr>
             </thead>
             <tbody id="market-board-body" class="text-slate-300">
@@ -72,6 +73,11 @@
                         <td class="p-2 text-right hidden sm:table-cell text-slate-400">{{ $row['vol'] }}</td>
                         <td class="p-2 text-right {{ $row['chg'] >= 0 ? 'text-emerald-500' : 'text-red-500' }}">
                             {{ $row['chg'] >= 0 ? '+' : '' }}{{ $row['chg'] }}%
+                        </td>
+                        <td class="p-2 text-right">
+                            <a href="{{ route('login') }}" class="inline-flex items-center justify-center h-6 px-3 text-xs font-bold text-slate-900 bg-emerald-500 hover:bg-emerald-400 rounded transition-colors uppercase tracking-wide">
+                                Take Shift
+                            </a>
                         </td>
                     </tr>
                 @endforeach

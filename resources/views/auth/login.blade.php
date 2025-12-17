@@ -8,7 +8,7 @@
     <div class="space-y-6">
         {{-- Header --}}
         <div class="space-y-2 text-center lg:text-left">
-            <h2 class="text-2xl font-bold tracking-tight text-gray-900">Sign in</h2>
+            <h2 class="text-2xl font-bold tracking-tight text-foreground">Sign in</h2>
             <p class="text-sm text-muted-foreground">Welcome back! Enter your details below.</p>
         </div>
 

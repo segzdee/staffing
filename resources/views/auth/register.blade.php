@@ -41,7 +41,7 @@
          ">
         {{-- Header --}}
         <div class="space-y-2 text-center lg:text-left">
-            <h2 class="text-2xl font-bold tracking-tight text-gray-900">Create account</h2>
+            <h2 class="text-2xl font-bold tracking-tight text-foreground">Create account</h2>
             <p class="text-sm text-muted-foreground">Get started in minutes.</p>
         </div>
 
@@ -72,7 +72,7 @@
                 <div class="grid grid-cols-3 gap-2">
                     <label 
                         class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all hover:bg-accent"
-                        :class="userType === 'worker' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-gray-300 text-foreground'"
+                        :class="userType === 'worker' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-primary text-foreground'"
                     >
                         <input type="radio" name="user_type" value="worker" class="sr-only" x-model="userType" {{ $type === 'worker' ? 'checked' : '' }}>
                         <div class="text-center">
@@ -81,7 +81,7 @@
                     </label>
                     <label 
                         class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all hover:bg-accent"
-                        :class="userType === 'business' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-gray-300 text-foreground'"
+                        :class="userType === 'business' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-primary text-foreground'"
                     >
                         <input type="radio" name="user_type" value="business" class="sr-only" x-model="userType" {{ $type === 'business' ? 'checked' : '' }}>
                         <div class="text-center">
@@ -90,7 +90,7 @@
                     </label>
                     <label 
                         class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all hover:bg-accent"
-                        :class="userType === 'agency' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-gray-300 text-foreground'"
+                        :class="userType === 'agency' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-primary text-foreground'"
                     >
                         <input type="radio" name="user_type" value="agency" class="sr-only" x-model="userType" {{ $type === 'agency' ? 'checked' : '' }}>
                         <div class="text-center">
@@ -183,7 +183,7 @@
                     type="checkbox" 
                     id="agree_terms" 
                     name="agree_terms" 
-                    class="h-4 w-4 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
+                    class="h-4 w-4 mt-0.5 rounded border-input text-primary focus:ring-primary"
                     required
                     {{ old('agree_terms') ? 'checked' : '' }}
                 >

@@ -63,6 +63,16 @@ class HomeController extends Controller
         return view('public.privacy');
     }
 
+    public function contact()
+    {
+        return view('public.contact');
+    }
+
+    public function about()
+    {
+        return view('public.about');
+    }
+
 
 
     // Business Marketing Pages

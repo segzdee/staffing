@@ -74,50 +74,18 @@ Global Design System v4.0
         rel="stylesheet">
 
     <!-- Vite Assets -->
-    @if(file_exists(public_path('build/manifest.json')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @else
-        <!-- Fallback to Tailwind CDN -->
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script nonce="{{ $cspNonce ?? '' }}">
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-                        colors: {
-                            primary: {
-                                50: '#eff6ff',
-                                100: '#dbeafe',
-                                200: '#bfdbfe',
-                                300: '#93c5fd',
-                                400: '#60a5fa',
-                                500: '#3b82f6',
-                                600: '#2563eb',
-                                700: '#1d4ed8',
-                                800: '#1e40af',
-                                900: '#1e3a8a',
-                            }
-                        }
-                    }
-                }
-            };
-        </script>
-    @endif
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <style nonce="{{ $cspNonce ?? '' }}">
+    <style>
         [x-cloak] {
             display: none !important;
         }
 
         body {
-            visibility: hidden;
-        }
-
-        body.alpine-loaded {
-            visibility: visible;
+            font-feature-settings: "rlig" 1, "calt" 1;
         }
 
         html {
@@ -128,20 +96,19 @@ Global Design System v4.0
     @stack('styles')
 </head>
 
-<body class="bg-background text-foreground font-sans antialiased min-h-screen" x-data="{ loaded: false }"
-    x-init="loaded = true; document.body.classList.add('alpine-loaded')">
-    <div class="min-h-screen flex flex-col">
-        <!-- Global Header -->
-        <x-global-header :transparent="$transparentHeader ?? false" />
+<body class="bg-background text-foreground font-sans antialiased min-h-screen flex flex-col" x-data="{ loaded: false }"
+    x-init="loaded = true">
 
-        <!-- Main Content -->
-        <main class="flex-1">
-            @yield('content')
-        </main>
+    <!-- Global Header -->
+    <x-global-header :transparent="$transparentHeader ?? false" />
 
-        <!-- Global Footer -->
-        <x-global-footer />
-    </div>
+    <!-- Main Content -->
+    <main class="flex-1">
+        @yield('content')
+    </main>
+
+    <!-- Global Footer -->
+    <x-global-footer />
 
     @stack('scripts')
 </body>

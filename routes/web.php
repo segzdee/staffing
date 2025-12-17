@@ -26,6 +26,8 @@ Route::middleware(['web'])->group(function () {
     // Public Marketing Pages
     Route::get('/terms', [App\Http\Controllers\HomeController::class, 'terms'])->name('terms');
     Route::get('/privacy', [App\Http\Controllers\HomeController::class, 'privacy'])->name('privacy');
+    Route::get('/contact', [App\Http\Controllers\HomeController::class, 'contact'])->name('contact');
+    Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->name('about');
 
     // For Businesses Pages
     Route::prefix('business')->name('business.')->group(function () {

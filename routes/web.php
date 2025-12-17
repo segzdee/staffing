@@ -104,7 +104,7 @@ Route::middleware(['web'])->group(function () {
 // DASHBOARD ROUTES - Authenticated User Dashboards
 // ============================================================================
 Route::prefix('dashboard')
-    ->middleware(['web', 'auth', 'verified'])
+    ->middleware(['auth', 'verified'])
     ->name('dashboard.')
     ->group(function () {
 
@@ -113,7 +113,7 @@ Route::prefix('dashboard')
 
         // Role-specific Dashboard Routes
         Route::get('/worker', [App\Http\Controllers\DashboardController::class, 'workerDashboard'])
-            ->middleware(['auth', 'verified', 'role:worker'])
+            ->middleware(['role:worker'])
             ->name('worker');
 
         Route::get('/company', [App\Http\Controllers\DashboardController::class, 'businessDashboard'])
@@ -124,23 +124,42 @@ Route::prefix('dashboard')
             ->middleware(['auth', 'verified', 'role:agency'])
             ->name('agency');
 
-        Route::get('/admin', [App\Http\Controllers\DashboardController::class, 'adminDashboard'])
-            ->middleware(['auth', 'verified', 'role:admin'])
-            ->name('admin');
-
         // Shared Authenticated Routes
-        Route::get('/profile', function () {
-            return view('profile.show');
-        })->name('profile');
-
-        Route::get('/notifications', function () {
-            return view('notifications.index');
-        })->name('notifications');
-
-        Route::get('/transactions', function () {
-            return view('transactions.index');
-        })->name('transactions');
+        Route::view('/notifications', 'notifications.index')->name('notifications');
+        Route::view('/transactions', 'transactions.index')->name('transactions');
     });
+
+// Fix: Routes that need specific names matching legacy calls (without dashboard. prefix)
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard/business/available-workers', [App\Http\Controllers\DashboardController::class, 'availableWorkers'])
+        ->middleware('role:business')
+        ->name('business.available-workers');
+
+    Route::get('/dashboard/agency/assignments', [App\Http\Controllers\DashboardController::class, 'agencyAssignments'])
+        ->middleware('role:agency')
+        ->name('agency.assignments');
+
+    Route::get('/dashboard/agency/shifts', [App\Http\Controllers\DashboardController::class, 'agencyShiftsBrowse'])
+        ->middleware('role:agency')
+        ->name('agency.shifts.browse');
+
+    Route::get('/dashboard/agency/shifts/{id}', [App\Http\Controllers\DashboardController::class, 'agencyShiftsView'])
+        ->middleware('role:agency')
+        ->name('agency.shifts.view');
+
+    Route::get('/dashboard/agency/workers', [App\Http\Controllers\DashboardController::class, 'agencyWorkersIndex'])
+        ->middleware('role:agency')
+        ->name('agency.workers.index');
+
+    Route::get('/dashboard/agency/commissions', [App\Http\Controllers\DashboardController::class, 'agencyCommissions'])
+        ->middleware('role:agency')
+        ->name('agency.commissions');
+
+    // Business Shift Management
+    Route::post('/shifts', [App\Http\Controllers\DashboardController::class, 'storeShift'])->name('shifts.store');
+
+    Route::get('/dashboard/profile', [App\Http\Controllers\DashboardController::class, 'profile'])->name('dashboard.profile');
+});
 
 // ============================================================================
 // SETTINGS ROUTE - Authenticated User Settings (outside dashboard prefix)
@@ -173,13 +192,8 @@ Route::middleware(['web', 'auth'])->group(function () {
 
 // Keep existing live market and shift application routes
 Route::middleware(['auth'])->group(function () {
-    Route::get('/shifts', function () {
-        return view('shifts.index');
-    })->name('shifts.index');
-
-    Route::get('/shifts/create', function () {
-        return view('shifts.create');
-    })->name('shifts.create');
+    Route::view('/shifts', 'shifts.index')->name('shifts.index');
+    Route::get('/shifts/create', [App\Http\Controllers\DashboardController::class, 'createShift'])->name('shifts.create');
 
     // Business Shifts Management
     Route::prefix('business')->name('business.')->middleware('role:business')->group(function () {
@@ -189,6 +203,8 @@ Route::middleware(['auth'])->group(function () {
     // Worker Routes (accessible without activation for onboarding)
     Route::prefix('worker')->name('worker.')->middleware(['auth', 'role:worker'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'workerDashboard'])->name('dashboard');
+        Route::get('/assignments', [App\Http\Controllers\DashboardController::class, 'workerAssignments'])->name('assignments');
+        Route::get('/profile', [App\Http\Controllers\DashboardController::class, 'profile'])->name('profile'); // Align with dashboard logic or point to generic profile
         Route::get('/payment-setup', [App\Http\Controllers\Worker\PaymentSetupController::class, 'index'])->name('payment-setup');
         Route::get('/skills', [App\Http\Controllers\Worker\SkillsController::class, 'index'])->name('skills');
         Route::get('/certifications', [App\Http\Controllers\Worker\CertificationController::class, 'index'])->name('certifications');

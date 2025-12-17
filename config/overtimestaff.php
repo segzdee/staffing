@@ -70,4 +70,14 @@ return [
         '2025-12-13', // Republic Day
         '2025-12-25', // Christmas Day
     ],
+    'cancellation' => [
+        'business' => [
+            'penalty_72h' => 0.00,
+            'penalty_48h' => 0.25,
+            'penalty_24h' => 0.50,
+            'penalty_12h' => 0.75,
+            'penalty_0h' => 1.00,
+        ],
+        'worker_compensation_share' => 0.50, // 50% of penalty
+    ],
 ];

@@ -47,7 +47,7 @@ class DashboardController extends Controller
         $stats = [
             'active_applications' => ShiftApplication::where('worker_id', $user->id)->where('status', 'pending')->count(),
             'completed_assignments' => ShiftAssignment::where('worker_id', $user->id)->where('status', 'completed')->count(),
-            'upcoming_shifts' => ShiftAssignment::where('worker_id', $user->id)->where('status', 'active')->whereHas('shift', function($q) {
+            'upcoming_shifts' => ShiftAssignment::where('worker_id', $user->id)->where('status', 'active')->whereHas('shift', function ($q) {
                 $q->where('shift_date', '>=', now());
             })->count(),
         ];
@@ -63,6 +63,21 @@ class DashboardController extends Controller
     }
 
     /**
+     * Worker Assignments
+     */
+    public function workerAssignments()
+    {
+        $user = Auth::user();
+
+        $assignments = ShiftAssignment::with('shift.business')
+            ->where('worker_id', $user->id)
+            ->latest()
+            ->paginate(10); // Use pagination for list view
+
+        return view('worker.assignments', compact('assignments'));
+    }
+
+    /**
      * Business Dashboard
      */
     public function businessDashboard()
@@ -72,10 +87,10 @@ class DashboardController extends Controller
         // Basic stats
         $stats = [
             'active_shifts' => Shift::where('business_id', $user->id)->where('status', 'active')->count(),
-            'total_applications' => ShiftApplication::whereHas('shift', function($q) use ($user) {
+            'total_applications' => ShiftApplication::whereHas('shift', function ($q) use ($user) {
                 $q->where('business_id', $user->id);
             })->count(),
-            'pending_applications' => ShiftApplication::whereHas('shift', function($q) use ($user) {
+            'pending_applications' => ShiftApplication::whereHas('shift', function ($q) use ($user) {
                 $q->where('business_id', $user->id);
             })->where('status', 'pending')->count(),
         ];
@@ -87,6 +102,16 @@ class DashboardController extends Controller
             ->get();
 
         return view('business.dashboard', compact('stats', 'recentShifts'));
+    }
+
+    /**
+     * Business Available Workers
+     */
+    public function availableWorkers()
+    {
+        $user = Auth::user();
+        $workers = []; // Placeholder
+        return view('business.available-workers', compact('workers'));
     }
 
     /**
@@ -107,6 +132,26 @@ class DashboardController extends Controller
     }
 
     /**
+     * Agency Assignments
+     */
+    public function agencyAssignments()
+    {
+        $user = Auth::user();
+        $assignments = []; // Placeholder for now
+        return view('agency.assignments', compact('assignments'));
+    }
+
+    /**
+     * User Profile
+     */
+    public function profile()
+    {
+        return view('profile.show', [
+            'user' => Auth::user()
+        ]);
+    }
+
+    /**
      * Admin Dashboard
      */
     public function adminDashboard()
@@ -121,5 +166,35 @@ class DashboardController extends Controller
         $recentUsers = User::latest()->take(5)->get();
 
         return view('admin.dashboard', compact('stats', 'recentUsers'));
+    }
+    public function agencyShiftsBrowse()
+    {
+        return view('agency.assignments'); // Placeholder
+    }
+
+    public function agencyShiftsView($id)
+    {
+        return view('agency.assignments'); // Placeholder
+    }
+
+    public function agencyWorkersIndex()
+    {
+        return view('agency.assignments'); // Placeholder
+    }
+
+    public function agencyCommissions()
+    {
+        return view('agency.assignments'); // Placeholder
+    }
+
+    public function storeShift()
+    {
+        return redirect()->back(); // Placeholder
+    }
+
+    public function createShift()
+    {
+        $venues = collect([]); // Placeholder
+        return view('shifts.create', compact('venues'));
     }
 }

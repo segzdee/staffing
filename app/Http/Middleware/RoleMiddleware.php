@@ -37,6 +37,12 @@ class RoleMiddleware
 
         // Check if user has the required role
         if ($user->user_type !== $requiredRole) {
+
+            // Debugging for test
+            if (app()->environment('testing')) {
+                dump("Role Middleware Failed: UserType: {$user->user_type}, Required: {$requiredRole}");
+            }
+
             // Redirect to access denied page
             return redirect()->route('errors.access-denied')
                 ->with('intended_role', $requiredRole)

@@ -37,6 +37,7 @@ OvertimeStaff is an advanced shift marketplace platform that connects businesses
 - **Real-time Features**: Laravel Reverb + Laravel Echo
 - **Frontend**: Tailwind CSS, Preline UI, Vite
 - **Queue System**: Laravel Horizon
+- **AI Assistance**: Laravel Boost
 
 ## 📋 Requirements
 

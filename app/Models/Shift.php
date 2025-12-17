@@ -662,22 +662,23 @@ class Shift extends Model
 
         if ($cancelledBy === 'business') {
             if ($hoursUntilShift >= 72) {
-                $penaltyRate = 0.00; // No penalty
+                $penaltyRate = config('overtimestaff.cancellation.business.penalty_72h', 0.00);
             } elseif ($hoursUntilShift >= 48) {
-                $penaltyRate = 0.25; // 25% penalty
+                $penaltyRate = config('overtimestaff.cancellation.business.penalty_48h', 0.25);
             } elseif ($hoursUntilShift >= 24) {
-                $penaltyRate = 0.50; // 50% penalty
+                $penaltyRate = config('overtimestaff.cancellation.business.penalty_24h', 0.50);
             } elseif ($hoursUntilShift >= 12) {
-                $penaltyRate = 0.75; // 75% penalty
+                $penaltyRate = config('overtimestaff.cancellation.business.penalty_12h', 0.75);
             } else {
-                $penaltyRate = 1.00; // 100% penalty
+                $penaltyRate = config('overtimestaff.cancellation.business.penalty_0h', 1.00);
             }
 
             $this->cancellation_penalty_amount = $this->escrow_amount * $penaltyRate;
 
-            // Worker compensation (workers get 50% of penalty if <24 hours)
+            // Worker compensation (workers get % of penalty if <24 hours)
             if ($hoursUntilShift < 24) {
-                $this->worker_compensation_amount = ($this->escrow_amount * $penaltyRate) * 0.50;
+                $compensationShare = config('overtimestaff.cancellation.worker_compensation_share', 0.50);
+                $this->worker_compensation_amount = $this->cancellation_penalty_amount * $compensationShare;
             }
         }
 

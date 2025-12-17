@@ -709,16 +709,19 @@
 <script>
 function shiftForm() {
     return {
-        venues: @json($venues->map(function($venue) {
-            return [
-                'id' => $venue->id,
-                'name' => $venue->name,
-                'address' => $venue->address,
-                'city' => $venue->city,
-                'state' => $venue->state,
-                'postal_code' => $venue->postal_code,
-            ];
-        })),
+@php
+    $venuesJson = $venues->map(function($venue) {
+        return [
+            'id' => $venue->id,
+            'name' => $venue->name,
+            'address' => $venue->address,
+            'city' => $venue->city,
+            'state' => $venue->state,
+            'postal_code' => $venue->postal_code,
+        ];
+    });
+@endphp
+        venues: @json($venuesJson),
         form: {
             title: '{{ old('title') }}',
             description: '{{ old('description') }}',

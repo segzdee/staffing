@@ -1393,8 +1393,8 @@ Route::middleware(['auth'])->group(function () {
 
 // Keep existing registration workflows
 Route::prefix('register/business')->name('business.register.')->group(function () {
-    Route::get('/', [App\Http\Controllers\Business\RegistrationController::class, 'showRegistrationForm']);
-    Route::get('/verify-email', [App\Http\Controllers\Business\RegistrationController::class, 'verifyEmailLink']);
+    Route::get('/', [App\Http\Controllers\Business\RegistrationController::class, 'showRegistrationForm'])->name('index');
+    Route::get('/verify-email', [App\Http\Controllers\Business\RegistrationController::class, 'verifyEmailLink'])->name('verify-email');
 });
 
 Route::prefix('register/worker')->name('worker.register.')->group(function () {
@@ -1403,8 +1403,8 @@ Route::prefix('register/worker')->name('worker.register.')->group(function () {
 });
 
 Route::prefix('worker')->name('worker.')->group(function () {
-    Route::get('/verify/email', [App\Http\Controllers\Worker\RegistrationController::class, 'showVerifyEmailForm']);
-    Route::get('/verify/phone', [App\Http\Controllers\Worker\RegistrationController::class, 'showVerifyPhoneForm']);
+    Route::get('/verify/email', [App\Http\Controllers\Worker\RegistrationController::class, 'showVerifyEmailForm'])->name('verify.email');
+    Route::get('/verify/phone', [App\Http\Controllers\Worker\RegistrationController::class, 'showVerifyPhoneForm'])->name('verify.phone');
 });
 
 Route::prefix('register/agency')->name('agency.register.')->group(function () {

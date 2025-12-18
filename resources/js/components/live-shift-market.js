@@ -7,8 +7,6 @@ window.liveShiftMarket = function (config = {}) {
     return {
         // Configuration
         variant: config.variant || 'full',
-        // Configuration
-        variant: config.variant || 'full',
         limit: config.limit || 20,
         endpoint: config.endpoint || '/api/market/live',
 

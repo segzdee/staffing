@@ -7,17 +7,7 @@
     <!-- Logo -->
     <div class="flex items-center justify-between h-16 px-6 border-b border-border flex-shrink-0">
         <a href="{{ route('dashboard.index') }}" class="flex items-center gap-2">
-            <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <svg class="w-5 h-5 text-primary-foreground" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="3" y="3" width="7" height="7" rx="1" />
-                    <rect x="14" y="3" width="7" height="7" rx="1" />
-                    <rect x="3" y="14" width="7" height="7" rx="1" />
-                    <rect x="14" y="14" width="7" height="7" rx="1" />
-                </svg>
-            </div>
-            <span class="text-lg font-bold tracking-tight text-foreground">
-                OVERTIME<span class="text-muted-foreground">STAFF</span>
-            </span>
+            <x-logo class="h-8 w-auto" />
         </a>
         <button @click="sidebarOpen = false"
             class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
@@ -71,7 +61,7 @@
                     @endphp
                     <a href="{{ Route::has($subItem['route']) ? route($subItem['route']) : '#' }}"
                         class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors mb-1
-                                            {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
+                                                                    {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $subItem['icon'] }}" />
                         </svg>
@@ -97,7 +87,7 @@
                 @endphp
                 <a href="{{ Route::has($item['route']) ? route($item['route']) : '#' }}"
                     class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors mb-1
-                                        {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
+                                                        {{ $isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}" />
                     </svg>

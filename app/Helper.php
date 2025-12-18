@@ -2,389 +2,398 @@
 
 namespace App;
 
-use Image;
-use App\Models\Updates;
-use App\Models\Pages;
 use App\Models\AdminSettings;
-use App\Models\PaymentGateways;
 use App\Models\LiveStreamings;
-use App\Models\User;
 use App\Models\Notifications;
+use App\Models\Pages;
+use App\Models\PaymentGateways;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Image;
 
 class Helper
 {
-	// spaces
-	public static function spacesUrlFiles($string)
-	{
-	  return (preg_replace('/(\s+)/u','_',$string ));
-	}
-
-	public static function spacesUrl($string)
-	{
-	  return ( preg_replace('/(\s+)/u','+',trim( $string ) ) );
-	}
-
-	public static function removeLineBreak($string)
-	{
-		return str_replace(array("\r\n", "\r"), "", $string);
-	}
-
-	// Text With (2) line break
-	public static function checkTextDb($str)
-	{
-		if (mb_strlen($str, 'utf8') < 1) {
-			return false;
-		}
-		$str = preg_replace('/(?:(?:\r\n|\r|\n)\s*){3}/s', "\r\n\r\n", $str);
-		$str = trim($str,"\r\n");
-
-		return $str;
-	}
-
-	public static function checkText($str, $url = null)
-	{
-		if (mb_strlen($str, 'utf8') < 1) {
-			return false;
-		}
-
-		$str = str_replace($url, '', $str);
-		$str = trim($str);
-		$str = nl2br(e($str));
-		$str = str_replace('&#039;', "'", $str);
-
-		$str = str_replace(array(chr(10), chr(13)), '' , $str);
-		$url = preg_replace('#^https?://#', '', url('').'/');
-
-		// Hashtags and @Mentions
-		$str = preg_replace_callback(
-        '~([#@])([^\s#@!\"\$\%&\'\(\)\*\+\,\-./\:\;\<\=\>?\[/\/\/\\]\^\`\{\|\}\~]+)~',
-        function ($matches) use($url) {
-					$url = $matches[1] == "#" ? "".$url."explore?q=%23".$matches[2]."" : $url.$matches[2];
-					return "<a href=\"//".$url."\">$matches[0]</a>";
-        },
-        $str
-    );
-
-		$str = stripslashes($str);
-		return $str;
-	}
-
-	public static function formatNumber($number)
-	{
-    if( $number >= 1000 &&  $number < 1000000 ) {
-
-       return number_format( $number/1000, 1 ). "k";
-    } else if( $number >= 1000000 ) {
-		return number_format( $number/1000000, 1 ). "M";
-	} else {
-        return $number;
-    }
-   }//<<<<--- End Function
-
-	 public static function formatNumbersStats($number)
-	 {
-    if( $number >= 100000000 ) {
-		return '<span class="counterStats">'.number_format( $number/1000000, 0 ). "</span>M";
-	} else {
-        return '<span class="counterStats">'.number_format( $number ).'</span>';
-    }
-   }//<<<<--- End Function
-
-   public static function spaces($string)
-	 {
-		 return ( preg_replace('/(\s+)/u',' ',$string ) );
-	}
-
-	public static function resizeImage($image,$width,$height,$scale,$imageNew = null)
-	{
-		list($imagewidth, $imageheight, $imageType) = getimagesize($image);
-		$imageType = image_type_to_mime_type($imageType);
-		$newImageWidth = ceil($width * $scale);
-		$newImageHeight = ceil($height * $scale);
-		$newImage = imagecreatetruecolor($newImageWidth,$newImageHeight);
-	switch($imageType) {
-		case "image/gif":
-			$source=imagecreatefromgif($image);
-			imagefill( $newImage, 0, 0, imagecolorallocate( $newImage, 255, 255, 255 ) );
-			imagealphablending( $newImage, TRUE );
-			break;
-	    case "image/pjpeg":
-		case "image/jpeg":
-		case "image/jpg":
-			$source=imagecreatefromjpeg($image);
-			break;
-	    case "image/png":
-		case "image/x-png":
-			$source=imagecreatefrompng($image);
-			imagealphablending( $newImage, false );
-			imagesavealpha( $newImage, true );
-			break;
-  	}
-	imagecopyresampled($newImage,$source,0,0,0,0,$newImageWidth,$newImageHeight,$width,$height);
-
-	switch($imageType) {
-		case "image/gif":
-	  		imagegif( $newImage, $imageNew );
-			break;
-      	case "image/pjpeg":
-		case "image/jpeg":
-		case "image/jpg":
-	  		imagejpeg( $newImage, $imageNew ,90 );
-			break;
-		case "image/png":
-		case "image/x-png":
-			imagepng( $newImage, $imageNew );
-			break;
+    // spaces
+    public static function spacesUrlFiles($string)
+    {
+        return preg_replace('/(\s+)/u', '_', $string);
     }
 
-	chmod($image, 0777);
-	return $image;
-	}
-
-public static function resizeImageFixed($image,$width,$height,$imageNew = null)
-{
-	list($imagewidth, $imageheight, $imageType) = getimagesize($image);
-	$imageType = image_type_to_mime_type($imageType);
-	$newImage = imagecreatetruecolor($width,$height);
-
-	switch($imageType) {
-		case "image/gif":
-			$source=imagecreatefromgif($image);
-			imagefill( $newImage, 0, 0, imagecolorallocate( $newImage, 255, 255, 255 ) );
-			imagealphablending( $newImage, TRUE );
-			break;
-	    case "image/pjpeg":
-		case "image/jpeg":
-		case "image/jpg":
-			$source=imagecreatefromjpeg($image);
-			break;
-	    case "image/png":
-		case "image/x-png":
-			$source=imagecreatefrompng($image);
-			imagefill( $newImage, 0, 0, imagecolorallocate( $newImage, 255, 255, 255 ) );
-			imagealphablending( $newImage, TRUE );
-			break;
-  	}
-	if( $width/$imagewidth > $height/$imageheight ){
-        $nw = $width;
-        $nh = ($imageheight * $nw) / $imagewidth;
-        $px = 0;
-        $py = ($height - $nh) / 2;
-    } else {
-        $nh = $height;
-        $nw = ($imagewidth * $nh) / $imageheight;
-        $py = 0;
-        $px = ($width - $nw) / 2;
+    public static function spacesUrl($string)
+    {
+        return preg_replace('/(\s+)/u', '+', trim($string));
     }
 
-	imagecopyresampled($newImage,$source,$px, $py, 0, 0, $nw, $nh, $imagewidth, $imageheight);
-
-	switch($imageType) {
-		case "image/gif":
-	  		imagegif($newImage,$imageNew);
-			break;
-      	case "image/pjpeg":
-		case "image/jpeg":
-		case "image/jpg":
-	  		imagejpeg($newImage,$imageNew,90);
-			break;
-		case "image/png":
-		case "image/x-png":
-			imagepng($newImage,$imageNew);
-			break;
+    public static function removeLineBreak($string)
+    {
+        return str_replace(["\r\n", "\r"], '', $string);
     }
 
-		chmod($image, 0777);
-		return $image;
-	}
+    // Text With (2) line break
+    public static function checkTextDb($str)
+    {
+        if (mb_strlen($str, 'utf8') < 1) {
+            return false;
+        }
+        $str = preg_replace('/(?:(?:\r\n|\r|\n)\s*){3}/s', "\r\n\r\n", $str);
+        $str = trim($str, "\r\n");
 
-	public static function getHeight($image)
-	{
-		$size   = getimagesize( $image );
-		$height = $size[1];
-		return $height;
-	}
-
-	public static function getWidth($image)
-	{
-		$size  = getimagesize( $image);
-		$width = $size[0];
-		return $width;
-	}
-	public static function formatBytes($size, $precision = 2)
-	{
-    // Handle zero or negative sizes
-    if ($size <= 0) {
-        return '0 B';
-    }
-    
-    $base = log($size, 1024);
-    $suffixes = array('', 'kB', 'MB', 'GB', 'TB');
-    
-    // Prevent -INF errors by ensuring base is valid
-    if (!is_finite($base)) {
-        return '0 B';
+        return $str;
     }
 
-    return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
-  }
+    public static function checkText($str, $url = null)
+    {
+        if (mb_strlen($str, 'utf8') < 1) {
+            return false;
+        }
 
-	public static function removeHTPP($string)
-	{
-		$string = preg_replace('#^https?://#', '', $string);
-		return $string;
-	}
+        $str = str_replace($url, '', $str);
+        $str = trim($str);
+        $str = nl2br(e($str));
+        $str = str_replace('&#039;', "'", $str);
 
-	public static function Array2Str($kvsep, $entrysep, $a)
-	{
-		$str = "";
-			foreach ( $a as $k => $v ){
-				$str .= "{$k}{$kvsep}{$v}{$entrysep}";
-				}
-		return $str;
-	}
+        $str = str_replace([chr(10), chr(13)], '', $str);
+        $url = preg_replace('#^https?://#', '', url('').'/');
 
-	public static function removeBR($string)
-	{
-		$html    = preg_replace( '[^(<br( \/)?>)*|(<br( \/)?>)*$]', '', $string );
-		$output = preg_replace('~(?:<br\b[^>]*>|\R){3,}~i', '<br /><br />', $html);
-		return $output;
-	}
+        // Hashtags and @Mentions
+        $str = preg_replace_callback(
+            '~([#@])([^\s#@!\"\$\%&\'\(\)\*\+\,\-./\:\;\<\=\>?\[/\/\/\\]\^\`\{\|\}\~]+)~',
+            function ($matches) use ($url) {
+                $url = $matches[1] == '#' ? ''.$url.'explore?q=%23'.$matches[2].'' : $url.$matches[2];
 
-	public static function removeTagScript($html)
-	{
-			  //parsing begins here:
-				$doc = new \DOMDocument();
-				@$doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
-				$nodes = $doc->getElementsByTagName('script');
+                return '<a href="//'.$url."\">$matches[0]</a>";
+            },
+            $str
+        );
 
-				$remove = [];
+        $str = stripslashes($str);
 
-				foreach ($nodes as $item) {
-					$remove[] = $item;
-				}
+        return $str;
+    }
 
-				foreach ($remove as $item) {
-					$item->parentNode->removeChild($item);
-				}
+    public static function formatNumber($number)
+    {
+        if ($number >= 1000 && $number < 1000000) {
 
-				return preg_replace(
-					'/^<!DOCTYPE.+?>/', '',
-					str_replace(
-					array('<html>', '</html>', '<body>', '</body>', '<head>', '</head>', '<p>', '</p>', '&nbsp;' ),
-					array('','','','','',' '),
-					$doc->saveHtml() ));
-	}// End Method
+            return number_format($number / 1000, 1).'k';
+        } elseif ($number >= 1000000) {
+            return number_format($number / 1000000, 1).'M';
+        } else {
+            return $number;
+        }
+    }// <<<<--- End Function
 
-	public static function removeTagIframe($html)
-	{
-			  //parsing begins here:
-				$doc = new \DOMDocument();
-				@$doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
-				$nodes = $doc->getElementsByTagName('iframe');
+    public static function formatNumbersStats($number)
+    {
+        if ($number >= 100000000) {
+            return '<span class="counterStats">'.number_format($number / 1000000, 0).'</span>M';
+        } else {
+            return '<span class="counterStats">'.number_format($number).'</span>';
+        }
+    }// <<<<--- End Function
 
-				$remove = [];
+    public static function spaces($string)
+    {
+        return preg_replace('/(\s+)/u', ' ', $string);
+    }
 
-				foreach ($nodes as $item) {
-					$remove[] = $item;
-				}
+    public static function resizeImage($image, $width, $height, $scale, $imageNew = null)
+    {
+        [$imagewidth, $imageheight, $imageType] = getimagesize($image);
+        $imageType = image_type_to_mime_type($imageType);
+        $newImageWidth = ceil($width * $scale);
+        $newImageHeight = ceil($height * $scale);
+        $newImage = imagecreatetruecolor($newImageWidth, $newImageHeight);
+        switch ($imageType) {
+            case 'image/gif':
+                $source = imagecreatefromgif($image);
+                imagefill($newImage, 0, 0, imagecolorallocate($newImage, 255, 255, 255));
+                imagealphablending($newImage, true);
+                break;
+            case 'image/pjpeg':
+            case 'image/jpeg':
+            case 'image/jpg':
+                $source = imagecreatefromjpeg($image);
+                break;
+            case 'image/png':
+            case 'image/x-png':
+                $source = imagecreatefrompng($image);
+                imagealphablending($newImage, false);
+                imagesavealpha($newImage, true);
+                break;
+        }
+        imagecopyresampled($newImage, $source, 0, 0, 0, 0, $newImageWidth, $newImageHeight, $width, $height);
 
-				foreach ($remove as $item) {
-					$item->parentNode->removeChild($item);
-				}
+        switch ($imageType) {
+            case 'image/gif':
+                imagegif($newImage, $imageNew);
+                break;
+            case 'image/pjpeg':
+            case 'image/jpeg':
+            case 'image/jpg':
+                imagejpeg($newImage, $imageNew, 90);
+                break;
+            case 'image/png':
+            case 'image/x-png':
+                imagepng($newImage, $imageNew);
+                break;
+        }
 
-				return preg_replace(
-					'/^<!DOCTYPE.+?>/', '',
-					str_replace(
-					array('<html>', '</html>', '<body>', '</body>', '<head>', '</head>', '<p>', '</p>', '&nbsp;' ),
-					array('','','','','',' '),
-					$doc->saveHtml() ));
-	}// End Method
+        chmod($image, 0777);
 
-	public static function fileNameOriginal($string)
-	{
-		return pathinfo($string, PATHINFO_FILENAME);
-	}
+        return $image;
+    }
 
-	public static function formatDate($date, $time = false)
-	{
-		$settings = AdminSettings::first();
+    public static function resizeImageFixed($image, $width, $height, $imageNew = null)
+    {
+        [$imagewidth, $imageheight, $imageType] = getimagesize($image);
+        $imageType = image_type_to_mime_type($imageType);
+        $newImage = imagecreatetruecolor($width, $height);
 
-		if ($time == false) {
-			$date = strtotime($date);
-		}
+        switch ($imageType) {
+            case 'image/gif':
+                $source = imagecreatefromgif($image);
+                imagefill($newImage, 0, 0, imagecolorallocate($newImage, 255, 255, 255));
+                imagealphablending($newImage, true);
+                break;
+            case 'image/pjpeg':
+            case 'image/jpeg':
+            case 'image/jpg':
+                $source = imagecreatefromjpeg($image);
+                break;
+            case 'image/png':
+            case 'image/x-png':
+                $source = imagecreatefrompng($image);
+                imagefill($newImage, 0, 0, imagecolorallocate($newImage, 255, 255, 255));
+                imagealphablending($newImage, true);
+                break;
+        }
+        if ($width / $imagewidth > $height / $imageheight) {
+            $nw = $width;
+            $nh = ($imageheight * $nw) / $imagewidth;
+            $px = 0;
+            $py = ($height - $nh) / 2;
+        } else {
+            $nh = $height;
+            $nw = ($imagewidth * $nh) / $imageheight;
+            $py = 0;
+            $px = ($width - $nw) / 2;
+        }
 
-		$day    = date('d', $date);
-		$_month = date('m', $date);
-		$month  = trans("months.$_month");
-		$year   = date('Y', $date);
+        imagecopyresampled($newImage, $source, $px, $py, 0, 0, $nw, $nh, $imagewidth, $imageheight);
 
-		if ($settings->date_format == 'M d, Y') {
-			$dateFormat = $month.' '.$day.', '.$year;
-		} elseif ($settings->date_format == 'd M, Y') {
-			$dateFormat = $day.' '.$month.', '.$year;
-		} else {
-			$dateFormat = date($settings->date_format, $date);
-		}
+        switch ($imageType) {
+            case 'image/gif':
+                imagegif($newImage, $imageNew);
+                break;
+            case 'image/pjpeg':
+            case 'image/jpeg':
+            case 'image/jpg':
+                imagejpeg($newImage, $imageNew, 90);
+                break;
+            case 'image/png':
+            case 'image/x-png':
+                imagepng($newImage, $imageNew);
+                break;
+        }
 
-		return $dateFormat;
-	}
+        chmod($image, 0777);
 
-	public static function watermark($name, $watermarkSource)
-	{
-		$thumbnail = Image::make($name);
-		$watermark = Image::make($watermarkSource);
-		$x = 0;
+        return $image;
+    }
 
-		while ($x < $thumbnail->width()) {
-		    $y = 0;
+    public static function getHeight($image)
+    {
+        $size = getimagesize($image);
+        $height = $size[1];
 
-		    while($y < $thumbnail->height()) {
-		        $thumbnail->insert($watermarkSource, 'top-left', $x, $y);
-		        $y += $watermark->height();
-		    }
+        return $height;
+    }
 
-		    $x += $watermark->width();
-		}
+    public static function getWidth($image)
+    {
+        $size = getimagesize($image);
+        $width = $size[0];
 
-		$thumbnail->save($name)->destroy();
-	}
+        return $width;
+    }
 
-	public static function amountFormat($value)
-	{
-		$settings = AdminSettings::first();
+    public static function formatBytes($size, $precision = 2)
+    {
+        // Handle zero or negative sizes
+        if ($size <= 0) {
+            return '0 B';
+        }
 
-		if($settings->currency_position == 'left') {
-			$amount = $settings->currency_symbol.number_format($value);
-		} elseif($settings->currency_position == 'right') {
-			$amount = number_format($value).$settings->currency_symbol;
-		} else {
-			$amount = $settings->currency_symbol.number_format($value);
-		}
+        $base = log($size, 1024);
+        $suffixes = ['', 'kB', 'MB', 'GB', 'TB'];
 
-	 return $amount;
-	}
+        // Prevent -INF errors by ensuring base is valid
+        if (! is_finite($base)) {
+            return '0 B';
+        }
 
-	public static function amountWithoutFormat($value)
-	{
-		$settings = AdminSettings::first();
+        return round(pow(1024, $base - floor($base)), $precision).$suffixes[floor($base)];
+    }
 
-		if($settings->currency_position == 'left') {
-			$amount = $settings->currency_symbol.$value;
-		} elseif($settings->currency_position == 'right') {
-			$amount = $value.$settings->currency_symbol;
-		} else {
-			$amount = $settings->currency_symbol.$value;
-		}
+    public static function removeHTPP($string)
+    {
+        $string = preg_replace('#^https?://#', '', $string);
 
-	 return $amount;
-	}
+        return $string;
+    }
 
-	public static function getYoutubeId($url)
-	{
-	 $pattern =
-			 '%^# Match any youtube URL
+    public static function Array2Str($kvsep, $entrysep, $a)
+    {
+        $str = '';
+        foreach ($a as $k => $v) {
+            $str .= "{$k}{$kvsep}{$v}{$entrysep}";
+        }
+
+        return $str;
+    }
+
+    public static function removeBR($string)
+    {
+        $html = preg_replace('[^(<br( \/)?>)*|(<br( \/)?>)*$]', '', $string);
+        $output = preg_replace('~(?:<br\b[^>]*>|\R){3,}~i', '<br /><br />', $html);
+
+        return $output;
+    }
+
+    public static function removeTagScript($html)
+    {
+        // parsing begins here:
+        $doc = new \DOMDocument;
+        @$doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        $nodes = $doc->getElementsByTagName('script');
+
+        $remove = [];
+
+        foreach ($nodes as $item) {
+            $remove[] = $item;
+        }
+
+        foreach ($remove as $item) {
+            $item->parentNode->removeChild($item);
+        }
+
+        return preg_replace(
+            '/^<!DOCTYPE.+?>/', '',
+            str_replace(
+                ['<html>', '</html>', '<body>', '</body>', '<head>', '</head>', '<p>', '</p>', '&nbsp;'],
+                ['', '', '', '', '', ' '],
+                $doc->saveHtml()));
+    }// End Method
+
+    public static function removeTagIframe($html)
+    {
+        // parsing begins here:
+        $doc = new \DOMDocument;
+        @$doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        $nodes = $doc->getElementsByTagName('iframe');
+
+        $remove = [];
+
+        foreach ($nodes as $item) {
+            $remove[] = $item;
+        }
+
+        foreach ($remove as $item) {
+            $item->parentNode->removeChild($item);
+        }
+
+        return preg_replace(
+            '/^<!DOCTYPE.+?>/', '',
+            str_replace(
+                ['<html>', '</html>', '<body>', '</body>', '<head>', '</head>', '<p>', '</p>', '&nbsp;'],
+                ['', '', '', '', '', ' '],
+                $doc->saveHtml()));
+    }// End Method
+
+    public static function fileNameOriginal($string)
+    {
+        return pathinfo($string, PATHINFO_FILENAME);
+    }
+
+    public static function formatDate($date, $time = false)
+    {
+        $settings = AdminSettings::first();
+
+        if ($time == false) {
+            $date = strtotime($date);
+        }
+
+        $day = date('d', $date);
+        $_month = date('m', $date);
+        $month = trans("months.$_month");
+        $year = date('Y', $date);
+
+        if ($settings->date_format == 'M d, Y') {
+            $dateFormat = $month.' '.$day.', '.$year;
+        } elseif ($settings->date_format == 'd M, Y') {
+            $dateFormat = $day.' '.$month.', '.$year;
+        } else {
+            $dateFormat = date($settings->date_format, $date);
+        }
+
+        return $dateFormat;
+    }
+
+    public static function watermark($name, $watermarkSource)
+    {
+        $thumbnail = Image::make($name);
+        $watermark = Image::make($watermarkSource);
+        $x = 0;
+
+        while ($x < $thumbnail->width()) {
+            $y = 0;
+
+            while ($y < $thumbnail->height()) {
+                $thumbnail->insert($watermarkSource, 'top-left', $x, $y);
+                $y += $watermark->height();
+            }
+
+            $x += $watermark->width();
+        }
+
+        $thumbnail->save($name)->destroy();
+    }
+
+    public static function amountFormat($value)
+    {
+        $settings = AdminSettings::first();
+
+        if ($settings->currency_position == 'left') {
+            $amount = $settings->currency_symbol.number_format($value);
+        } elseif ($settings->currency_position == 'right') {
+            $amount = number_format($value).$settings->currency_symbol;
+        } else {
+            $amount = $settings->currency_symbol.number_format($value);
+        }
+
+        return $amount;
+    }
+
+    public static function amountWithoutFormat($value)
+    {
+        $settings = AdminSettings::first();
+
+        if ($settings->currency_position == 'left') {
+            $amount = $settings->currency_symbol.$value;
+        } elseif ($settings->currency_position == 'right') {
+            $amount = $value.$settings->currency_symbol;
+        } else {
+            $amount = $settings->currency_symbol.$value;
+        }
+
+        return $amount;
+    }
+
+    public static function getYoutubeId($url)
+    {
+        $pattern =
+                '%^# Match any youtube URL
 			(?:https?://)?
 			(?:www\.)?
 			(?:
@@ -399,576 +408,582 @@ public static function resizeImageFixed($image,$width,$height,$imageNew = null)
 			)
 			([\w-]{10,12})
 			($|&).*
-			$%x'
-			;
+			$%x';
 
-			$result = preg_match( $pattern, $url, $matches );
-			if ( $matches ) {
-					return $matches[1];
-			}
-			return false;
-	}//<<<-- End
+        $result = preg_match($pattern, $url, $matches);
+        if ($matches) {
+            return $matches[1];
+        }
 
-	public static function getVimeoId($url)
-	{
-		$url = explode('/',$url);
-		return $url[3];
-	}
+        return false;
+    }// <<<-- End
 
-	public static function videoUrl($url)
-	{
-		$urlValid = filter_var($url, FILTER_VALIDATE_URL) ? true : false;
+    public static function getVimeoId($url)
+    {
+        $url = explode('/', $url);
 
-		if ($urlValid) {
-			$parse = parse_url($url);
-			$host  = strtolower($parse['host']);
+        return $url[3];
+    }
 
-			if ($host) {
-				if (in_array($host, array(
-					'youtube.com',
-					'www.youtube.com',
-					'm.youtube.com',
-					'youtu.be',
-					'www.youtu.be',
-					'vimeo.com',
-					'player.vimeo.com'))) {
-						return $host;
-				}
-			}
-		}
-	}
+    public static function videoUrl($url)
+    {
+        $urlValid = filter_var($url, FILTER_VALIDATE_URL) ? true : false;
 
-	//============== linkText
-	 public static function linkText($text)
-	 {
-	    return preg_replace('/https?:\/\/[\w\-\.!~#?&=+%;:\*\'"(),\/]+/u','<a class="data-link" href="$0" target="_blank">$0</a>', $text);
-	}
+        if ($urlValid) {
+            $parse = parse_url($url);
+            $host = strtolower($parse['host']);
 
-	public static function strRandom()
-	{
-		return substr(strtolower(md5(time() . mt_rand(1000, 9999))), 0, 8);
-	}// End method
+            if ($host) {
+                if (in_array($host, [
+                    'youtube.com',
+                    'www.youtube.com',
+                    'm.youtube.com',
+                    'youtu.be',
+                    'www.youtu.be',
+                    'vimeo.com',
+                    'player.vimeo.com'])) {
+                    return $host;
+                }
+            }
+        }
+    }
 
-	/**
-	 * Format currency amount from cents to dollars
-	 * 
-	 * @param int $cents Amount in cents
-	 * @param bool $includeSymbol Whether to include currency symbol
-	 * @return string Formatted currency string
-	 */
-	public static function formatCurrency($cents, $includeSymbol = true)
-	{
-		$settings = AdminSettings::first();
-		$dollars = $cents / 100;
-		
-		if ($settings->currency_code == 'JPY') {
-			$formatted = number_format($dollars, 0);
-		} else {
-			if ($settings->decimal_format == 'dot') {
-				$formatted = number_format($dollars, 2, '.', ',');
-			} else {
-				$formatted = number_format($dollars, 2, ',', '.');
-			}
-		}
-		
-		if (!$includeSymbol) {
-			return $formatted;
-		}
-		
-		if ($settings->currency_position == 'left') {
-			return $settings->currency_symbol . $formatted;
-		} elseif ($settings->currency_position == 'right') {
-			return $formatted . $settings->currency_symbol;
-		} else {
-			return $settings->currency_symbol . $formatted;
-		}
-	}
+    // ============== linkText
+    public static function linkText($text)
+    {
+        return preg_replace('/https?:\/\/[\w\-\.!~#?&=+%;:\*\'"(),\/]+/u', '<a class="data-link" href="$0" target="_blank">$0</a>', $text);
+    }
 
-	public static function amountFormatDecimal($value, $appyTax = null)
-  {
- 	 $settings = AdminSettings::first();
+    public static function strRandom()
+    {
+        return substr(strtolower(md5(time().mt_rand(1000, 9999))), 0, 8);
+    }// End method
 
-	 // Aplly Taxes
-	 if (auth()->check()) {
-		 $isTaxable = auth()->user()->isTaxable();
-  	 $taxes = 0;
+    /**
+     * Format currency amount from cents to dollars
+     *
+     * @param  int  $cents  Amount in cents
+     * @param  bool  $includeSymbol  Whether to include currency symbol
+     * @return string Formatted currency string
+     */
+    public static function formatCurrency($cents, $includeSymbol = true)
+    {
+        $settings = AdminSettings::first();
+        $dollars = $cents / 100;
 
-  	 if ($appyTax && $isTaxable->count()) {
-  		 foreach ($isTaxable as $tax) {
-  				$taxes += $tax->percentage;
-  		 }
+        if ($settings->currency_code == 'JPY') {
+            $formatted = number_format($dollars, 0);
+        } else {
+            if ($settings->decimal_format == 'dot') {
+                $formatted = number_format($dollars, 2, '.', ',');
+            } else {
+                $formatted = number_format($dollars, 2, ',', '.');
+            }
+        }
 
-  		 $valueWithTax = number_format($taxes * $value / 100, 2);
-  		 $value = ($value + $valueWithTax);
-  	 }
-	 }// isTaxable
+        if (! $includeSymbol) {
+            return $formatted;
+        }
 
-	 if ($settings->currency_code == 'JPY') {
-		 return $settings->currency_symbol.number_format($value);
-	 }
+        if ($settings->currency_position == 'left') {
+            return $settings->currency_symbol.$formatted;
+        } elseif ($settings->currency_position == 'right') {
+            return $formatted.$settings->currency_symbol;
+        } else {
+            return $settings->currency_symbol.$formatted;
+        }
+    }
 
- 	 if ($settings->decimal_format == 'dot') {
- 		 $decimalDot = '.';
- 		 $decimalComma = ',';
- 	 } else {
- 		 $decimalDot = ',';
- 		 $decimalComma = '.';
- 	 }
+    public static function amountFormatDecimal($value, $appyTax = null)
+    {
+        $settings = AdminSettings::first();
 
- 	 if ($settings->currency_position == 'left') {
- 		 $amount = $settings->currency_symbol.number_format($value, 2, $decimalDot, $decimalComma);
- 	 } elseif ($settings->currency_position == 'right') {
- 		 $amount = number_format($value, 2, $decimalDot, $decimalComma).$settings->currency_symbol;
- 	 } else {
- 		 $amount = $settings->currency_symbol.number_format($value, 2, $decimalDot, $decimalComma);
- 	 }
+        // Aplly Taxes
+        if (auth()->check()) {
+            $isTaxable = auth()->user()->isTaxable();
+            $taxes = 0;
 
- 	return $amount;
+            if ($appyTax && $isTaxable->count()) {
+                foreach ($isTaxable as $tax) {
+                    $taxes += $tax->percentage;
+                }
 
- }// END
+                $valueWithTax = number_format($taxes * $value / 100, 2);
+                $value = ($value + $valueWithTax);
+            }
+        }// isTaxable
 
- public static function amountGross($amount)
- {
-	 $settings = AdminSettings::first();
+        if ($settings->currency_code == 'JPY') {
+            return $settings->currency_symbol.number_format($value);
+        }
 
-	 // Aplly Taxes
-	 $isTaxable = auth()->user()->isTaxable();
-	 $taxes = 0;
+        if ($settings->decimal_format == 'dot') {
+            $decimalDot = '.';
+            $decimalComma = ',';
+        } else {
+            $decimalDot = ',';
+            $decimalComma = '.';
+        }
 
-	 if ($isTaxable->count()) {
-		 foreach ($isTaxable as $tax) {
-				$taxes += $tax->percentage;
-		 }
+        if ($settings->currency_position == 'left') {
+            $amount = $settings->currency_symbol.number_format($value, 2, $decimalDot, $decimalComma);
+        } elseif ($settings->currency_position == 'right') {
+            $amount = number_format($value, 2, $decimalDot, $decimalComma).$settings->currency_symbol;
+        } else {
+            $amount = $settings->currency_symbol.number_format($value, 2, $decimalDot, $decimalComma);
+        }
 
-		 if ($settings->currency_code == 'JPY') {
-		 	$amount = round($amount + ($taxes * $amount / 100));
-		} else {
-			$amount = number_format($amount + ($taxes * $amount / 100), 2, '.', '');
-		}
+        return $amount;
 
-		 return $amount;
-	 }// isTaxable
+    }// END
 
-	 return $amount;
- }
+    public static function amountGross($amount)
+    {
+        $settings = AdminSettings::first();
 
- public static function calculatePercentage($value, $percentage)
- {
-	 return number_format(($value * $percentage / 100), 2);
- }
+        // Aplly Taxes
+        $isTaxable = auth()->user()->isTaxable();
+        $taxes = 0;
 
- public static function envUpdate($key, $value, $comma = false)
-  {
-      $path = base_path('.env');
-			$value = trim($value);
-			$env = $comma ? '"'.env($key).'"' : env($key);
+        if ($isTaxable->count()) {
+            foreach ($isTaxable as $tax) {
+                $taxes += $tax->percentage;
+            }
 
-      if (file_exists($path)) {
+            if ($settings->currency_code == 'JPY') {
+                $amount = round($amount + ($taxes * $amount / 100));
+            } else {
+                $amount = number_format($amount + ($taxes * $amount / 100), 2, '.', '');
+            }
 
-          file_put_contents($path, str_replace(
-              $key . '=' . $env, $key . '=' . $value, file_get_contents($path)
-          ));
-      }
-  }
+            return $amount;
+        }// isTaxable
 
-	public static function urlToDomain($url)
-	{
-   $domain = explode('/', preg_replace('/https?:\/\/(www\.)?/', '', $url));
-   return $domain['0'];
- }
+        return $amount;
+    }
 
- public static function expandLink($url)
- {
-	 $headers = get_headers($url, 1);
+    public static function calculatePercentage($value, $percentage)
+    {
+        return number_format(($value * $percentage / 100), 2);
+    }
 
-	 if (! empty($headers['Location'])) {
-		 $headers['Location'] = (array) $headers['Location'];
-		 $url = array_pop($headers['Location']);
-	 }
-	 return $url;
- }
+    public static function envUpdate($key, $value, $comma = false)
+    {
+        $path = base_path('.env');
+        $value = trim($value);
+        $env = $comma ? '"'.env($key).'"' : env($key);
 
- public static function getFirstUrl($string)
- {
-	 preg_match_all('#\bhttps?://[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/))#', $string, $_matches);
+        if (file_exists($path)) {
 
-		 $firstURL = $_matches[0][0] ?? false;
+            file_put_contents($path, str_replace(
+                $key.'='.$env, $key.'='.$value, file_get_contents($path)
+            ));
+        }
+    }
 
-	 if ($firstURL) {
-			return $firstURL;
-		 }
- }
+    public static function urlToDomain($url)
+    {
+        $domain = explode('/', preg_replace('/https?:\/\/(www\.)?/', '', $url));
 
- public static function daysInMonth($month, $year)
- {
-	 return $month == 2 ? ($year % 4 ? 28 : ($year % 100 ? 29 : ($year % 400 ? 28 : 29))) : (($month - 1) % 7 % 2 ? 30 : 31);
-	}
+        return $domain['0'];
+    }
 
-	public static function PercentageIncreaseDecrease($currentPeriod, $previousPeriod)
-	{
-		if ($currentPeriod > $previousPeriod && $previousPeriod != 0) {
-			 $subtraction = $currentPeriod  - $previousPeriod;
-			 $percentage = $subtraction / $currentPeriod * 100;
-			 return '<small class="float-right text-success">
+    public static function expandLink($url)
+    {
+        $headers = get_headers($url, 1);
+
+        if (! empty($headers['Location'])) {
+            $headers['Location'] = (array) $headers['Location'];
+            $url = array_pop($headers['Location']);
+        }
+
+        return $url;
+    }
+
+    public static function getFirstUrl($string)
+    {
+        preg_match_all('#\bhttps?://[^\s()<>]+(?:\([\w\d]+\)|([^[:punct:]\s]|/))#', $string, $_matches);
+
+        $firstURL = $_matches[0][0] ?? false;
+
+        if ($firstURL) {
+            return $firstURL;
+        }
+    }
+
+    public static function daysInMonth($month, $year)
+    {
+        return $month == 2 ? ($year % 4 ? 28 : ($year % 100 ? 29 : ($year % 400 ? 28 : 29))) : (($month - 1) % 7 % 2 ? 30 : 31);
+    }
+
+    public static function PercentageIncreaseDecrease($currentPeriod, $previousPeriod)
+    {
+        if ($currentPeriod > $previousPeriod && $previousPeriod != 0) {
+            $subtraction = $currentPeriod - $previousPeriod;
+            $percentage = $subtraction / $currentPeriod * 100;
+
+            return '<small class="float-right text-success">
 			 <strong><i class="feather icon-arrow-up mr-1"></i> '.number_format($percentage, 2).'%</strong>
 			 </small>';
 
-		} elseif ($currentPeriod < $previousPeriod && $currentPeriod != 0) {
-			$subtraction = $previousPeriod - $currentPeriod;
-			$percentage = $subtraction / $currentPeriod * 100;
-			return '<small class="float-right text-danger">
+        } elseif ($currentPeriod < $previousPeriod && $currentPeriod != 0) {
+            $subtraction = $previousPeriod - $currentPeriod;
+            $percentage = $subtraction / $currentPeriod * 100;
+
+            return '<small class="float-right text-danger">
 			<strong><i class="feather icon-arrow-down mr-1"></i> '.number_format($percentage, 2).'%</strong>
 			</small>';
 
-		} elseif ($currentPeriod < $previousPeriod && $previousPeriod != 0) {
-			$subtraction = $previousPeriod - $currentPeriod;
-			$percentage = $subtraction / $previousPeriod * 100;
-			return '<small class="float-right text-danger">
+        } elseif ($currentPeriod < $previousPeriod && $previousPeriod != 0) {
+            $subtraction = $previousPeriod - $currentPeriod;
+            $percentage = $subtraction / $previousPeriod * 100;
+
+            return '<small class="float-right text-danger">
 			<strong><i class="feather icon-arrow-down mr-1"></i> '.number_format($percentage, 2).'%</strong>
 			</small>';
 
-		} elseif ($currentPeriod == $previousPeriod) {
-			return '<small class="float-right text-muted">
+        } elseif ($currentPeriod == $previousPeriod) {
+            return '<small class="float-right text-muted">
 			<strong>0%</strong>
 			</small>';
 
-		} else {
-			 $percentage = $currentPeriod / 100 * 100;
-			return '<small class="float-right text-success">
+        } else {
+            $percentage = $currentPeriod / 100 * 100;
+
+            return '<small class="float-right text-success">
 			<strong><i class="feather icon-arrow-up mr-1"></i> '.number_format($percentage, 2).'%</strong>
 			</small>';
 
-		}
-	}// End method
+        }
+    }// End method
 
-	private static function getPool($type = 'alnum')
-	{
-			switch ($type) {
-					case 'alnum':
-							$pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-							break;
-					case 'alpha':
-							$pool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-							break;
-					case 'hexdec':
-							$pool = '0123456789abcdef';
-							break;
-					case 'numeric':
-							$pool = '0123456789';
-							break;
-					case 'nozero':
-							$pool = '123456789';
-							break;
-					case 'distinct':
-							$pool = '2345679ACDEFHJKLMNPRSTUVWXYZ';
-							break;
-					default:
-							$pool = (string) $type;
-							break;
-			}
+    private static function getPool($type = 'alnum')
+    {
+        switch ($type) {
+            case 'alnum':
+                $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                break;
+            case 'alpha':
+                $pool = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                break;
+            case 'hexdec':
+                $pool = '0123456789abcdef';
+                break;
+            case 'numeric':
+                $pool = '0123456789';
+                break;
+            case 'nozero':
+                $pool = '123456789';
+                break;
+            case 'distinct':
+                $pool = '2345679ACDEFHJKLMNPRSTUVWXYZ';
+                break;
+            default:
+                $pool = (string) $type;
+                break;
+        }
 
-			return $pool;
-	}
+        return $pool;
+    }
 
-	/**
-	 * Generate a random secure crypt figure
-	 */
-	private static function secureCrypt($min, $max)
-	{
-			$range = $max - $min;
+    /**
+     * Generate a random secure crypt figure
+     */
+    private static function secureCrypt($min, $max)
+    {
+        $range = $max - $min;
 
-			if ($range < 0) {
-					return $min; // not so random...
-			}
+        if ($range < 0) {
+            return $min; // not so random...
+        }
 
-			$log    = log($range, 2);
-			$bytes  = (int) ($log / 8) + 1; // length in bytes
-			$bits   = (int) $log + 1; // length in bits
-			$filter = (int) (1 << $bits) - 1; // set all lower bits to 1
-			do {
-					$rnd = hexdec(bin2hex(openssl_random_pseudo_bytes($bytes)));
-					$rnd = $rnd & $filter; // discard irrelevant bits
-			} while ($rnd >= $range);
+        $log = log($range, 2);
+        $bytes = (int) ($log / 8) + 1; // length in bytes
+        $bits = (int) $log + 1; // length in bits
+        $filter = (int) (1 << $bits) - 1; // set all lower bits to 1
+        do {
+            $rnd = hexdec(bin2hex(openssl_random_pseudo_bytes($bytes)));
+            $rnd = $rnd & $filter; // discard irrelevant bits
+        } while ($rnd >= $range);
 
-			return $min + $rnd;
-	}
+        return $min + $rnd;
+    }
 
-	/**
-	 * Finally, generate a hashed token
-	 */
-	public static function getHashedToken($length = 25)
-	{
-			$token = "";
-			$max   = strlen(static::getPool());
-			for ($i = 0; $i < $length; $i++) {
-					$token .= static::getPool()[static::secureCrypt(0, $max)];
-			}
+    /**
+     * Finally, generate a hashed token
+     */
+    public static function getHashedToken($length = 25)
+    {
+        $token = '';
+        $max = strlen(static::getPool());
+        for ($i = 0; $i < $length; $i++) {
+            $token .= static::getPool()[static::secureCrypt(0, $max)];
+        }
 
-			return $token;
-	}
+        return $token;
+    }
 
-	public static function genTranxRef()
-	{
-			return self::getHashedToken();
-	}
+    public static function genTranxRef()
+    {
+        return self::getHashedToken();
+    }
 
-	// Show Section My Cards
-	public static function showSectionMyCards()
-	{
-		return PaymentGateways::whereName('Stripe')
-			 ->whereEnabled('1')
-			 ->orWhere('name', 'Paystack')
-			 ->whereEnabled('1')
-		 ->first() ? true : false;
-	}
+    // Show Section My Cards
+    public static function showSectionMyCards()
+    {
+        return PaymentGateways::whereName('Stripe')
+            ->whereEnabled('1')
+            ->orWhere('name', 'Paystack')
+            ->whereEnabled('1')
+            ->first() ? true : false;
+    }
 
-	// Get file from Disk
-	public static function getFile($path)
-	{
+    // Get file from Disk
+    public static function getFile($path)
+    {
 
-		
-		if (env('FILESYSTEM_DRIVER') == 'backblaze') {
-			 return 'https://'.env('BACKBLAZE_BUCKET').'.'.env('BACKBLAZE_BUCKET_REGION').'/'.$path;
-		} elseif (env('FILESYSTEM_DRIVER') == 'dospace' && env('DOS_CDN')) {
-			return 'https://'.env('DOS_BUCKET').'.'.env('DOS_DEFAULT_REGION').'.cdn.digitaloceanspaces.com/'.$path;
-		} else {
-			return Storage::url($path);
-		}
-	}
+        if (config('filesystems.default') == 'backblaze') {
+            return 'https://'.config('filesystems.disks.backblaze.bucket').'.'.config('filesystems.disks.backblaze.region').'/'.$path;
+        } elseif (config('filesystems.default') == 'dospace' && config('filesystems.disks.dospace.cdn')) {
+            return 'https://'.config('filesystems.disks.dospace.bucket').'.'.config('filesystems.disks.dospace.region').'.cdn.digitaloceanspaces.com/'.$path;
+        } else {
+            return Storage::url($path);
+        }
+    }
 
-	// User wallet format
-	public static function userWallet($balance = null)
-	{
-		$settings = AdminSettings::first();
+    // User wallet format
+    public static function userWallet($balance = null)
+    {
+        $settings = AdminSettings::first();
 
-		// Get Balance current
-		if ($balance) {
-			if ($settings->wallet_format != 'real_money') {
- 		 	return floor(auth()->user()->wallet);
- 		 }
+        // Get Balance current
+        if ($balance) {
+            if ($settings->wallet_format != 'real_money') {
+                return floor(auth()->user()->wallet);
+            }
 
- 		 return auth()->user()->wallet;
-		}
+            return auth()->user()->wallet;
+        }
 
-		// Format Wallet
-		switch ($settings->wallet_format) {
-			case 'real_money':
-				$formatWallet = self::amountFormatDecimal(auth()->user()->wallet);
-				break;
+        // Format Wallet
+        switch ($settings->wallet_format) {
+            case 'real_money':
+                $formatWallet = self::amountFormatDecimal(auth()->user()->wallet);
+                break;
 
-			case 'credits':
-				$formatWallet = floor(auth()->user()->wallet) .' ' . trans('general.credits');
-				break;
+            case 'credits':
+                $formatWallet = floor(auth()->user()->wallet).' '.trans('general.credits');
+                break;
 
-			case 'points':
-				$formatWallet = floor(auth()->user()->wallet) .' ' . trans('general.points');
-				break;
+            case 'points':
+                $formatWallet = floor(auth()->user()->wallet).' '.trans('general.points');
+                break;
 
-			case 'tokens':
-				$formatWallet = floor(auth()->user()->wallet) .' ' . trans('general.tokens');
-				break;
-		}
+            case 'tokens':
+                $formatWallet = floor(auth()->user()->wallet).' '.trans('general.tokens');
+                break;
+        }
 
-		return $formatWallet;
-	}
+        return $formatWallet;
+    }
 
-	public static function sizeFileMb($size, $precision = 2)
-	{
-    $base = log($size, 1024);
-    return round(pow(1024, $base - floor($base)), $precision);
-  }
+    public static function sizeFileMb($size, $precision = 2)
+    {
+        $base = log($size, 1024);
 
-	public static function getDatacURL($url)
-	{
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_POST, false);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.7.12) Gecko/20050915 Firefox/1.0.7");
-		curl_setopt($ch, CURLOPT_HEADER, false);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-		$ch = curl_exec($ch);
+        return round(pow(1024, $base - floor($base)), $precision);
+    }
 
-		return json_decode($ch);
-	}
+    public static function getDatacURL($url)
+    {
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, false);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.0; en-US; rv:1.7.12) Gecko/20050915 Firefox/1.0.7');
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        $ch = curl_exec($ch);
 
-	public static function userCountry()
-	{
-		$ip = request()->ip();
-		if (cache('userCountry-'.$ip)) {
+        return json_decode($ch);
+    }
 
-			// Give access to Admin or staff if their country has been blocked.
-			if (auth()->check() && auth()->user()->permission == 'all') {
-				return 'null';
-			}
+    public static function userCountry()
+    {
+        $ip = request()->ip();
+        if (cache('userCountry-'.$ip)) {
 
-			return cache('userCountry-'.$ip);
-		} else {
-			return 'null';
-		}
-	}
+            // Give access to Admin or staff if their country has been blocked.
+            if (auth()->check() && auth()->user()->permission == 'all') {
+                return 'null';
+            }
 
-	public static function equivalentMoney($walletFormat)
-	{
-		$settings = AdminSettings::first();
+            return cache('userCountry-'.$ip);
+        } else {
+            return 'null';
+        }
+    }
 
-		switch ($walletFormat) {
-			case 'credits':
-				return trans('general.credit_equivalent_money') . ' ' .self::amountFormatDecimal(1) .' '.$settings->currency_code;
-				break;
+    public static function equivalentMoney($walletFormat)
+    {
+        $settings = AdminSettings::first();
 
-			case 'points':
-				return trans('general.point_equivalent_money') . ' ' .self::amountFormatDecimal(1) .' '.$settings->currency_code;
-				break;
+        switch ($walletFormat) {
+            case 'credits':
+                return trans('general.credit_equivalent_money').' '.self::amountFormatDecimal(1).' '.$settings->currency_code;
+                break;
 
-			case 'tokens':
-				return trans('general.token_equivalent_money') . ' ' .self::amountFormatDecimal(1) .' '.$settings->currency_code;
-				break;
+            case 'points':
+                return trans('general.point_equivalent_money').' '.self::amountFormatDecimal(1).' '.$settings->currency_code;
+                break;
 
-        default:
-        return false;
-		}
-	}
+            case 'tokens':
+                return trans('general.token_equivalent_money').' '.self::amountFormatDecimal(1).' '.$settings->currency_code;
+                break;
 
-	public static function referralLink()
-	{
-		$settings = AdminSettings::first();
+            default:
+                return false;
+        }
+    }
 
-		if (auth()->check() && $settings->referral_system == 'on') {
-			return '?ref='.auth()->user()->id;
-		}
-	}
+    public static function referralLink()
+    {
+        $settings = AdminSettings::first();
 
-	public static function pages()
-	{
-		// Simplified for OvertimeStaff - no multi-language support needed
-		return Pages::orderBy('id')->get();
-	}
+        if (auth()->check() && $settings->referral_system == 'on') {
+            return '?ref='.auth()->user()->id;
+        }
+    }
 
-	public static function liveStatus($id)
-	{
-		return LiveStreamings::whereId($id)
-    ->where('updated_at', '>', now()->subMinutes(5))
-    ->whereStatus('0')
-    ->first();
-	}
+    public static function pages()
+    {
+        // Simplified for OvertimeStaff - no multi-language support needed
+        return Pages::orderBy('id')->get();
+    }
 
-	public static function calculateSubscriptionDiscount($interval, $priceMonth, $planPrice)
-	{
-		switch ($interval) {
-			case 'weekly':
-				return number_format(((($priceMonth / 4) - $planPrice)/($priceMonth / 4) * 100), 0);
-				break;
+    public static function liveStatus($id)
+    {
+        return LiveStreamings::whereId($id)
+            ->where('updated_at', '>', now()->subMinutes(5))
+            ->whereStatus('0')
+            ->first();
+    }
 
-			case 'quarterly':
-				return number_format(((($priceMonth * 3) - $planPrice)/($priceMonth * 3) * 100), 0);
-				break;
+    public static function calculateSubscriptionDiscount($interval, $priceMonth, $planPrice)
+    {
+        switch ($interval) {
+            case 'weekly':
+                return number_format(((($priceMonth / 4) - $planPrice) / ($priceMonth / 4) * 100), 0);
+                break;
 
-			case 'biannually':
-				return number_format(((($priceMonth * 6) - $planPrice)/($priceMonth * 6) * 100), 0);
-				break;
+            case 'quarterly':
+                return number_format(((($priceMonth * 3) - $planPrice) / ($priceMonth * 3) * 100), 0);
+                break;
 
-				case 'yearly':
-					return number_format(((($priceMonth * 12) - $planPrice)/($priceMonth * 12) * 100), 0);
-					break;
-		}
+            case 'biannually':
+                return number_format(((($priceMonth * 6) - $planPrice) / ($priceMonth * 6) * 100), 0);
+                break;
 
-	}
+            case 'yearly':
+                return number_format(((($priceMonth * 12) - $planPrice) / ($priceMonth * 12) * 100), 0);
+                break;
+        }
 
-	public static function formatDatepicker($datepicker = false)
-	{
-		$settings = AdminSettings::first();
+    }
 
-		switch ($settings->date_format) {
-			case 'M d, Y':
-				$date = 'm/d/Y';
-				$datePickerFormat = 'mm/dd/yyyy';
-				break;
+    public static function formatDatepicker($datepicker = false)
+    {
+        $settings = AdminSettings::first();
 
-				case 'd M, Y':
-				$date = 'd/m/Y';
-				$datePickerFormat = 'dd/mm/yyyy';
-					break;
+        switch ($settings->date_format) {
+            case 'M d, Y':
+                $date = 'm/d/Y';
+                $datePickerFormat = 'mm/dd/yyyy';
+                break;
 
-				case 'Y-m-d':
-					$date = 'Y/m/d';
-					$datePickerFormat = 'yyyy/mm/dd';
-						break;
+            case 'd M, Y':
+                $date = 'd/m/Y';
+                $datePickerFormat = 'dd/mm/yyyy';
+                break;
 
-				case 'm/d/Y':
-					$date = 'm/d/Y';
-					$datePickerFormat = 'mm/dd/yyyy';
-						break;
+            case 'Y-m-d':
+                $date = 'Y/m/d';
+                $datePickerFormat = 'yyyy/mm/dd';
+                break;
 
-				case 'd/m/Y':
-					$date = 'd/m/Y';
-					$datePickerFormat = 'dd/mm/yyyy';
-						break;
-		}
+            case 'm/d/Y':
+                $date = 'm/d/Y';
+                $datePickerFormat = 'mm/dd/yyyy';
+                break;
 
-		return $datepicker ? $datePickerFormat : $date;
-	}
+            case 'd/m/Y':
+                $date = 'd/m/Y';
+                $datePickerFormat = 'dd/mm/yyyy';
+                break;
+        }
 
-	public static function getFileSize($filename)
-	{
-		$headers  = get_headers($filename, 1);
-		$fsize    = $headers['Content-Length'];
-		$size    = static::formatBytes($fsize, 1);
+        return $datepicker ? $datePickerFormat : $date;
+    }
 
-		return $size;
-	}
+    public static function getFileSize($filename)
+    {
+        $headers = get_headers($filename, 1);
+        $fsize = $headers['Content-Length'];
+        $size = static::formatBytes($fsize, 1);
 
-	public static function sendNotificationMention($data, $target)
-	{
-		$post = strtolower($data);
-		preg_match_all('~([@])([^\s@!\"\$\%&\'\(\)\*\+\,\-./\:\;\<\=\>?\[/\/\/\\]\^\`\{\|\}\~]+)~', $post, $matches);
+        return $size;
+    }
 
-		foreach ($matches as $key) {
-		 $key = array_unique($key);
-	 }
+    public static function sendNotificationMention($data, $target)
+    {
+        $post = strtolower($data);
+        preg_match_all('~([@])([^\s@!\"\$\%&\'\(\)\*\+\,\-./\:\;\<\=\>?\[/\/\/\\]\^\`\{\|\}\~]+)~', $post, $matches);
 
-	 $numMentions = count($matches[1]);
+        foreach ($matches as $key) {
+            $key = array_unique($key);
+        }
 
-	 for ($i = 0; $i < $numMentions; ++$i) {
+        $numMentions = count($matches[1]);
 
-		 if (isset($key[$i])) {
+        for ($i = 0; $i < $numMentions; $i++) {
 
-			$key[$i] = strip_tags($key[$i]);
+            if (isset($key[$i])) {
 
-			/* Verified Username  */
-		 	$user = User::whereUsername(trim($key[$i]))
-			->whereNotifyMentions('yes')
-			->first();
+                $key[$i] = strip_tags($key[$i]);
 
-			if ($user) {
-			 if ($user->id != auth()->id()) {
-				 Notifications::send($user->id, auth()->id(), 16, $target);
-			 }
-			}
-		 }
-	 	}// end for
-	}// end method sendNotificationMention
+                /* Verified Username */
+                $user = User::whereUsername(trim($key[$i]))
+                    ->whereNotifyMentions('yes')
+                    ->first();
 
-	public static function emojis()
-	{
-		return [
-			'😀', '😃', '😄', '😁', '😆', '😅', '😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰',
-			'😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎',
-			 '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫',
-			 '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱',
-			 '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬',
-			 '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢',
-			 '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻',
-			 '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾',
-			 '👋', '🤚', '🖐', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇',
-			 '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳',
-			 '💪', '🦾', '🦵', '🦿', '🦶', '👣', '👂', '🦻', '👃', '🧠', '🦷', '🦴', '👀', '👅', '👄', '💋', '🩸',
-		];
+                if ($user) {
+                    if ($user->id != auth()->id()) {
+                        Notifications::send($user->id, auth()->id(), 16, $target);
+                    }
+                }
+            }
+        }// end for
+    }// end method sendNotificationMention
 
-	}
+    public static function emojis()
+    {
+        return [
+            '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰',
+            '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎',
+            '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫',
+            '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱',
+            '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬',
+            '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢',
+            '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻',
+            '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾',
+            '👋', '🤚', '🖐', '✋', '🖖', '👌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇',
+            '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳',
+            '💪', '🦾', '🦵', '🦿', '🦶', '👣', '👂', '🦻', '👃', '🧠', '🦷', '🦴', '👀', '👅', '👄', '💋', '🩸',
+        ];
 
-}//<--- End Class
+    }
+}// <--- End Class

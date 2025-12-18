@@ -13,7 +13,12 @@
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        {{-- Live Activity Ticker --}}
+        <div class="absolute top-0 left-0 right-0 z-10 pt-20">
+            <x-marketing.live-ticker />
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground mb-6">
                 Staffing, <span class="text-primary">Simplified.</span>
             </h1>

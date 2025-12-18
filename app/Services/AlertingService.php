@@ -3,20 +3,20 @@
 namespace App\Services;
 
 use App\Models\AlertConfiguration;
+use App\Models\AlertDigest;
 use App\Models\AlertHistory;
 use App\Models\AlertIntegration;
-use App\Models\AlertDigest;
 use App\Models\SystemIncident;
 use App\Notifications\SystemAlertNotification;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
-use Carbon\Carbon;
 
 class AlertingService
 {
     protected const MAX_RETRIES = 3;
+
     protected const PAGERDUTY_API_URL = 'https://events.pagerduty.com/v2/enqueue';
 
     /**
@@ -24,14 +24,16 @@ class AlertingService
      */
     public function sendAlert(SystemIncident $incident): void
     {
-        if (!$this->isAlertingEnabled()) {
+        if (! $this->isAlertingEnabled()) {
             Log::info('Alerting is disabled globally');
+
             return;
         }
 
         // Determine if we should send this alert
-        if (!$this->shouldSendAlert($incident)) {
+        if (! $this->shouldSendAlert($incident)) {
             Log::info("Alert suppressed for incident {$incident->id}");
+
             return;
         }
 
@@ -46,7 +48,7 @@ class AlertingService
                 $this->sendToChannel($channel, $incident, $config);
             }
         } catch (\Exception $e) {
-            Log::error("Failed to send alert for incident {$incident->id}: " . $e->getMessage(), [
+            Log::error("Failed to send alert for incident {$incident->id}: ".$e->getMessage(), [
                 'incident_id' => $incident->id,
                 'exception' => $e,
             ]);
@@ -60,8 +62,9 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('slack')->enabled()->first();
 
-        if (!$integration) {
+        if (! $integration) {
             Log::warning('Slack integration not configured or disabled');
+
             return false;
         }
 
@@ -70,7 +73,8 @@ class AlertingService
         $webhookUrl = $integration->getWebhookUrl($channelType) ?: $integration->getWebhookUrl('default');
 
         if (empty($webhookUrl)) {
-            Log::warning('No Slack webhook URL configured for channel: ' . $channelType);
+            Log::warning('No Slack webhook URL configured for channel: '.$channelType);
+
             return false;
         }
 
@@ -97,17 +101,20 @@ class AlertingService
             if ($response->successful()) {
                 $alertHistory->markAsSent();
                 $integration->markAsUsed(true);
+
                 return true;
             }
 
             $alertHistory->markAsFailed($response->body());
             $integration->markAsUsed(false);
+
             return false;
 
         } catch (\Exception $e) {
-            Log::error('Slack alert failed: ' . $e->getMessage());
+            Log::error('Slack alert failed: '.$e->getMessage());
             $alertHistory->markAsFailed($e->getMessage());
             $integration->markAsUsed(false);
+
             return false;
         }
     }
@@ -119,20 +126,22 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('pagerduty')->enabled()->first();
 
-        if (!$integration) {
+        if (! $integration) {
             Log::warning('PagerDuty integration not configured or disabled');
+
             return false;
         }
 
         // Only send to PagerDuty for critical and high severity
-        if (!in_array($severity, ['critical', 'high'])) {
+        if (! in_array($severity, ['critical', 'high'])) {
             return false;
         }
 
         $routingKey = $integration->getRoutingKey($severity) ?: $integration->getIntegrationKey();
 
         if (empty($routingKey)) {
-            Log::warning('No PagerDuty routing key configured for severity: ' . $severity);
+            Log::warning('No PagerDuty routing key configured for severity: '.$severity);
+
             return false;
         }
 
@@ -172,12 +181,14 @@ class AlertingService
 
             $alertHistory->markAsFailed($response->body());
             $integration->markAsUsed(false);
+
             return false;
 
         } catch (\Exception $e) {
-            Log::error('PagerDuty alert failed: ' . $e->getMessage());
+            Log::error('PagerDuty alert failed: '.$e->getMessage());
             $alertHistory->markAsFailed($e->getMessage());
             $integration->markAsUsed(false);
+
             return false;
         }
     }
@@ -189,14 +200,15 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('pagerduty')->enabled()->first();
 
-        if (!$integration) {
+        if (! $integration) {
             return false;
         }
 
         $dedupKey = Cache::get("pagerduty_incident_{$incident->id}");
 
-        if (!$dedupKey) {
+        if (! $dedupKey) {
             Log::info("No PagerDuty dedup key found for incident {$incident->id}");
+
             return false;
         }
 
@@ -230,7 +242,8 @@ class AlertingService
             return false;
 
         } catch (\Exception $e) {
-            Log::error('PagerDuty resolution failed: ' . $e->getMessage());
+            Log::error('PagerDuty resolution failed: '.$e->getMessage());
+
             return false;
         }
     }
@@ -240,7 +253,7 @@ class AlertingService
      */
     public function sendResolutionNotification(SystemIncident $incident): void
     {
-        if (!$this->isAlertingEnabled()) {
+        if (! $this->isAlertingEnabled()) {
             return;
         }
 
@@ -266,13 +279,14 @@ class AlertingService
         // Check if alerting is enabled for this metric
         $config = $this->getAlertConfiguration($incident->affected_service);
 
-        if (!$config || !$config->enabled) {
+        if (! $config || ! $config->enabled) {
             return false;
         }
 
         // Check quiet hours for non-critical alerts
         if ($incident->severity !== 'critical' && $config->isInQuietHours()) {
             Log::info("Alert suppressed due to quiet hours for incident {$incident->id}");
+
             return false;
         }
 
@@ -296,6 +310,7 @@ class AlertingService
         if ($this->isInBackoffPeriod($incident->affected_service)) {
             Log::info("Alert in backoff period for metric {$incident->affected_service}");
             $this->addToDigest($incident);
+
             return false;
         }
 
@@ -334,7 +349,7 @@ class AlertingService
         $message = "**{$incident->title}**\n\n";
         $message .= "**Severity:** {$incident->severity}\n";
         $message .= "**Service:** {$incident->affected_service}\n";
-        $message .= "**Detected:** " . $incident->detected_at->format('M j, Y g:i A') . "\n";
+        $message .= '**Detected:** '.$incident->detected_at->format('M j, Y g:i A')."\n";
 
         if ($metric) {
             $message .= "**Current Value:** {$metric->value} {$metric->unit}\n";
@@ -379,7 +394,7 @@ class AlertingService
                 'type' => 'header',
                 'text' => [
                     'type' => 'plain_text',
-                    'text' => "{$severityEmoji} " . ($incident?->title ?? 'System Alert'),
+                    'text' => "{$severityEmoji} ".($incident?->title ?? 'System Alert'),
                     'emoji' => true,
                 ],
             ],
@@ -398,19 +413,19 @@ class AlertingService
             $fields = [
                 [
                     'type' => 'mrkdwn',
-                    'text' => "*Severity:*\n" . ucfirst($incident->severity),
+                    'text' => "*Severity:*\n".ucfirst($incident->severity),
                 ],
                 [
                     'type' => 'mrkdwn',
-                    'text' => "*Service:*\n" . $incident->affected_service,
+                    'text' => "*Service:*\n".$incident->affected_service,
                 ],
                 [
                     'type' => 'mrkdwn',
-                    'text' => "*Detected:*\n" . $incident->detected_at->format('M j, g:i A'),
+                    'text' => "*Detected:*\n".$incident->detected_at->format('M j, g:i A'),
                 ],
                 [
                     'type' => 'mrkdwn',
-                    'text' => "*Incident ID:*\n#" . $incident->id,
+                    'text' => "*Incident ID:*\n#".$incident->id,
                 ],
             ];
 
@@ -433,7 +448,7 @@ class AlertingService
             ];
 
             // Add action buttons
-            $dashboardUrl = config('app.url') . '/panel/admin/system-health/incidents/' . $incident->id;
+            $dashboardUrl = config('app.url').'/panel/admin/system-health/incidents/'.$incident->id;
 
             $blocks[] = [
                 'type' => 'actions',
@@ -455,7 +470,7 @@ class AlertingService
                             'text' => 'View Dashboard',
                             'emoji' => true,
                         ],
-                        'url' => config('app.url') . '/panel/admin/system-health',
+                        'url' => config('app.url').'/panel/admin/system-health',
                     ],
                 ],
             ];
@@ -465,7 +480,7 @@ class AlertingService
                 'elements' => [
                     [
                         'type' => 'mrkdwn',
-                        'text' => ':clock1: ' . now()->format('M j, Y g:i:s A T'),
+                        'text' => ':clock1: '.now()->format('M j, Y g:i:s A T'),
                     ],
                 ],
             ];
@@ -509,13 +524,13 @@ class AlertingService
                     'incident_id' => $incident?->id,
                     'detected_at' => $incident?->detected_at?->toIso8601String(),
                     'dashboard_url' => $incident
-                        ? config('app.url') . '/panel/admin/system-health/incidents/' . $incident->id
-                        : config('app.url') . '/panel/admin/system-health',
+                        ? config('app.url').'/panel/admin/system-health/incidents/'.$incident->id
+                        : config('app.url').'/panel/admin/system-health',
                 ]),
             ],
             'links' => [
                 [
-                    'href' => config('app.url') . '/panel/admin/system-health',
+                    'href' => config('app.url').'/panel/admin/system-health',
                     'text' => 'System Health Dashboard',
                 ],
             ],
@@ -524,8 +539,8 @@ class AlertingService
 
         if ($incident) {
             $payload['links'][] = [
-                'href' => config('app.url') . '/panel/admin/system-health/incidents/' . $incident->id,
-                'text' => 'View Incident #' . $incident->id,
+                'href' => config('app.url').'/panel/admin/system-health/incidents/'.$incident->id,
+                'text' => 'View Incident #'.$incident->id,
             ];
         }
 
@@ -561,7 +576,7 @@ class AlertingService
                 default => Log::warning("Unknown alert channel: {$channel}"),
             };
         } catch (\Exception $e) {
-            Log::error("Failed to send to {$channel}: " . $e->getMessage());
+            Log::error("Failed to send to {$channel}: ".$e->getMessage());
             // Don't throw - continue with other channels
         }
     }
@@ -573,7 +588,7 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('email')->enabled()->first();
 
-        if (!$integration) {
+        if (! $integration) {
             return;
         }
 
@@ -583,6 +598,7 @@ class AlertingService
 
         if (empty($recipients)) {
             Log::warning('No email recipients configured');
+
             return;
         }
 
@@ -695,11 +711,11 @@ class AlertingService
      */
     protected function generateDedupKey(?SystemIncident $incident): ?string
     {
-        if (!$incident) {
+        if (! $incident) {
             return null;
         }
 
-        return md5($incident->affected_service . '_' . $incident->severity . '_' . $incident->detected_at->format('Y-m-d-H'));
+        return md5($incident->affected_service.'_'.$incident->severity.'_'.$incident->detected_at->format('Y-m-d-H'));
     }
 
     /**
@@ -710,7 +726,7 @@ class AlertingService
         $cacheKey = "alert_backoff_{$metricName}";
         $backoffData = Cache::get($cacheKey);
 
-        if (!$backoffData) {
+        if (! $backoffData) {
             return false;
         }
 
@@ -766,6 +782,7 @@ class AlertingService
         foreach ($digests as $digest) {
             if ($digest->alert_count === 0) {
                 $digest->cancel();
+
                 continue;
             }
 
@@ -789,7 +806,7 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('slack')->enabled()->first();
 
-        if (!$integration) {
+        if (! $integration) {
             return;
         }
 
@@ -827,7 +844,7 @@ class AlertingService
         try {
             Http::timeout(10)->post($webhookUrl, $payload);
         } catch (\Exception $e) {
-            Log::error('Slack resolution notification failed: ' . $e->getMessage());
+            Log::error('Slack resolution notification failed: '.$e->getMessage());
         }
     }
 
@@ -863,7 +880,7 @@ class AlertingService
      */
     protected function isAlertingEnabled(): bool
     {
-        return config('alerting.enabled', env('ALERTS_ENABLED', true));
+        return config('alerting.enabled', true);
     }
 
     /**
@@ -883,7 +900,7 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('slack')->first();
 
-        if (!$integration) {
+        if (! $integration) {
             return ['success' => false, 'message' => 'Slack integration not configured'];
         }
 
@@ -916,7 +933,7 @@ class AlertingService
                         'elements' => [
                             [
                                 'type' => 'mrkdwn',
-                                'text' => ':clock1: ' . now()->format('M j, Y g:i:s A T'),
+                                'text' => ':clock1: '.now()->format('M j, Y g:i:s A T'),
                             ],
                         ],
                     ],
@@ -932,13 +949,14 @@ class AlertingService
 
             if ($response->successful()) {
                 $integration->markAsVerified();
+
                 return ['success' => true, 'message' => 'Test alert sent successfully'];
             }
 
-            return ['success' => false, 'message' => 'Failed: ' . $response->body()];
+            return ['success' => false, 'message' => 'Failed: '.$response->body()];
 
         } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'Error: '.$e->getMessage()];
         }
     }
 
@@ -949,7 +967,7 @@ class AlertingService
     {
         $integration = AlertIntegration::ofType('pagerduty')->first();
 
-        if (!$integration) {
+        if (! $integration) {
             return ['success' => false, 'message' => 'PagerDuty integration not configured'];
         }
 
@@ -963,7 +981,7 @@ class AlertingService
             $payload = [
                 'routing_key' => $routingKey,
                 'event_action' => 'trigger',
-                'dedup_key' => 'overtimestaff_test_' . time(),
+                'dedup_key' => 'overtimestaff_test_'.time(),
                 'payload' => [
                     'summary' => 'Test Alert - OvertimeStaff Connection Successful',
                     'severity' => 'info',
@@ -986,7 +1004,7 @@ class AlertingService
                 // Immediately resolve the test alert
                 $resolvePayload = [
                     'routing_key' => $routingKey,
-                    'dedup_key' => 'overtimestaff_test_' . time(),
+                    'dedup_key' => 'overtimestaff_test_'.time(),
                     'event_action' => 'resolve',
                 ];
 
@@ -995,13 +1013,14 @@ class AlertingService
                     ->post(self::PAGERDUTY_API_URL, $resolvePayload);
 
                 $integration->markAsVerified();
+
                 return ['success' => true, 'message' => 'Test alert sent and resolved successfully'];
             }
 
-            return ['success' => false, 'message' => 'Failed: ' . $response->body()];
+            return ['success' => false, 'message' => 'Failed: '.$response->body()];
 
         } catch (\Exception $e) {
-            return ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'Error: '.$e->getMessage()];
         }
     }
 

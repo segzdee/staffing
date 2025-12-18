@@ -19,17 +19,7 @@
             <div class="flex-shrink-0">
                 <a href="{{ url('/') }}" class="flex items-center gap-2 group">
                     {{-- Logo Icon --}}
-                    <div
-                        class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                        </svg>
-                    </div>
-                    {{-- Wordmark --}}
-                    <span class="text-lg font-bold tracking-tight {{ $transparent ? 'text-white' : 'text-gray-900' }}">
-                        OVERTIMESTAFF
-                    </span>
+                    <x-logo class="h-9 w-auto" />
                 </a>
             </div>
 

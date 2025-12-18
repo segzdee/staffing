@@ -9,6 +9,22 @@
 
     <title>@yield('title', 'OvertimeStaff')</title>
 
+    {{-- Open Graph / Facebook --}}
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:title" content="@yield('title', 'OvertimeStaff')">
+    <meta property="og:description" content="@yield('meta_description', 'Enterprise-grade shift marketplace platform')">
+    <meta property="og:image" content="{{ asset('images/og-image.jpg') }}">
+    <meta property="og:site_name" content="OvertimeStaff">
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ url()->current() }}">
+    <meta name="twitter:title" content="@yield('title', 'OvertimeStaff')">
+    <meta name="twitter:description"
+        content="@yield('meta_description', 'Enterprise-grade shift marketplace platform')">
+    <meta name="twitter:image" content="{{ asset('images/twitter-card.jpg') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -71,6 +87,7 @@
     @endif
 
     <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/mask@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {{-- CSP Nonce: All inline styles and scripts must include the nonce attribute --}}
@@ -139,26 +156,8 @@
         </main>
 
         <!-- Footer -->
-        <footer class="bg-white border-t py-6" style="border-color: hsl(240 5.9% 90%);">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-                    <p class="text-sm" style="color: hsl(240 3.8% 46.1%);">
-                        &copy; {{ date('Y') }} OvertimeStaff. All rights reserved.
-                    </p>
-                    <div class="flex items-center space-x-6">
-                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Features</a>
-                        <a href="{{ route('business.pricing') }}" class="text-sm transition-colors"
-                            style="color: hsl(240 3.8% 46.1%);">Pricing</a>
-                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">About</a>
-                        <a href="{{ route('privacy') }}" class="text-sm transition-colors"
-                            style="color: hsl(240 3.8% 46.1%);">Privacy</a>
-                        <a href="{{ route('terms') }}" class="text-sm transition-colors"
-                            style="color: hsl(240 3.8% 46.1%);">Terms</a>
-                        <a href="#" class="text-sm transition-colors" style="color: hsl(240 3.8% 46.1%);">Contact</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
+        <!-- Footer -->
+        <x-global-footer class="bg-white border-t py-6" />
     </div>
 
     @stack('scripts')

@@ -46,7 +46,7 @@ class AlertingController extends Controller
         $statistics = $this->alertingService->getAlertStatistics(30);
 
         // Check if alerting is enabled globally
-        $alertingEnabled = config('alerting.enabled', env('ALERTS_ENABLED', true));
+        $alertingEnabled = config('alerting.enabled', true);
 
         return view('admin.alerting.index', compact(
             'configurations',
@@ -258,7 +258,7 @@ class AlertingController extends Controller
             $query->where('created_at', '>=', $request->input('from_date'));
         }
         if ($request->filled('to_date')) {
-            $query->where('created_at', '<=', $request->input('to_date') . ' 23:59:59');
+            $query->where('created_at', '<=', $request->input('to_date').' 23:59:59');
         }
 
         $alerts = $query->paginate(50);
@@ -403,7 +403,7 @@ class AlertingController extends Controller
         $configuration = AlertConfiguration::findOrFail($id);
 
         $configuration->update([
-            'enabled' => !$configuration->enabled,
+            'enabled' => ! $configuration->enabled,
         ]);
 
         $status = $configuration->enabled ? 'unmuted' : 'muted';
@@ -459,7 +459,7 @@ class AlertingController extends Controller
         foreach ($defaults as $default) {
             $existing = AlertConfiguration::where('metric_name', $default['metric_name'])->first();
 
-            if (!$existing) {
+            if (! $existing) {
                 AlertConfiguration::create($default);
                 $created++;
             }
@@ -479,7 +479,7 @@ class AlertingController extends Controller
         $defaults = AlertIntegration::getDefaultIntegrations();
 
         foreach ($defaults as $default) {
-            if (!$integrations->has($default['type'])) {
+            if (! $integrations->has($default['type'])) {
                 AlertIntegration::create($default);
             }
         }
@@ -494,7 +494,7 @@ class AlertingController extends Controller
     {
         $alert = AlertHistory::findOrFail($id);
 
-        if (!$alert->canRetry()) {
+        if (! $alert->canRetry()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Alert cannot be retried (max attempts reached or not in failed status)',

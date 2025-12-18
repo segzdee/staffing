@@ -477,9 +477,9 @@
 function workerRegisterForm() {
     return {
         registrationMethod: 'email',
-        name: '{{ $invitationInfo['invitee_name'] ?? old('name') }}',
-        email: '{{ $invitationInfo['invitee_email'] ?? old('email') }}',
-        phone: '{{ $invitationInfo['invitee_phone'] ?? old('phone') }}',
+        name: @json($invitationInfo['invitee_name'] ?? old('name') ?? ''),
+        email: @json($invitationInfo['invitee_email'] ?? old('email') ?? ''),
+        phone: @json($invitationInfo['invitee_phone'] ?? old('phone') ?? ''),
         phoneCountryCode: '+1',
         password: '',
         password_confirmation: '',

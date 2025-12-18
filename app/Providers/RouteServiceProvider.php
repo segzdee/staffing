@@ -46,6 +46,10 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
+
+            Route::middleware('web')
+                ->namespace($this->namespace)
+                ->group(base_path('routes/financial-automation.php'));
         });
     }
 
@@ -65,12 +69,13 @@ class RouteServiceProvider extends ServiceProvider
         // Login rate limiter: 5 attempts per minute per email+IP
         RateLimiter::for('login', function (Request $request) {
             $email = strtolower($request->input('email', ''));
-            $key = $email . '|' . $request->ip();
+            $key = $email.'|'.$request->ip();
+
             return Limit::perMinute(5)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
-                        'message' => 'Too many login attempts. Please try again in ' . ceil($headers['Retry-After'] / 60) . ' minute(s).',
+                        'message' => 'Too many login attempts. Please try again in '.ceil($headers['Retry-After'] / 60).' minute(s).',
                         'retry_after' => $headers['Retry-After'],
                     ], 429, $headers);
                 });
@@ -79,7 +84,8 @@ class RouteServiceProvider extends ServiceProvider
         // Password reset rate limiter: 3 attempts per hour per email+IP
         RateLimiter::for('password-reset', function (Request $request) {
             $email = strtolower($request->input('email', ''));
-            $key = 'password-reset|' . $email . '|' . $request->ip();
+            $key = 'password-reset|'.$email.'|'.$request->ip();
+
             return Limit::perHour(3)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
@@ -93,7 +99,8 @@ class RouteServiceProvider extends ServiceProvider
         // 2FA code verification rate limiter: 3 attempts per minute per user
         RateLimiter::for('2fa-code', function (Request $request) {
             $userId = optional($request->user())->id ?: $request->ip();
-            $key = '2fa-code|' . $userId;
+            $key = '2fa-code|'.$userId;
+
             return Limit::perMinute(3)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
@@ -109,19 +116,21 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('2fa', function (Request $request) {
             // Use session ID if available, otherwise IP address
             $sessionKey = session('two_factor_user_id') ?? $request->ip();
-            $key = '2fa|' . $sessionKey;
+            $key = '2fa|'.$sessionKey;
+
             return Limit::perMinutes(5, 5)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
                     return back()->withErrors([
-                        'code' => 'Too many verification attempts. Please wait ' . ceil($headers['Retry-After'] / 60) . ' minute(s) before trying again.',
+                        'code' => 'Too many verification attempts. Please wait '.ceil($headers['Retry-After'] / 60).' minute(s) before trying again.',
                     ]);
                 });
         });
 
         // Registration rate limiter: 5 attempts per hour per IP
         RateLimiter::for('registration', function (Request $request) {
-            $key = 'registration|' . $request->ip();
+            $key = 'registration|'.$request->ip();
+
             return Limit::perHour(5)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
@@ -135,7 +144,8 @@ class RouteServiceProvider extends ServiceProvider
         // Email/Phone verification rate limiter: 3 attempts per hour per user
         RateLimiter::for('verification', function (Request $request) {
             $userId = optional($request->user())->id ?: $request->ip();
-            $key = 'verification|' . $userId;
+            $key = 'verification|'.$userId;
+
             return Limit::perHour(3)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
@@ -149,7 +159,8 @@ class RouteServiceProvider extends ServiceProvider
         // Verification code submission rate limiter: 5 attempts per 10 minutes per user
         RateLimiter::for('verification-code', function (Request $request) {
             $userId = optional($request->user())->id ?: $request->ip();
-            $key = 'verification-code|' . $userId;
+            $key = 'verification-code|'.$userId;
+
             return Limit::perMinutes(10, 5)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {
@@ -163,7 +174,8 @@ class RouteServiceProvider extends ServiceProvider
         // Password change rate limiter: 5 attempts per hour per user
         RateLimiter::for('password-change', function (Request $request) {
             $userId = optional($request->user())->id ?: $request->ip();
-            $key = 'password-change|' . $userId;
+            $key = 'password-change|'.$userId;
+
             return Limit::perHour(5)
                 ->by($key)
                 ->response(function (Request $request, array $headers) {

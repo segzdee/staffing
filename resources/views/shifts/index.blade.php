@@ -7,6 +7,13 @@
     <x-dashboard.sidebar-nav />
 @endsection
 
+@section('breadcrumb')
+    <x-ui.breadcrumb :items="[
+            ['label' => 'Dashboard', 'url' => route('dashboard.index')],
+            ['label' => 'Marketplace']
+        ]" />
+@endsection
+
 @section('content')
     <div class="p-6 space-y-6">
         <div class="flex items-center justify-between">

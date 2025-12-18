@@ -5,13 +5,28 @@
 
 @section('content')
 <div class="p-6 max-w-5xl mx-auto space-y-6">
+    <!-- Session Messages -->
+    @if(session('success'))
+    <div class="bg-green-50 text-green-700 p-4 rounded-lg">
+        {{ session('success') }}
+    </div>
+    @endif
+    @if(session('error'))
+    <div class="bg-red-50 text-red-700 p-4 rounded-lg">
+        {{ session('error') }}
+    </div>
+    @endif
+
     <div class="flex items-center space-x-4">
         <a href="{{ route('shifts.index') }}" class="text-gray-600 hover:text-gray-900">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
         </a>
-        <h1 class="text-2xl font-bold text-gray-900">Warehouse Worker Needed</h1>
+        <h1 class="text-2xl font-bold text-gray-900">{{ $shift->title }}</h1>
+        @if($shift->status === 'cancelled')
+            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">Cancelled</span>
+        @endif
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -24,8 +39,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                         <div>
-                            <p class="font-medium text-gray-900">Position</p>
-                            <p class="text-gray-600">Warehouse Worker</p>
+                            <p class="font-medium text-gray-900">Role Type</p>
+                            <p class="text-gray-600">{{ ucfirst(str_replace('_', ' ', $shift->role_type ?? 'General')) }}</p>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -34,8 +49,11 @@
                         </svg>
                         <div>
                             <p class="font-medium text-gray-900">Date & Time</p>
-                            <p class="text-gray-600">Tomorrow, December 16, 2025</p>
-                            <p class="text-gray-600">8:00 AM - 4:00 PM (8 hours)</p>
+                            <p class="text-gray-600">{{ \Carbon\Carbon::parse($shift->shift_date)->format('l, F j, Y') }}</p>
+                            <p class="text-gray-600">
+                                {{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }}
+                                ({{ number_format($shift->duration_hours, 1) }} hours)
+                            </p>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -44,7 +62,15 @@
                         </svg>
                         <div>
                             <p class="font-medium text-gray-900">Location</p>
-                            <p class="text-gray-600">123 Warehouse St, Boston, MA 02118</p>
+                            <p class="text-gray-600">
+                                @if($shift->venue)
+                                    {{ $shift->venue->name }}<br>
+                                    {{ $shift->venue->address }}<br>
+                                @else
+                                    {{ $shift->location_address }}<br>
+                                @endif
+                                {{ $shift->location_city }}, {{ $shift->location_state }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -52,42 +78,59 @@
 
             <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">Description</h2>
-                <p class="text-gray-600 leading-relaxed">
-                    We are looking for reliable warehouse workers to help with inventory management and order fulfillment. 
-                    This is a fast-paced environment requiring attention to detail and the ability to lift up to 50 lbs.
-                </p>
+                <div class="text-gray-600 leading-relaxed prose max-w-none">
+                    {!! nl2br(e($shift->description)) !!}
+                </div>
+                
+                @if($shift->requirements)
                 <div class="mt-4">
                     <h3 class="font-medium text-gray-900 mb-2">Requirements:</h3>
-                    <ul class="list-disc list-inside text-gray-600 space-y-1">
-                        <li>Ability to lift 50 lbs</li>
-                        <li>Previous warehouse experience preferred</li>
-                        <li>Reliable transportation</li>
-                    </ul>
+                    <div class="text-gray-600">
+                        {!! nl2br(e($shift->requirements)) !!}
+                    </div>
                 </div>
+                @endif
             </div>
         </div>
 
         <div class="space-y-6">
             <div class="bg-white rounded-xl border border-gray-200 p-6 sticky top-6">
                 <div class="text-center mb-6">
-                    <p class="text-3xl font-bold text-gray-900">$22.00/hr</p>
-                    <p class="text-sm text-gray-500 mt-1">Total: $176.00</p>
+                    @php
+                        $hourlyRate = $shift->final_rate ? \App\Support\Money::toDecimal($shift->final_rate) : 0;
+                        $totalPay = $hourlyRate * $shift->duration_hours;
+                    @endphp
+                    <p class="text-3xl font-bold text-gray-900">${{ number_format($hourlyRate, 2) }}/hr</p>
+                    <p class="text-sm text-gray-500 mt-1">Total: ${{ number_format($totalPay, 2) }}</p>
                 </div>
                 
-                @if(auth()->user()->isWorker())
-                <button class="w-full px-6 py-3 bg-brand-600 text-white font-medium rounded-lg hover:bg-brand-700 transition-colors">
-                    Apply for This Shift
-                </button>
+                @if(auth()->user() && auth()->user()->isWorker())
+                    @if($hasApplied)
+                        <button disabled class="w-full px-6 py-3 bg-gray-100 text-gray-500 font-medium rounded-lg cursor-not-allowed">
+                            Applied
+                        </button>
+                    @elseif($shift->status === 'open')
+                        <form action="{{ route('market.apply', $shift->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                                Apply for This Shift
+                            </button>
+                        </form>
+                    @else
+                        <button disabled class="w-full px-6 py-3 bg-gray-100 text-gray-500 font-medium rounded-lg cursor-not-allowed">
+                            {{ ucfirst($shift->status) }}
+                        </button>
+                    @endif
                 @endif
 
                 <div class="mt-6 pt-6 border-t border-gray-200 space-y-3 text-sm">
                     <div class="flex items-center justify-between">
                         <span class="text-gray-600">Workers Needed</span>
-                        <span class="font-medium text-gray-900">3</span>
+                        <span class="font-medium text-gray-900">{{ $shift->required_workers }}</span>
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-gray-600">Applicants</span>
-                        <span class="font-medium text-gray-900">7</span>
+                        <span class="text-gray-600">Filled Slots</span>
+                        <span class="font-medium text-gray-900">{{ $shift->filled_workers }}</span>
                     </div>
                 </div>
             </div>
@@ -95,18 +138,21 @@
             <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <h3 class="font-semibold text-gray-900 mb-4">Business Info</h3>
                 <div class="flex items-center space-x-3 mb-4">
-                    <div class="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                    <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-xl font-bold text-gray-500">
+                        {{ substr($shift->business->name ?? 'B', 0, 1) }}
+                    </div>
                     <div>
-                        <p class="font-medium text-gray-900">Sample Business Inc.</p>
+                        <p class="font-medium text-gray-900">{{ $shift->business->name ?? 'Unknown Business' }}</p>
+                        @if($shift->business->businessProfile)
                         <div class="flex items-center text-sm text-gray-500">
-                            <svg class="w-4 h-4 text-yellow-400 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                            </svg>
-                            4.8 (156 reviews)
+                            {{ $shift->business->businessProfile->industry ?? 'Business' }}
                         </div>
+                        @endif
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Established warehouse and distribution company serving the Boston area for over 10 years.</p>
+                @if($shift->business->businessProfile)
+                <p class="text-sm text-gray-600">{{ \Illuminate\Support\Str::limit($shift->business->businessProfile->description, 150) }}</p>
+                @endif
             </div>
         </div>
     </div>

@@ -72,26 +72,11 @@
             <x-dashboard.widget-card title="Recent Users"
                 icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
                 :action="route('admin.users')" actionLabel="View all">
-                <div class="space-y-4">
+                <div class="space-y-3">
                     @forelse(($recent_users ?? collect()) as $user)
-                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                                    <span
-                                        class="text-sm font-semibold text-gray-600">{{ substr($user->name ?? 'U', 0, 1) }}</span>
-                                </div>
-                                <div>
-                                    <h4 class="font-medium text-gray-900">{{ $user->name }}</h4>
-                                    <p class="text-sm text-gray-500">{{ $user->email }}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
-                                    {{ ucfirst($user->user_type ?? 'user') }}
-                                </span>
-                                <p class="text-xs text-gray-400 mt-1">{{ $user->created_at->diffForHumans() }}</p>
-                            </div>
-                        </div>
+                        <x-dashboard.user-list-item :name="$user->name" :email="$user->email"
+                            :subtext="$user->created_at->diffForHumans()" :status="ucfirst($user->user_type ?? 'user')"
+                            :statusColor="'gray'" />
                     @empty
                         <x-dashboard.empty-state
                             icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
@@ -104,39 +89,27 @@
         <!-- Sidebar -->
         <div class="space-y-6">
             <!-- Quick Actions -->
-            <x-dashboard.quick-actions>
-                <x-dashboard.quick-action href="{{ route('admin.users') }}"
-                    icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    variant="primary">
+            <x-dashboard.sidebar-section title="Quick Actions">
+                <x-dashboard.quick-action href="{{ route('admin.users') }}" variant="primary">
                     Manage Users
                 </x-dashboard.quick-action>
-                <x-dashboard.quick-action href="{{ route('admin.users') }}"
-                    icon="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                    variant="secondary">
+                <x-dashboard.quick-action href="{{ route('admin.users') }}">
                     Review Verifications
                 </x-dashboard.quick-action>
-                <x-dashboard.quick-action href="{{ route('admin.shifts.index') }}"
-                    icon="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    variant="secondary">
+                <x-dashboard.quick-action href="{{ route('admin.shifts.index') }}">
                     View All Shifts
                 </x-dashboard.quick-action>
-                <x-dashboard.quick-action href="{{ route('settings.index') }}"
-                    icon="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    variant="secondary">
+                <x-dashboard.quick-action href="{{ route('settings.index') }}">
                     Platform Settings
                 </x-dashboard.quick-action>
-            </x-dashboard.quick-actions>
+            </x-dashboard.sidebar-section>
 
             <!-- Recent Shifts -->
             <x-dashboard.sidebar-section title="Recent Shifts" :action="route('admin.shifts.index')" actionLabel="View all">
                 <div class="space-y-3">
                     @forelse(($recent_shifts ?? collect()) as $shift)
-                        <div class="p-3 bg-gray-50 rounded-lg">
-                            <h4 class="font-medium text-gray-900 text-sm truncate">{{ $shift->title }}</h4>
-                            <p class="text-xs text-gray-500 mt-1">{{ $shift->business_name ?? 'Unknown Business' }}</p>
-                            <p class="text-xs text-gray-400 mt-1">
-                                {{ \Carbon\Carbon::parse($shift->created_at)->diffForHumans() }}</p>
-                        </div>
+                        <x-dashboard.info-item :title="$shift->title" :subtitle="$shift->business_name ?? 'Unknown Business'"
+                            :meta="\Carbon\Carbon::parse($shift->created_at)->diffForHumans()" />
                     @empty
                         <p class="text-sm text-gray-500 text-center py-4">No recent shifts</p>
                     @endforelse
@@ -145,29 +118,11 @@
 
             <!-- System Status -->
             <x-dashboard.sidebar-section title="System Status">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Database</span>
-                        <span class="inline-flex items-center gap-1 text-sm text-gray-600">
-                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                            Connected
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Cache</span>
-                        <span class="inline-flex items-center gap-1 text-sm text-gray-600">
-                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                            Active
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Queue</span>
-                        <span class="inline-flex items-center gap-1 text-sm text-gray-600">
-                            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-                            Running
-                        </span>
-                    </div>
-                </div>
+                <x-dashboard.status-list :items="[
+            ['label' => 'Database', 'status' => 'Connected', 'color' => 'green'],
+            ['label' => 'Cache', 'status' => 'Active', 'color' => 'green'],
+            ['label' => 'Queue', 'status' => 'Running', 'color' => 'green'],
+        ]" />
             </x-dashboard.sidebar-section>
         </div>
     </div>

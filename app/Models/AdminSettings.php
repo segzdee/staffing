@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $file_size_allowed
  * @property string|null $created_at
  * @property string|null $updated_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminSettings newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminSettings newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminSettings query()
@@ -16,10 +17,14 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminSettings whereFileSizeAllowed($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminSettings whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminSettings whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
-class AdminSettings extends Model {
+class AdminSettings extends Model
+{
+    protected $fillable = [
+        'file_size_allowed',
+    ];
 
-	protected $guarded = ['id'];
-	public $timestamps = false;
+    public $timestamps = false;
 }

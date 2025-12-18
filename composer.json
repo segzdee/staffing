@@ -80,8 +80,7 @@
             "Tests\\": "tests/"
         },
         "files": [
-            "app/Helper.php",
-            "app/Library/class.fileuploader.php"
+            "app/Helper.php"
         ]
     },
     "minimum-stability": "stable",

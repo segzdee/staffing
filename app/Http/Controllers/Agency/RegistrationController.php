@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Agency\RegistrationStepRequest;
-use App\Models\AgencyProfile;
 use App\Models\Industry;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -150,7 +148,7 @@ class RegistrationController extends Controller
     /**
      * Show a specific registration step.
      */
-    public function showStep(int $step): View|JsonResponse
+    public function showStep(int $step): View|JsonResponse|\Illuminate\Http\RedirectResponse
     {
         // Validate step number
         if ($step < 1 || $step > self::TOTAL_STEPS) {
@@ -170,7 +168,7 @@ class RegistrationController extends Controller
         // Prepare step data
         $stepData = $this->prepareStepData($step, $registration['data'] ?? []);
 
-        return view('agency.registration.step' . $step, [
+        return view('agency.registration.step'.$step, [
             'step' => $step,
             'totalSteps' => self::TOTAL_STEPS,
             'stepTitle' => $this->getStepTitle($step),
@@ -184,7 +182,10 @@ class RegistrationController extends Controller
     /**
      * Save data for a specific step and proceed to next.
      */
-    public function saveStep(RegistrationStepRequest $request, int $step): JsonResponse
+    /**
+     * Save data for a specific step and proceed to next.
+     */
+    public function saveStep(RegistrationStepRequest $request, int $step): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         // Get registration data from session
         $registration = session(self::SESSION_KEY, [
@@ -210,36 +211,39 @@ class RegistrationController extends Controller
         // Determine next step or completion
         $nextStep = $step + 1;
         $isComplete = $step >= self::TOTAL_STEPS;
+        $redirectUrl = $isComplete
+            ? route('agency.register.submit')
+            : route('agency.register.step', ['step' => $nextStep]);
 
-        return response()->json([
-            'success' => true,
-            'message' => $this->getStepSuccessMessage($step),
-            'next_step' => $isComplete ? null : $nextStep,
-            'redirect' => $isComplete
-                ? route('agency.register.submit')
-                : route('agency.register.step', ['step' => $nextStep]),
-            'progress' => round(($nextStep / self::TOTAL_STEPS) * 100),
-        ]);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $this->getStepSuccessMessage($step),
+                'next_step' => $isComplete ? null : $nextStep,
+                'redirect' => $redirectUrl,
+                'progress' => round(($nextStep / self::TOTAL_STEPS) * 100),
+            ]);
+        }
+
+        return redirect()->to($redirectUrl)->with('success', $this->getStepSuccessMessage($step));
     }
 
     /**
      * Go to previous step.
      */
-    public function previousStep(int $step): JsonResponse
+    /**
+     * Go to previous step.
+     */
+    public function previousStep(int $step): \Illuminate\Http\RedirectResponse
     {
         if ($step <= 1) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot go back from the first step.',
-            ], 400);
+            return redirect()->route('agency.register.step', 1)
+                ->with('error', 'Cannot go back from the first step.');
         }
 
         $previousStep = $step - 1;
 
-        return response()->json([
-            'success' => true,
-            'redirect' => route('agency.register.step', ['step' => $previousStep]),
-        ]);
+        return redirect()->route('agency.register.step', ['step' => $previousStep]);
     }
 
     /**
@@ -257,11 +261,11 @@ class RegistrationController extends Controller
             $documentType = $request->input('document_type');
 
             // Generate unique filename
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
 
             // Store temporarily (will be moved to permanent storage on final submission)
             $path = $file->storeAs(
-                'temp/agency-registration/' . session()->getId(),
+                'temp/agency-registration/'.session()->getId(),
                 $filename,
                 'local'
             );
@@ -333,18 +337,18 @@ class RegistrationController extends Controller
     /**
      * Show the final review page before submission.
      */
-    public function review(): View
+    public function review(): View|\Illuminate\Http\RedirectResponse
     {
         $registration = session(self::SESSION_KEY);
 
-        if (!$registration || empty($registration['data'])) {
+        if (! $registration || empty($registration['data'])) {
             return redirect()->route('agency.register.start')
                 ->with('error', 'Please complete the registration steps first.');
         }
 
         // Validate all required steps are complete
         $requiredSteps = $this->validateAllStepsComplete($registration['data']);
-        if (!$requiredSteps['complete']) {
+        if (! $requiredSteps['complete']) {
             return redirect()->route('agency.register.step', ['step' => $requiredSteps['incomplete_step']])
                 ->with('error', 'Please complete all required steps before reviewing.');
         }
@@ -363,7 +367,7 @@ class RegistrationController extends Controller
     {
         $registration = session(self::SESSION_KEY);
 
-        if (!$registration || empty($registration['data'])) {
+        if (! $registration || empty($registration['data'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Registration data not found. Please start over.',
@@ -373,7 +377,7 @@ class RegistrationController extends Controller
 
         // Validate all steps complete
         $validation = $this->validateAllStepsComplete($registration['data']);
-        if (!$validation['complete']) {
+        if (! $validation['complete']) {
             return response()->json([
                 'success' => false,
                 'message' => 'Please complete all required steps.',
@@ -392,47 +396,53 @@ class RegistrationController extends Controller
                 'email' => $data['contact_email'],
                 'password' => Hash::make($data['password']),
                 'user_type' => 'agency',
-                'role' => 'user',
+                'role' => 'user', // Default role until approved
                 'status' => 'pending', // Pending until application approved
                 'phone' => $data['contact_phone'] ?? null,
                 'email_verified_at' => null, // Requires verification
             ]);
 
-            // Create agency profile
-            $agencyProfile = AgencyProfile::create([
+            // Create Agency Application
+            $application = \App\Models\AgencyApplication::create([
                 'user_id' => $user->id,
+                'status' => \App\Models\AgencyApplication::STATUS_SUBMITTED,
                 'agency_name' => $data['business_name'],
                 'business_registration_number' => $data['registration_number'] ?? null,
-                'phone' => $data['contact_phone'] ?? null,
-                'website' => $data['website'] ?? null,
-                'address' => $data['address'] ?? null,
-                'city' => $data['city'] ?? null,
-                'state' => $data['state'] ?? null,
-                'zip_code' => $data['postal_code'] ?? null,
-                'country' => $data['country'] ?? null,
-                'description' => $data['business_description'] ?? null,
-                'specializations' => json_encode($data['industries'] ?? []),
                 'license_number' => $data['license_number'] ?? null,
-                'license_verified' => false,
-                'verification_status' => 'pending',
+                'business_type' => $data['agency_type'] ?? 'staffing_agency',
+
+                // Contact
+                'contact_name' => $data['contact_name'],
+                'contact_email' => $data['contact_email'],
+                'contact_phone' => $data['contact_phone'] ?? null,
+                'website' => $data['website'] ?? null,
+
+                // Address
+                'registered_address' => $data['address'] ?? null,
+                'registered_city' => $data['city'] ?? null,
+                'registered_state' => $data['state'] ?? null,
+                'registered_postal_code' => $data['postal_code'] ?? null,
+                'registered_country' => $data['country'] ?? null,
+
+                // Operations
+                'description' => $data['business_description'] ?? null,
+                'specializations' => $data['industries'] ?? [],
+                'estimated_worker_count' => (int) $data['existing_workers_count'] ?? 0,
                 'business_model' => $data['partnership_tier'] ?? 'standard',
-                'commission_rate' => $this->partnershipTiers[$data['partnership_tier'] ?? 'standard']['commission'],
-                'total_workers' => $data['existing_workers_count'] ?? 0,
-                'onboarding_step' => 1,
-                'onboarding_completed' => false,
+                'proposed_commission_rate' => $this->partnershipTiers[$data['partnership_tier'] ?? 'standard']['commission'],
+
+                'submitted_at' => now(),
+                'submission_attempts' => 1,
             ]);
 
-            // Store agency application data (for admin review)
-            $this->storeApplicationData($user, $agencyProfile, $data);
-
-            // Move temporary documents to permanent storage
-            $this->moveDocumentsToPermanentStorage($user, $data['documents'] ?? []);
+            // Move and Create Documents
+            $this->processDocuments($application, $data['documents'] ?? []);
 
             // Send verification email
             $user->sendEmailVerificationNotification();
 
             // Notify admins of new application
-            $this->notifyAdminsOfNewApplication($user, $agencyProfile);
+            $this->notifyAdminsOfNewApplication($user, $application);
 
             DB::commit();
 
@@ -442,7 +452,7 @@ class RegistrationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Your agency application has been submitted successfully!',
-                'redirect' => route('agency.register.confirmation', ['id' => $agencyProfile->id]),
+                'redirect' => route('agency.register.confirmation', ['id' => $application->id]),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -457,6 +467,55 @@ class RegistrationController extends Controller
                 'success' => false,
                 'message' => 'An error occurred while processing your application. Please try again.',
             ], 500);
+        }
+    }
+
+    /**
+     * Process documents: Move from temp to permanent and create records.
+     */
+    protected function processDocuments(\App\Models\AgencyApplication $application, array $documents): void
+    {
+        foreach ($documents as $type => $document) {
+            if (! empty($document['path']) && Storage::disk('local')->exists($document['path'])) {
+                $filename = basename($document['path']);
+                $newPath = 'agency-documents/'.$application->id.'/'.$type.'/'.$filename;
+
+                Storage::disk('local')->move($document['path'], $newPath);
+
+                \App\Models\AgencyDocument::create([
+                    'agency_application_id' => $application->id,
+                    'document_type' => $type,
+                    'name' => $document['original_name'],
+                    'file_path' => $newPath,
+                    'file_name' => $filename,
+                    'file_type' => $document['mime_type'] ?? 'application/octet-stream',
+                    'file_size' => $document['size'] ?? 0,
+                    'status' => 'pending',
+                ]);
+            }
+        }
+
+        // Clean up temp directory
+        $tempDir = 'temp/agency-registration/'.session()->getId();
+        if (Storage::disk('local')->exists($tempDir)) {
+            Storage::disk('local')->deleteDirectory($tempDir);
+        }
+    }
+
+    /**
+     * Notify admins of new agency application.
+     */
+    protected function notifyAdminsOfNewApplication(User $user, \App\Models\AgencyApplication $application): void
+    {
+        // Get admin users
+        $admins = User::where('user_type', 'admin')->get();
+
+        foreach ($admins as $admin) {
+            Log::info('New agency application notification', [
+                'admin_id' => $admin->id,
+                'application_id' => $application->id,
+                'agency_name' => $application->agency_name,
+            ]);
         }
     }
 
@@ -634,87 +693,11 @@ class RegistrationController extends Controller
         }
 
         // Step 7: Terms accepted
-        if (empty($data['terms_accepted']) || !$data['terms_accepted']) {
+        if (empty($data['terms_accepted']) || ! $data['terms_accepted']) {
             return ['complete' => false, 'incomplete_step' => 7];
         }
 
         return ['complete' => true];
-    }
-
-    /**
-     * Store application data for admin review.
-     */
-    protected function storeApplicationData(User $user, AgencyProfile $profile, array $data): void
-    {
-        // Store in a dedicated table or as JSON in the profile
-        // For now, storing as JSON metadata in the profile
-        $applicationMeta = [
-            'registration_number' => $data['registration_number'] ?? null,
-            'agency_type' => $data['agency_type'] ?? null,
-            'years_in_business' => $data['years_in_business'] ?? null,
-            'references' => $data['references'] ?? [],
-            'industries' => $data['industries'] ?? [],
-            'worker_count_range' => $data['worker_count_range'] ?? null,
-            'partnership_tier' => $data['partnership_tier'] ?? 'standard',
-            'submitted_at' => now()->toIso8601String(),
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ];
-
-        // Could be stored in a separate agency_applications table if needed
-        // For now, update the profile with onboarding metadata
-        $profile->update([
-            'verification_notes' => json_encode($applicationMeta),
-        ]);
-    }
-
-    /**
-     * Move temporary documents to permanent storage.
-     */
-    protected function moveDocumentsToPermanentStorage(User $user, array $documents): void
-    {
-        foreach ($documents as $type => $document) {
-            if (!empty($document['path']) && Storage::disk('local')->exists($document['path'])) {
-                $newPath = 'agency-documents/' . $user->id . '/' . $type . '/' . basename($document['path']);
-
-                Storage::disk('local')->move($document['path'], $newPath);
-
-                // Store document reference (could use a documents table)
-                // For now, logging the move
-                Log::info('Agency document stored', [
-                    'user_id' => $user->id,
-                    'document_type' => $type,
-                    'path' => $newPath,
-                ]);
-            }
-        }
-
-        // Clean up temp directory
-        $tempDir = 'temp/agency-registration/' . session()->getId();
-        if (Storage::disk('local')->exists($tempDir)) {
-            Storage::disk('local')->deleteDirectory($tempDir);
-        }
-    }
-
-    /**
-     * Notify admins of new agency application.
-     */
-    protected function notifyAdminsOfNewApplication(User $user, AgencyProfile $profile): void
-    {
-        // Get admin users
-        $admins = User::where('user_type', 'admin')->get();
-
-        foreach ($admins as $admin) {
-            // Using Laravel's notification system (would need notification class)
-            // $admin->notify(new NewAgencyApplicationNotification($user, $profile));
-
-            // For now, log the notification
-            Log::info('New agency application notification', [
-                'admin_id' => $admin->id,
-                'agency_user_id' => $user->id,
-                'agency_name' => $profile->agency_name,
-            ]);
-        }
     }
 
     /**
@@ -757,7 +740,7 @@ class RegistrationController extends Controller
                 ->pluck('name', 'id')
                 ->toArray();
 
-            if (!empty($industries)) {
+            if (! empty($industries)) {
                 return $industries;
             }
         } catch (\Exception $e) {
@@ -827,6 +810,6 @@ class RegistrationController extends Controller
             $i++;
         }
 
-        return round($bytes, 2) . ' ' . $units[$i];
+        return round($bytes, 2).' '.$units[$i];
     }
 }

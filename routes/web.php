@@ -1,9 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Artisan;
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -161,7 +158,7 @@ Route::prefix('dashboard')
         });
 
         // ADMIN ROUTES
-        Route::prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
             // Main
             Route::view('/overview', 'dashboard.admin.overview')->name('overview');
             Route::view('/system', 'dashboard.admin.system')->name('system');
@@ -169,7 +166,16 @@ Route::prefix('dashboard')
             // Users
             Route::view('/users', 'dashboard.admin.users')->name('users');
             Route::view('/companies', 'dashboard.admin.companies')->name('companies');
-            Route::view('/verification', 'dashboard.admin.verification')->name('verification');
+
+            // Agency Applications
+            Route::resource('agency-applications', App\Http\Controllers\Admin\AgencyApplicationController::class);
+            Route::post('agency-applications/{id}/review-documents', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'reviewDocuments'])->name('agency-applications.review-documents');
+            Route::post('agency-applications/{id}/compliance', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'reviewCompliance'])->name('agency-applications.compliance');
+            Route::post('agency-applications/{id}/approve', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'approveApplication'])->name('agency-applications.approve');
+            Route::post('agency-applications/{id}/reject', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'rejectApplication'])->name('agency-applications.reject');
+            Route::post('agency-applications/{id}/assign', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'assignReviewer'])->name('agency-applications.assign');
+            Route::post('agency-applications/{id}/note', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'addNote'])->name('agency-applications.note');
+            Route::post('agency-applications/{id}/start-compliance', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'startComplianceChecks'])->name('agency-applications.start-compliance');
 
             // Operations
             Route::view('/all-shifts', 'dashboard.admin.all-shifts')->name('all-shifts');
@@ -260,6 +266,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 // Keep existing live market and shift application routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/shifts', [App\Http\Controllers\Shift\ShiftController::class, 'index'])->name('shifts.index');
+    Route::get('/shifts/{shift}', [App\Http\Controllers\Shift\ShiftController::class, 'show'])->name('shifts.show');
     // Route::get('/shifts/create', [App\Http\Controllers\DashboardController::class, 'createShift'])->name('shifts.create'); // This route is now handled by ShiftController
 
     // Business Shifts Management
@@ -313,10 +320,10 @@ Route::prefix('worker')->name('worker.')->group(function () {
 Route::prefix('register/agency')->name('agency.register.')->group(function () {
     Route::get('/', [App\Http\Controllers\Agency\RegistrationController::class, 'index'])->name('index');
     Route::get('/start', [App\Http\Controllers\Agency\RegistrationController::class, 'start'])->name('start');
-    Route::get('/step/{step}', [App\Http\Controllers\Agency\RegistrationController::class, 'showStep'])->name('step.show');
-    Route::post('/step/{step}', [App\Http\Controllers\Agency\RegistrationController::class, 'saveStep'])->name('step.save');
-    Route::post('/step/{step}/previous', [App\Http\Controllers\Agency\RegistrationController::class, 'previousStep'])->name('step.previous');
-    Route::post('/upload-document', [App\Http\Controllers\Agency\RegistrationController::class, 'uploadDocument'])->name('upload-document');
+    Route::get('/step/{step}', [App\Http\Controllers\Agency\RegistrationController::class, 'showStep'])->name('step');
+    Route::post('/step/{step}', [App\Http\Controllers\Agency\RegistrationController::class, 'saveStep'])->name('saveStep');
+    Route::get('/step/{step}/previous', [App\Http\Controllers\Agency\RegistrationController::class, 'previousStep'])->name('previous');
+    Route::post('/upload-document', [App\Http\Controllers\Agency\RegistrationController::class, 'uploadDocument'])->name('upload');
     Route::delete('/remove-document', [App\Http\Controllers\Agency\RegistrationController::class, 'removeDocument'])->name('remove-document');
     Route::get('/review', [App\Http\Controllers\Agency\RegistrationController::class, 'review'])->name('review');
     Route::post('/submit', [App\Http\Controllers\Agency\RegistrationController::class, 'submitApplication'])->name('submit');

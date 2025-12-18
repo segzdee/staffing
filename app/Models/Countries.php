@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int|null $states_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
  * @property-read int|null $users_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Countries newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Countries newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Countries query()
@@ -24,21 +25,28 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Countries whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Countries whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Countries wherePhoneCode($value)
+ *
  * @mixin \Eloquent
  */
-class Countries extends Model {
+class Countries extends Model
+{
+    protected $fillable = [
+        'country_code',
+        'name',
+        'currency_code',
+        'phone_code',
+        'is_active',
+    ];
 
-	protected $guarded = ['id'];
-	public $timestamps = false;
+    public $timestamps = false;
 
-	public function users()
-	{
-		return $this->hasMany(User::class);
-	}
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 
-	public function states()
-	{
-		return $this->hasMany(States::class);
-	}
-
+    public function states()
+    {
+        return $this->hasMany(States::class);
+    }
 }

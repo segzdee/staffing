@@ -39,36 +39,27 @@
         <!-- Sidebar -->
         <div class="space-y-6">
             <!-- Quick Actions -->
-            <x-dashboard.quick-actions>
-                <x-dashboard.quick-action href="{{ route('shifts.create') }}" icon="M12 4v16m8-8H4" variant="primary">
+            <x-dashboard.sidebar-section title="Quick Actions">
+                <x-dashboard.quick-action href="{{ route('shifts.create') }}" variant="primary">
                     Post New Shift
                 </x-dashboard.quick-action>
-                <x-dashboard.quick-action href="{{ route('business.available-workers') }}"
-                    icon="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" variant="secondary">
+                <x-dashboard.quick-action href="{{ route('business.available-workers') }}">
                     Find Available Workers
                 </x-dashboard.quick-action>
-            </x-dashboard.quick-actions>
+            </x-dashboard.sidebar-section>
 
             <!-- Recent Applications -->
             @if(($recentApplications ?? collect())->count() > 0)
                 <x-dashboard.sidebar-section title="Recent Applications">
                     <div class="space-y-3">
                         @foreach(($recentApplications ?? collect())->take(5) as $application)
-                            <div class="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                                <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-                                        <span
-                                            class="text-sm font-medium text-muted-foreground">{{ substr($application->worker->name ?? 'U', 0, 1) }}</span>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-medium text-foreground">{{ $application->worker->name ?? 'Unknown' }}
-                                        </p>
-                                        <p class="text-xs text-muted-foreground">{{ $application->shift->title ?? 'Shift' }}</p>
-                                    </div>
-                                </div>
-                                <a href="{{ route('business.shifts.applications', $application->shift_id) }}"
-                                    class="text-sm text-muted-foreground hover:text-foreground">Review</a>
-                            </div>
+                            <x-dashboard.user-list-item
+                                :name="$application->worker->name ?? 'Unknown'"
+                                :subtext="$application->shift->title ?? 'Shift'"
+                                :avatar="substr($application->worker->name ?? 'U', 0, 1)"
+                                href="{{ route('business.shifts.applications', $application->shift_id) }}"
+                                actionLabel="Review"
+                            />
                         @endforeach
                     </div>
                 </x-dashboard.sidebar-section>

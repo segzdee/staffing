@@ -63,10 +63,10 @@ return [
         ],
 
         'default' => [
-             'driver' => 'local',
-             'root' => public_path(),
-             'url' => env('APP_URL').'/public',
-             'visibility' => 'public',
+            'driver' => 'local',
+            'root' => public_path(),
+            'url' => env('APP_URL').'/public',
+            'visibility' => 'public',
         ],
 
         's3' => [
@@ -80,36 +80,39 @@ return [
         ],
 
         'dospace' => [
-          'driver' => 's3',
-          'key' => env('DOS_ACCESS_KEY_ID'),
-          'secret' => env('DOS_SECRET_ACCESS_KEY'),
-          'region' => env('DOS_DEFAULT_REGION'),
-          'bucket' => env('DOS_BUCKET'),
-          'visibility' => 'public',
-          'endpoint' => 'https://'.env('DOS_DEFAULT_REGION').'.digitaloceanspaces.com',
+            'driver' => 's3',
+            'key' => env('DOS_ACCESS_KEY_ID'),
+            'secret' => env('DOS_SECRET_ACCESS_KEY'),
+            'region' => env('DOS_DEFAULT_REGION'),
+            'bucket' => env('DOS_BUCKET'),
+            'visibility' => 'public',
+            'endpoint' => 'https://'.env('DOS_DEFAULT_REGION').'.digitaloceanspaces.com',
+            'cdn' => env('DOS_CDN'),
         ],
 
         'wasabi' => [
-          'driver' => 's3',
-          'key' => env('WAS_ACCESS_KEY_ID'),
-          'secret' => env('WAS_SECRET_ACCESS_KEY'),
-          'region' => env('WAS_DEFAULT_REGION'),
-          'bucket' => env('WAS_BUCKET'),
-          'visibility' => 'public',
-          'endpoint' => 'https://s3.'.env('WAS_DEFAULT_REGION').'.wasabisys.com'
+            'driver' => 's3',
+            'key' => env('WAS_ACCESS_KEY_ID'),
+            'secret' => env('WAS_SECRET_ACCESS_KEY'),
+            'region' => env('WAS_DEFAULT_REGION'),
+            'bucket' => env('WAS_BUCKET'),
+            'visibility' => 'public',
+            'endpoint' => 'https://s3.'.env('WAS_DEFAULT_REGION').'.wasabisys.com',
         ],
 
         'backblaze' => [
-            'driver'         => 'b2',
-            'accountId'      => env('BACKBLAZE_ACCOUNT_ID'),
+            'driver' => 'b2',
+            'accountId' => env('BACKBLAZE_ACCOUNT_ID'),
             'applicationKey' => env('BACKBLAZE_APP_KEY'),
-            'bucketName'     => env('BACKBLAZE_BUCKET'),
-            'bucketId'       => env('BACKBLAZE_BUCKET_ID'),
+            'bucketName' => env('BACKBLAZE_BUCKET'),
+            'bucketId' => env('BACKBLAZE_BUCKET_ID'),
+            'bucket' => env('BACKBLAZE_BUCKET'),
+            'region' => env('BACKBLAZE_BUCKET_REGION'),
         ],
 
         'vultr' => [
             'driver' => 's3',
-            'key'=> env('VULTR_ACCESS_KEY'),
+            'key' => env('VULTR_ACCESS_KEY'),
             'secret' => env('VULTR_SECRET_KEY'),
             'region' => env('VULTR_REGION'),
             'bucket' => env('VULTR_BUCKET'),

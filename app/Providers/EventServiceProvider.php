@@ -2,20 +2,9 @@
 
 namespace App\Providers;
 
-use App\Events\NewPostEvent;
-use App\Listeners\NewPostListener;
-use App\Events\MassMessagesEvent;
-use App\Listeners\MassMessagesListener;
-use App\Events\SubscriptionDisabledEvent;
-use App\Listeners\SubscriptionDisabledListener;
-use App\Events\LiveBroadcasting;
-use App\Listeners\LiveBroadcastingListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
-use App\Listeners\CreateIssueResolveListener;
-use App\Events\CreatorIssueResolve;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -28,25 +17,7 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        NewPostEvent::class => [
-            NewPostListener::class,
-        ],
-        MassMessagesEvent::class => [
-            MassMessagesListener::class,
-        ],
-        SubscriptionDisabledEvent::class => [
-          SubscriptionDisabledListener::class,
-        ],
-        LiveBroadcasting::class => [
-          LiveBroadcastingListener::class,
-        ],
-        'App\Events\CreatorIssueResolve' => [
-            'App\Listeners\CreateIssueResolveListener',
-        ],
-        'App\Events\SendMailToAdminByCreator' => [
-            'App\Listeners\SendMailToAdminByCreatorListener',
-        ],
-        
+
         // ============================================================================
         // OVERTIMESTAFF EMAIL NOTIFICATIONS
         // ============================================================================

@@ -38,7 +38,7 @@
                   <small class="d-inline-block mb-2">{{ trans('general.by') }} {{ $response->user()->name }} </small>
                   <h3 class="mb-0">{{ $response->title }}</h3>
                   <div class="mb-3 text-muted">{{ Helper::formatDate($response->date) }}</div>
-                  <div class="card-text mb-auto content-p">{!! $response->content !!}</div>
+                  <div class="card-text mb-auto content-p">{!! Purify::clean($response->content) !!}</div>
 
                   <div class="mt-4 justify-content-middle">
                     <hr>

@@ -22,12 +22,10 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {{-- CSP Nonce: All inline styles and scripts must include the nonce attribute --}}
-    {{-- Example: <style nonce="{{ $cspNonce ?? '' }}">
-        or <script nonce="{{ $cspNonce ?? '' }}">--
-        }
-        }
+    {{-- Example: <style nonce="{{ $cspNonce ?? '' }}"> or <script nonce="{{ $cspNonce ?? '' }}"> --}}
 
-        <style nonce="{{ $cspNonce ?? '' }}">[x-cloak] {
+    <style nonce="{{ $cspNonce ?? '' }}">
+        [x-cloak] {
             display: none !important;
         }
 

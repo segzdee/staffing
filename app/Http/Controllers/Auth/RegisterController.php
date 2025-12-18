@@ -2,21 +2,13 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Mail;
-use Cookie;
-use Validator;
-use App\Helper;
-use App\Models\User;
-use App\Models\Countries;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use App\Models\AdminSettings;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
-
+use Validator;
 
 class RegisterController extends Controller
 {
@@ -45,37 +37,35 @@ class RegisterController extends Controller
      *
      * @return void
      */
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
         $this->middleware('guest');
-        $this->settings = $settings::first();
     }
 
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
     {
 
-      $data['_captcha'] = $this->settings->captcha;
+        $data['_captcha'] = $this->settings->captcha;
 
-		$messages = array (
-			"letters"    => trans('validation.letters'),
-      'g-recaptcha-response.required_if' => trans('admin.captcha_error_required'),
-      'g-recaptcha-response.captcha' => trans('admin.captcha_error'),
-        );
+        $messages = [
+            'letters' => trans('validation.letters'),
+            'g-recaptcha-response.required_if' => trans('admin.captcha_error_required'),
+            'g-recaptcha-response.captcha' => trans('admin.captcha_error'),
+        ];
 
-		 Validator::extend('ascii_only', function($attribute, $value, $parameters){
-    		return !preg_match('/[^x00-x7F\-]/i', $value);
-		});
+        Validator::extend('ascii_only', function ($attribute, $value, $parameters) {
+            return ! preg_match('/[^x00-x7F\-]/i', $value);
+        });
 
-		// Validate if have one letter
-	Validator::extend('letters', function($attribute, $value, $parameters){
-    	return preg_match('/[a-zA-Z0-9]/', $value);
-	});
+        // Validate if have one letter
+        Validator::extend('letters', function ($attribute, $value, $parameters) {
+            return preg_match('/[a-zA-Z0-9]/', $value);
+        });
 
         return Validator::make($data, [
             'name' => 'required|string|max:100',
@@ -91,7 +81,7 @@ class RegisterController extends Controller
             ],
             'user_type' => 'required|in:worker,business,agency',
             'agree_terms' => 'required|accepted',
-            'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha'
+            'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha',
         ], $messages);
     }
 
@@ -99,7 +89,6 @@ class RegisterController extends Controller
      * Show registration form.
      * Accepts optional 'type' query parameter to pre-select user type.
      *
-     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\View\View
      */
     public function showRegistrationForm(Request $request)
@@ -107,18 +96,16 @@ class RegisterController extends Controller
         $type = $request->query('type', 'worker');
 
         // Validate type - only allow valid user types
-        if (!in_array($type, ['worker', 'business', 'agency'])) {
+        if (! in_array($type, ['worker', 'business', 'agency'])) {
             $type = 'worker';
         }
 
         return view('auth.register', compact('type'));
     }
 
-
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
      * @return User
      */
     protected function create(array $data)
@@ -159,29 +146,26 @@ class RegisterController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function register(Request $request)
+    /**
+     * Handle a registration request for the application.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function register(\App\Http\Requests\Auth\RegisterRequest $request)
     {
         // If agency, redirect to multi-step agency registration flow
-        // Agency registration requires documents, verification, and partnership tier selection
         if ($request->user_type === 'agency') {
             return redirect()->route('agency.register.index')
                 ->with('info', 'Agency registration requires additional information. Please complete the multi-step registration process.');
         }
 
-        $validator = $this->validator($request->all());
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
+        // Data is already validated by RegisterRequest
+        $data = $request->validated();
 
         // Create the user and fire Registered event
-        // The Registered event listener will send email verification notification
-        event(new Registered($user = $this->create($request->all())));
+        event(new Registered($user = $this->create($data)));
 
-        // SECURITY: Send email verification notification explicitly
-        // This ensures the user must verify their email before full access
+        // Send email verification notification
         $user->sendEmailVerificationNotification();
 
         // Auto-login the user

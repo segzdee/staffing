@@ -4,7 +4,6 @@
 /public/temp
 /storage/*.key
 /vendor
-composer.lock
 .env
 .env.*
 .env copy
@@ -18,7 +17,6 @@ Homestead.yaml
 npm-debug.log
 yarn-error.log
 .htaccess
-composer.lock
 storage
 storage/*
 

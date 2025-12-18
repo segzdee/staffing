@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\ResetsPasswords;
 use App\Models\AdminSettings;
+use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 
@@ -33,7 +33,6 @@ class ResetPasswordController extends Controller
     /**
      * Get the response for a successful password reset.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  string  $response
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
@@ -50,7 +49,7 @@ class ResetPasswordController extends Controller
      */
     public function __construct()
     {
-      	$this->subject = trans('passwords.subject'); //add this line
+        $this->subject = trans('passwords.subject'); // add this line
         $this->middleware('guest');
     }
 
@@ -62,8 +61,8 @@ class ResetPasswordController extends Controller
      */
     protected function rules()
     {
-      $settings = AdminSettings::first();
-      $catpcha = $settings->captcha == 'on' ? 'required|captcha' : 'required_if:_null,==,0' ;
+        $settings = AdminSettings::first();
+        $catpcha = $settings->captcha == 'on' ? 'required|captcha' : 'required_if:_null,==,0';
 
         return [
             'token' => 'required',
@@ -71,13 +70,11 @@ class ResetPasswordController extends Controller
             'password' => [
                 'required',
                 'confirmed',
-                Password::min(12)
+                Password::min(8)
                     ->mixedCase()
-                    ->numbers()
-                    ->symbols()
-                    ->uncompromised(),
+                    ->numbers(),
             ],
-            'g-recaptcha-response' => $catpcha
+            'g-recaptcha-response' => $catpcha,
         ];
     }
 
@@ -89,8 +86,8 @@ class ResetPasswordController extends Controller
     protected function validationErrorMessages()
     {
         return [
-          'g-recaptcha-response.required' => trans('admin.captcha_error_required'),
-          'g-recaptcha-response.captcha' => trans('admin.captcha_error'),
+            'g-recaptcha-response.required' => trans('admin.captcha_error_required'),
+            'g-recaptcha-response.captcha' => trans('admin.captcha_error'),
         ];
     }
 }

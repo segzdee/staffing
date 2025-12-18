@@ -20,7 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 // Demo route for development only - displays PHP configuration
 if (app()->environment('local', 'development')) {
-    Route::get("/demo", function () {
+    Route::get('/demo', function () {
         return response()->json([
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'post_max_size' => ini_get('post_max_size'),
@@ -385,4 +385,333 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
         Route::get('/{id}/expiry', [App\Http\Controllers\Worker\CertificationController::class, 'checkExpiry'])
             ->name('expiry');
     });
+
+    // Emergency Contacts Management (SAF-001)
+    Route::prefix('emergency-contacts')->name('emergency-contacts.')->group(function () {
+        Route::get('/', [App\Http\Controllers\Worker\EmergencyContactController::class, 'list'])
+            ->name('index');
+        Route::post('/', [App\Http\Controllers\Worker\EmergencyContactController::class, 'store'])
+            ->name('store');
+        Route::put('/{id}', [App\Http\Controllers\Worker\EmergencyContactController::class, 'update'])
+            ->name('update');
+        Route::delete('/{id}', [App\Http\Controllers\Worker\EmergencyContactController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('/{id}/verify', [App\Http\Controllers\Worker\EmergencyContactController::class, 'verify'])
+            ->name('verify');
+        Route::post('/{id}/resend-verification', [App\Http\Controllers\Worker\EmergencyContactController::class, 'resendVerification'])
+            ->name('resend-verification');
+        Route::post('/{id}/set-primary', [App\Http\Controllers\Worker\EmergencyContactController::class, 'setPrimary'])
+            ->name('set-primary');
+        Route::put('/priorities', [App\Http\Controllers\Worker\EmergencyContactController::class, 'updatePriorities'])
+            ->name('priorities');
+        Route::get('/verification-status', [App\Http\Controllers\Worker\EmergencyContactController::class, 'verificationStatus'])
+            ->name('verification-status');
+    });
+});
+
+// ============================================================================
+// SAF-001: Emergency SOS API Routes
+// ============================================================================
+
+// SOS Trigger endpoint - requires authentication
+Route::prefix('sos')->name('api.sos.')->middleware('auth:sanctum')->group(function () {
+    // ONE-TAP SOS TRIGGER - Designed for emergency situations with minimal data
+    Route::post('/trigger', [App\Http\Controllers\Api\EmergencyAlertController::class, 'trigger'])
+        ->name('trigger');
+
+    // Update location during active alert
+    Route::post('/location', [App\Http\Controllers\Api\EmergencyAlertController::class, 'updateLocation'])
+        ->name('location');
+
+    // Get current alert status
+    Route::get('/status', [App\Http\Controllers\Api\EmergencyAlertController::class, 'status'])
+        ->name('status');
+
+    // Cancel alert (user-initiated)
+    Route::post('/cancel', [App\Http\Controllers\Api\EmergencyAlertController::class, 'cancel'])
+        ->name('cancel');
+
+    // Request notification to emergency contacts
+    Route::post('/notify-contacts', [App\Http\Controllers\Api\EmergencyAlertController::class, 'notifyContacts'])
+        ->name('notify-contacts');
+
+    // Get user's alert history
+    Route::get('/history', [App\Http\Controllers\Api\EmergencyAlertController::class, 'history'])
+        ->name('history');
+});
+
+// ============================================================================
+// SAF-001: Admin Emergency Alert Management API Routes
+// ============================================================================
+
+Route::prefix('admin/emergency-alerts')->name('api.admin.emergency-alerts.')->middleware(['auth:sanctum', 'admin'])->group(function () {
+    // Get active alerts (for live dashboard)
+    Route::get('/active', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'getActiveAlerts'])
+        ->name('active');
+
+    // Get alert statistics
+    Route::get('/statistics', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'statistics'])
+        ->name('statistics');
+
+    // List all alerts with filtering
+    Route::get('/', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'list'])
+        ->name('index');
+
+    // Get single alert details
+    Route::get('/{id}', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'show'])
+        ->name('show');
+
+    // Acknowledge an alert
+    Route::post('/{id}/acknowledge', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'acknowledge'])
+        ->name('acknowledge');
+
+    // Resolve an alert
+    Route::post('/{id}/resolve', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'resolve'])
+        ->name('resolve');
+
+    // Mark as false alarm
+    Route::post('/{id}/false-alarm', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'markFalseAlarm'])
+        ->name('false-alarm');
+
+    // Notify emergency contacts
+    Route::post('/{id}/notify-contacts', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'notifyContacts'])
+        ->name('notify-contacts');
+
+    // Mark emergency services called
+    Route::post('/{id}/emergency-services-called', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'markEmergencyServicesCalled'])
+        ->name('emergency-services-called');
+
+    // Get location history
+    Route::get('/{id}/location-history', [App\Http\Controllers\Admin\EmergencyAlertController::class, 'locationHistory'])
+        ->name('location-history');
+});
+
+// ============================================================================
+// COM-002: Push Notification API Routes
+// ============================================================================
+
+Route::prefix('push')->name('api.push.')->middleware('auth:sanctum')->group(function () {
+    // Register device token
+    Route::post('/register', [App\Http\Controllers\Api\PushNotificationController::class, 'register'])
+        ->name('register');
+
+    // Unregister device token
+    Route::delete('/unregister', [App\Http\Controllers\Api\PushNotificationController::class, 'unregister'])
+        ->name('unregister');
+
+    // Send test notification
+    Route::get('/test', [App\Http\Controllers\Api\PushNotificationController::class, 'test'])
+        ->name('test');
+
+    // List registered tokens
+    Route::get('/tokens', [App\Http\Controllers\Api\PushNotificationController::class, 'tokens'])
+        ->name('tokens');
+
+    // Get push notification stats
+    Route::get('/stats', [App\Http\Controllers\Api\PushNotificationController::class, 'stats'])
+        ->name('stats');
+});
+
+// FCM Delivery Receipt Webhook (public endpoint with signature verification)
+Route::post('/push/receipt', [App\Http\Controllers\Api\PushNotificationController::class, 'receipt'])
+    ->name('api.push.receipt');
+
+// ============================================================================
+// GLO-001: Multi-Currency Support API Routes
+// ============================================================================
+
+// Public currency endpoints (no auth required)
+Route::prefix('currency')->name('api.currency.')->group(function () {
+    // Get list of supported currencies
+    Route::get('/supported', [App\Http\Controllers\Api\CurrencyWalletController::class, 'supportedCurrencies'])
+        ->name('supported');
+
+    // Get current exchange rates (public)
+    Route::get('/rates', [App\Http\Controllers\Api\CurrencyWalletController::class, 'exchangeRates'])
+        ->name('rates');
+});
+
+// Authenticated currency wallet endpoints
+Route::prefix('currency')->name('api.currency.')->middleware('auth:sanctum')->group(function () {
+    // Wallet Management
+    Route::get('/wallets', [App\Http\Controllers\Api\CurrencyWalletController::class, 'index'])
+        ->name('wallets.index');
+
+    Route::get('/wallets/{currency}', [App\Http\Controllers\Api\CurrencyWalletController::class, 'show'])
+        ->name('wallets.show');
+
+    Route::post('/wallets', [App\Http\Controllers\Api\CurrencyWalletController::class, 'store'])
+        ->name('wallets.store');
+
+    Route::post('/wallets/{currency}/primary', [App\Http\Controllers\Api\CurrencyWalletController::class, 'setPrimary'])
+        ->name('wallets.set-primary');
+
+    // Total balance across all wallets
+    Route::get('/total-balance', [App\Http\Controllers\Api\CurrencyWalletController::class, 'totalBalance'])
+        ->name('total-balance');
+
+    // Currency Conversion
+    Route::post('/convert/preview', [App\Http\Controllers\Api\CurrencyWalletController::class, 'previewConversion'])
+        ->name('convert.preview');
+
+    Route::post('/convert', [App\Http\Controllers\Api\CurrencyWalletController::class, 'convert'])
+        ->name('convert');
+
+    // Conversion History
+    Route::get('/conversions', [App\Http\Controllers\Api\CurrencyWalletController::class, 'conversionHistory'])
+        ->name('conversions');
+});
+
+// ============================================================================
+// WKR-013: Availability Forecasting API Routes
+// ============================================================================
+
+Route::prefix('forecasting')->name('api.forecasting.')->middleware('auth:sanctum')->group(function () {
+    // Worker Patterns & Predictions
+    Route::get('/workers/{workerId}/patterns', [App\Http\Controllers\AvailabilityForecastController::class, 'getWorkerPatterns'])
+        ->name('worker.patterns');
+
+    Route::get('/workers/{workerId}/predictions', [App\Http\Controllers\AvailabilityForecastController::class, 'getWorkerPredictions'])
+        ->name('worker.predictions');
+
+    Route::get('/workers/{workerId}/predictions/{date}', [App\Http\Controllers\AvailabilityForecastController::class, 'getWorkerPredictionForDate'])
+        ->name('worker.prediction.date');
+
+    Route::post('/workers/{workerId}/refresh-patterns', [App\Http\Controllers\AvailabilityForecastController::class, 'refreshWorkerPatterns'])
+        ->name('worker.refresh-patterns');
+
+    // Demand Forecasts
+    Route::get('/demand', [App\Http\Controllers\AvailabilityForecastController::class, 'getDemandForecasts'])
+        ->name('demand');
+
+    Route::get('/demand/gap', [App\Http\Controllers\AvailabilityForecastController::class, 'getSupplyDemandGap'])
+        ->name('demand.gap');
+
+    Route::get('/demand/critical', [App\Http\Controllers\AvailabilityForecastController::class, 'getCriticalForecasts'])
+        ->name('demand.critical');
+
+    Route::get('/demand/trends', [App\Http\Controllers\AvailabilityForecastController::class, 'getDemandTrends'])
+        ->name('demand.trends');
+
+    // Available Workers
+    Route::get('/available-workers', [App\Http\Controllers\AvailabilityForecastController::class, 'getAvailableWorkers'])
+        ->name('available-workers');
+
+    Route::get('/shifts/{shiftId}/recommended-workers', [App\Http\Controllers\AvailabilityForecastController::class, 'getRecommendedWorkersForShift'])
+        ->name('shift.recommended-workers');
+
+    // Analytics
+    Route::get('/accuracy', [App\Http\Controllers\AvailabilityForecastController::class, 'getPredictionAccuracy'])
+        ->name('accuracy');
+
+    // Reference Data
+    Route::get('/regions', [App\Http\Controllers\AvailabilityForecastController::class, 'getRegions'])
+        ->name('regions');
+
+    Route::get('/skill-categories', [App\Http\Controllers\AvailabilityForecastController::class, 'getSkillCategories'])
+        ->name('skill-categories');
+});
+
+// ============================================================================
+// GLO-007: Holiday Calendar API Routes
+// ============================================================================
+
+Route::prefix('holidays')->name('api.holidays.')->group(function () {
+    // Public holiday data (no auth required)
+    Route::get('/countries', [App\Http\Controllers\HolidayController::class, 'countries'])
+        ->name('countries');
+
+    Route::get('/check', [App\Http\Controllers\HolidayController::class, 'checkDate'])
+        ->name('check');
+
+    Route::get('/list', [App\Http\Controllers\HolidayController::class, 'getHolidays'])
+        ->name('list');
+
+    Route::get('/upcoming', [App\Http\Controllers\HolidayController::class, 'upcoming'])
+        ->name('upcoming');
+
+    Route::get('/next', [App\Http\Controllers\HolidayController::class, 'next'])
+        ->name('next');
+
+    Route::get('/range', [App\Http\Controllers\HolidayController::class, 'forDateRange'])
+        ->name('range');
+
+    Route::get('/search', [App\Http\Controllers\HolidayController::class, 'search'])
+        ->name('search');
+});
+
+// ============================================================================
+// COM-004: SMS & WhatsApp Messaging Webhook Routes
+// ============================================================================
+
+// WhatsApp Webhook (Meta/Facebook) - public endpoints for webhook verification and events
+Route::prefix('webhooks/whatsapp')->name('api.webhooks.whatsapp.')->group(function () {
+    // Webhook verification (GET) - Meta sends this during webhook setup
+    Route::get('/', [App\Http\Controllers\Api\MessagingWebhookController::class, 'verifyWhatsApp'])
+        ->name('verify');
+
+    // Webhook events (POST) - Message status updates, incoming messages
+    Route::post('/', [App\Http\Controllers\Api\MessagingWebhookController::class, 'handleWhatsApp'])
+        ->name('handle');
+});
+
+// SMS Provider Webhooks - status callbacks
+Route::prefix('webhooks/sms')->name('api.webhooks.sms.')->group(function () {
+    // Twilio Status Callback
+    Route::post('/twilio/status', [App\Http\Controllers\Api\MessagingWebhookController::class, 'handleTwilioStatus'])
+        ->name('twilio.status');
+
+    // Twilio WhatsApp Status Callback
+    Route::post('/twilio/whatsapp', [App\Http\Controllers\Api\MessagingWebhookController::class, 'handleTwilioWhatsApp'])
+        ->name('twilio.whatsapp');
+
+    // Vonage (Nexmo) Delivery Receipt
+    Route::post('/vonage/status', [App\Http\Controllers\Api\MessagingWebhookController::class, 'handleVonageStatus'])
+        ->name('vonage.status');
+
+    // MessageBird Status Webhook
+    Route::post('/messagebird/status', [App\Http\Controllers\Api\MessagingWebhookController::class, 'handleMessageBirdStatus'])
+        ->name('messagebird.status');
+
+    // Generic incoming SMS handler
+    Route::post('/{provider}/incoming', [App\Http\Controllers\Api\MessagingWebhookController::class, 'handleIncomingSms'])
+        ->name('incoming')
+        ->where('provider', 'twilio|vonage|messagebird');
+});
+
+// ============================================================================
+// COM-004: Authenticated Messaging API Routes
+// ============================================================================
+
+Route::prefix('messaging')->name('api.messaging.')->middleware('auth:sanctum')->group(function () {
+    // User messaging preferences
+    Route::get('/preferences', [App\Http\Controllers\Api\MessagingController::class, 'getPreferences'])
+        ->name('preferences');
+
+    Route::put('/preferences', [App\Http\Controllers\Api\MessagingController::class, 'updatePreferences'])
+        ->name('preferences.update');
+
+    Route::post('/preferences/quiet-hours', [App\Http\Controllers\Api\MessagingController::class, 'setQuietHours'])
+        ->name('preferences.quiet-hours');
+
+    Route::delete('/preferences/quiet-hours', [App\Http\Controllers\Api\MessagingController::class, 'clearQuietHours'])
+        ->name('preferences.quiet-hours.clear');
+
+    Route::post('/preferences/whatsapp/enable', [App\Http\Controllers\Api\MessagingController::class, 'enableWhatsApp'])
+        ->name('preferences.whatsapp.enable');
+
+    Route::post('/preferences/whatsapp/disable', [App\Http\Controllers\Api\MessagingController::class, 'disableWhatsApp'])
+        ->name('preferences.whatsapp.disable');
+
+    // Message history
+    Route::get('/history', [App\Http\Controllers\Api\MessagingController::class, 'getHistory'])
+        ->name('history');
+
+    // Message statistics
+    Route::get('/stats', [App\Http\Controllers\Api\MessagingController::class, 'getStats'])
+        ->name('stats');
+
+    // Send test message (development only)
+    Route::post('/test', [App\Http\Controllers\Api\MessagingController::class, 'sendTest'])
+        ->name('test');
 });

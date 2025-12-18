@@ -2,76 +2,80 @@
 
 namespace App\Providers;
 
-use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Auth;
 use App\Auth\SessionGuard;
-use App\Models\User;
-use App\Models\WorkerProfile;
-use App\Models\BusinessProfile;
-use App\Models\AgencyProfile;
-use App\Models\Shift;
-use App\Models\ShiftTemplate;
-use App\Models\ShiftApplication;
-use App\Models\ShiftAssignment;
-use App\Models\ShiftPayment;
-use App\Models\ShiftSwap;
-use App\Models\ShiftInvitation;
-use App\Models\ShiftNotification;
-use App\Models\ShiftAttachment;
-use App\Models\WorkerSkill;
-use App\Models\WorkerCertification;
-use App\Models\WorkerBadge;
-use App\Models\WorkerAvailabilitySchedule;
-use App\Models\WorkerBlackoutDate;
-use App\Models\AvailabilityBroadcast;
-use App\Models\Skill;
-use App\Models\Certification;
-use App\Models\Rating;
-use App\Models\Message;
-use App\Models\Conversation;
-use App\Models\VerificationQueue;
 use App\Models\AdminDisputeQueue;
 use App\Models\AdminSettings;
+use App\Models\AgencyProfile;
 use App\Models\AgencyWorker;
-use App\Models\Countries;
-use App\Models\States;
-use App\Models\TaxRates;
-use App\Models\Pages;
+use App\Models\AvailabilityBroadcast;
+use App\Models\BankAccount;
 use App\Models\Blogs;
-use App\Policies\UserPolicy;
-use App\Policies\WorkerProfilePolicy;
-use App\Policies\BusinessProfilePolicy;
-use App\Policies\AgencyProfilePolicy;
-use App\Policies\ShiftPolicy;
-use App\Policies\ShiftTemplatePolicy;
-use App\Policies\ShiftApplicationPolicy;
-use App\Policies\ShiftAssignmentPolicy;
-use App\Policies\ShiftPaymentPolicy;
-use App\Policies\ShiftSwapPolicy;
-use App\Policies\ShiftInvitationPolicy;
-use App\Policies\ShiftNotificationPolicy;
-use App\Policies\ShiftAttachmentPolicy;
-use App\Policies\WorkerSkillPolicy;
-use App\Policies\WorkerCertificationPolicy;
-use App\Policies\WorkerBadgePolicy;
-use App\Policies\WorkerAvailabilitySchedulePolicy;
-use App\Policies\WorkerBlackoutDatePolicy;
-use App\Policies\AvailabilityBroadcastPolicy;
-use App\Policies\SkillPolicy;
-use App\Policies\CertificationPolicy;
-use App\Policies\RatingPolicy;
-use App\Policies\MessagePolicy;
-use App\Policies\ConversationPolicy;
-use App\Policies\VerificationQueuePolicy;
+use App\Models\BusinessProfile;
+use App\Models\Certification;
+use App\Models\Conversation;
+use App\Models\Countries;
+use App\Models\Message;
+use App\Models\Pages;
+use App\Models\Rating;
+use App\Models\Shift;
+use App\Models\ShiftApplication;
+use App\Models\ShiftAssignment;
+use App\Models\ShiftAttachment;
+use App\Models\ShiftInvitation;
+use App\Models\ShiftNotification;
+use App\Models\ShiftPayment;
+use App\Models\ShiftSwap;
+use App\Models\ShiftTemplate;
+use App\Models\Skill;
+use App\Models\States;
+use App\Models\TaxForm;
+use App\Models\TaxRates;
+use App\Models\User;
+use App\Models\VerificationQueue;
+use App\Models\WorkerAvailabilitySchedule;
+use App\Models\WorkerBadge;
+use App\Models\WorkerBlackoutDate;
+use App\Models\WorkerCertification;
+use App\Models\WorkerProfile;
+use App\Models\WorkerSkill;
 use App\Policies\AdminDisputeQueuePolicy;
 use App\Policies\AdminSettingsPolicy;
+use App\Policies\AgencyProfilePolicy;
 use App\Policies\AgencyWorkerPolicy;
-use App\Policies\CountriesPolicy;
-use App\Policies\StatesPolicy;
-use App\Policies\TaxRatesPolicy;
-use App\Policies\PagesPolicy;
+use App\Policies\AvailabilityBroadcastPolicy;
+use App\Policies\BankAccountPolicy;
 use App\Policies\BlogsPolicy;
+use App\Policies\BusinessProfilePolicy;
+use App\Policies\CertificationPolicy;
+use App\Policies\ConversationPolicy;
+use App\Policies\CountriesPolicy;
+use App\Policies\MessagePolicy;
+use App\Policies\PagesPolicy;
+use App\Policies\RatingPolicy;
+use App\Policies\ShiftApplicationPolicy;
+use App\Policies\ShiftAssignmentPolicy;
+use App\Policies\ShiftAttachmentPolicy;
+use App\Policies\ShiftInvitationPolicy;
+use App\Policies\ShiftNotificationPolicy;
+use App\Policies\ShiftPaymentPolicy;
+use App\Policies\ShiftPolicy;
+use App\Policies\ShiftSwapPolicy;
+use App\Policies\ShiftTemplatePolicy;
+use App\Policies\SkillPolicy;
+use App\Policies\StatesPolicy;
+use App\Policies\TaxFormPolicy;
+use App\Policies\TaxRatesPolicy;
+use App\Policies\UserPolicy;
+use App\Policies\VerificationQueuePolicy;
+use App\Policies\WorkerAvailabilitySchedulePolicy;
+use App\Policies\WorkerBadgePolicy;
+use App\Policies\WorkerBlackoutDatePolicy;
+use App\Policies\WorkerCertificationPolicy;
+use App\Policies\WorkerProfilePolicy;
+use App\Policies\WorkerSkillPolicy;
+use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -111,9 +115,11 @@ class AuthServiceProvider extends ServiceProvider
         AgencyWorker::class => AgencyWorkerPolicy::class,
         Countries::class => CountriesPolicy::class,
         States::class => StatesPolicy::class,
+        TaxForm::class => TaxFormPolicy::class, // GLO-002: Tax Jurisdiction Engine
         TaxRates::class => TaxRatesPolicy::class,
         Pages::class => PagesPolicy::class,
         Blogs::class => BlogsPolicy::class,
+        BankAccount::class => BankAccountPolicy::class,
     ];
 
     /**
@@ -150,8 +156,6 @@ class AuthServiceProvider extends ServiceProvider
      * This guard enhances security by rotating the remember_token on every
      * authentication event, preventing session fixation attacks and limiting
      * the damage if a remember token is compromised.
-     *
-     * @return void
      */
     protected function registerSessionRotatingGuard(): void
     {

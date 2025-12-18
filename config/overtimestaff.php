@@ -21,14 +21,52 @@ return [
     | Surge Pricing Settings
     |--------------------------------------------------------------------------
     |
-    | Multipliers for various surge conditions.
+    | SL-008: Comprehensive surge pricing configuration.
+    | Includes time-based, demand-based, and event-based surge multipliers.
     |
     */
     'surge' => [
+        // Legacy simple multipliers (kept for backward compatibility)
         'urgent_shift' => 0.50, // +50%
         'night_shift' => 0.30, // +30%
         'weekend' => 0.20, // +20%
         'public_holiday' => 0.50, // +50%
+
+        // Time-based surge configuration
+        'time_based' => [
+            'enabled' => true,
+            'night_hours' => ['22:00', '06:00'], // Night shift window
+            'night_multiplier' => 1.25, // 1.25x for night shifts
+            'weekend_multiplier' => 1.15, // 1.15x for weekend shifts
+            'urgent_multiplier' => 1.50, // 1.50x for urgent (<24h) shifts
+        ],
+
+        // Demand-based surge configuration
+        'demand_based' => [
+            'enabled' => true,
+            // Thresholds based on fill rate (percentage of shifts filled)
+            // Higher fill rate = lower surge (less demand pressure)
+            'thresholds' => [
+                ['ratio' => 0.8, 'multiplier' => 1.0],  // 80%+ fill rate = no surge
+                ['ratio' => 0.6, 'multiplier' => 1.2],  // 60-80% fill rate = 1.2x
+                ['ratio' => 0.4, 'multiplier' => 1.5],  // 40-60% fill rate = 1.5x
+                ['ratio' => 0.0, 'multiplier' => 2.0],  // <40% fill rate = 2.0x (critical)
+            ],
+        ],
+
+        // Event-based surge configuration
+        'event_based' => [
+            'enabled' => true,
+            'max_multiplier' => 2.5, // Cap event surge at 2.5x
+        ],
+
+        // How to combine multiple surge types
+        // 'highest' = use the highest single multiplier
+        // 'multiplicative' = multiply all surge factors together
+        'combination_method' => 'highest',
+
+        // Maximum total surge multiplier allowed (safety cap)
+        'cap' => 3.0,
     ],
 
     /*

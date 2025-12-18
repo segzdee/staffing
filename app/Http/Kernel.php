@@ -39,7 +39,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\Language::class,
+            \App\Http\Middleware\SetLocaleMiddleware::class, // GLO-006: Enhanced locale detection (replaces Language)
             \App\Http\Middleware\UserOnline::class,
             \App\Http\Middleware\UserCountry::class,
             \App\Http\Middleware\Referred::class,
@@ -71,7 +71,8 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'role' => \App\Http\Middleware\RoleMiddleware::class,
-        'language' => \App\Http\Middleware\Language::class,
+        'language' => \App\Http\Middleware\SetLocaleMiddleware::class, // GLO-006: Enhanced locale detection
+        'set-locale' => \App\Http\Middleware\SetLocaleMiddleware::class, // GLO-006: Alias for new middleware
         'private.content' => \App\Http\Middleware\PrivateContent::class,
         'live' => \App\Http\Middleware\OnlineUsersLive::class,
         'worker' => \App\Http\Middleware\WorkerMiddleware::class,
@@ -83,5 +84,6 @@ class Kernel extends HttpKernel
         'business.activated' => \App\Http\Middleware\EnsureBusinessActivated::class, // BIZ-REG-011: Business activation gate
         'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class, // SECURITY: Webhook signature verification
         'two-factor' => \App\Http\Middleware\EnsureTwoFactorVerified::class, // SECURITY: Two-factor authentication verification
+        'white-label' => \App\Http\Middleware\WhiteLabelMiddleware::class, // AGY-006: White-label branding detection
     ];
 }

@@ -11,7 +11,7 @@
              <div class="flex items-center gap-3">
                 @if($icon)
                     <div class="p-2 bg-muted rounded-lg">
-                        <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
                         </svg>
                     </div>
@@ -20,7 +20,7 @@
             </div>
 
             @if($action)
-                <a href="{{ $action }}" class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                <a href="{{ $action }}" class="text-sm font-medium text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:text-primary focus:underline">
                     {{ $actionLabel }} &rarr;
                 </a>
             @endif

@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Shift;
+use App\Models\TeamShiftRequest;
 use App\Models\User;
 use App\Models\WorkerProfile;
+use App\Models\WorkerRelationship;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -500,6 +502,14 @@ class ShiftMatchingService
         $langBonus = $this->getLanguageBonus($worker, $shift);
         $bonus += $langBonus;
 
+        // WKR-014: Buddy/Coworker relationship bonus (up to 15 points)
+        $relationshipBonus = $this->getRelationshipBonus($worker, $shift);
+        $bonus += $relationshipBonus;
+
+        // WKR-014: Team application priority bonus (up to 10 points)
+        $teamBonus = $this->getTeamApplicationBonus($worker, $shift);
+        $bonus += $teamBonus;
+
         return $bonus;
     }
 
@@ -694,5 +704,316 @@ class ShiftMatchingService
         ];
 
         return $marketRates[$role] ?? 15.00;
+    }
+
+    // =========================================================================
+    // WKR-014: TEAM FORMATION - BUDDY/COWORKER MATCHING
+    // =========================================================================
+
+    /**
+     * Get relationship bonus based on buddy/preferred coworker matching.
+     * WKR-014: Team Formation
+     *
+     * Bonus structure:
+     * - Buddy already assigned to shift: +15 points
+     * - Preferred coworker assigned: +8 points
+     * - Avoided worker assigned: -20 points (penalty)
+     */
+    protected function getRelationshipBonus(User $worker, Shift $shift): float
+    {
+        $bonus = 0.0;
+
+        // Get workers already assigned to this shift
+        $assignedWorkerIds = DB::table('shift_assignments')
+            ->where('shift_id', $shift->id)
+            ->whereIn('status', ['assigned', 'checked_in'])
+            ->pluck('worker_id')
+            ->toArray();
+
+        if (empty($assignedWorkerIds)) {
+            return 0.0;
+        }
+
+        // Check for buddy relationships (mutual buddies give highest bonus)
+        $buddyCount = WorkerRelationship::where('worker_id', $worker->id)
+            ->whereIn('related_worker_id', $assignedWorkerIds)
+            ->where('relationship_type', WorkerRelationship::TYPE_BUDDY)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->where('is_mutual', true)
+            ->count();
+
+        $bonus += $buddyCount * 15; // 15 points per buddy on shift
+
+        // Check for preferred coworkers
+        $preferredCount = WorkerRelationship::where('worker_id', $worker->id)
+            ->whereIn('related_worker_id', $assignedWorkerIds)
+            ->where('relationship_type', WorkerRelationship::TYPE_PREFERRED)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->count();
+
+        $bonus += $preferredCount * 8; // 8 points per preferred coworker
+
+        // Check for avoided workers (penalty)
+        $avoidedCount = WorkerRelationship::where('worker_id', $worker->id)
+            ->whereIn('related_worker_id', $assignedWorkerIds)
+            ->where('relationship_type', WorkerRelationship::TYPE_AVOIDED)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->count();
+
+        // Also check if any assigned worker has marked this worker as avoided
+        $avoidedByCount = WorkerRelationship::whereIn('worker_id', $assignedWorkerIds)
+            ->where('related_worker_id', $worker->id)
+            ->where('relationship_type', WorkerRelationship::TYPE_AVOIDED)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->count();
+
+        $totalAvoided = $avoidedCount + $avoidedByCount;
+        $bonus -= $totalAvoided * 20; // -20 points per avoided worker conflict
+
+        // Cap the bonus to reasonable range
+        return max(-50, min(30, $bonus));
+    }
+
+    /**
+     * Get team application bonus for workers who are part of a team applying.
+     * WKR-014: Team Formation
+     *
+     * Workers who are part of an approved or pending team application
+     * get priority in matching.
+     */
+    protected function getTeamApplicationBonus(User $worker, Shift $shift): float
+    {
+        // Check if worker is part of a team with an active application for this shift
+        $teamRequest = TeamShiftRequest::where('shift_id', $shift->id)
+            ->whereIn('status', [
+                TeamShiftRequest::STATUS_PENDING,
+                TeamShiftRequest::STATUS_PARTIAL,
+                TeamShiftRequest::STATUS_APPROVED,
+            ])
+            ->whereJsonContains('confirmed_members', $worker->id)
+            ->first();
+
+        if (! $teamRequest) {
+            return 0.0;
+        }
+
+        // Calculate bonus based on team request status and priority
+        $bonus = 0.0;
+
+        // Base bonus for being part of a team application
+        $bonus += 5;
+
+        // Additional bonus for approved team applications
+        if ($teamRequest->status === TeamShiftRequest::STATUS_APPROVED) {
+            $bonus += 5;
+        }
+
+        // Priority score bonus (team has worked with business before, etc.)
+        $bonus += min(5, $teamRequest->priority_score / 10);
+
+        return $bonus;
+    }
+
+    /**
+     * Check if a shift assignment would create avoided worker conflicts.
+     * WKR-014: Team Formation
+     *
+     * @return array Contains 'has_conflict' boolean and 'conflicts' array
+     */
+    public function checkAvoidanceConflicts(User $worker, Shift $shift): array
+    {
+        $assignedWorkerIds = DB::table('shift_assignments')
+            ->where('shift_id', $shift->id)
+            ->whereIn('status', ['assigned', 'checked_in'])
+            ->pluck('worker_id')
+            ->toArray();
+
+        if (empty($assignedWorkerIds)) {
+            return ['has_conflict' => false, 'conflicts' => []];
+        }
+
+        // Workers that the candidate has marked as avoided
+        $avoidedByWorker = WorkerRelationship::where('worker_id', $worker->id)
+            ->whereIn('related_worker_id', $assignedWorkerIds)
+            ->where('relationship_type', WorkerRelationship::TYPE_AVOIDED)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->with('relatedWorker:id,name')
+            ->get();
+
+        // Assigned workers who have marked the candidate as avoided
+        $workerAvoidedBy = WorkerRelationship::whereIn('worker_id', $assignedWorkerIds)
+            ->where('related_worker_id', $worker->id)
+            ->where('relationship_type', WorkerRelationship::TYPE_AVOIDED)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->with('worker:id,name')
+            ->get();
+
+        $conflicts = [];
+
+        foreach ($avoidedByWorker as $relation) {
+            $conflicts[] = [
+                'type' => 'worker_avoids',
+                'worker_id' => $relation->related_worker_id,
+                'worker_name' => $relation->relatedWorker->name ?? 'Unknown',
+                'reason' => 'Candidate has marked this worker as avoided',
+            ];
+        }
+
+        foreach ($workerAvoidedBy as $relation) {
+            $conflicts[] = [
+                'type' => 'avoided_by_worker',
+                'worker_id' => $relation->worker_id,
+                'worker_name' => $relation->worker->name ?? 'Unknown',
+                'reason' => 'This worker has marked the candidate as avoided',
+            ];
+        }
+
+        return [
+            'has_conflict' => ! empty($conflicts),
+            'conflicts' => $conflicts,
+        ];
+    }
+
+    /**
+     * Get buddy pairs among workers assigned to a shift.
+     * WKR-014: Team Formation
+     *
+     * Useful for optimizing break schedules, task assignments, etc.
+     */
+    public function getBuddyPairsOnShift(Shift $shift): array
+    {
+        $assignedWorkerIds = DB::table('shift_assignments')
+            ->where('shift_id', $shift->id)
+            ->whereIn('status', ['assigned', 'checked_in', 'completed'])
+            ->pluck('worker_id')
+            ->toArray();
+
+        if (count($assignedWorkerIds) < 2) {
+            return [];
+        }
+
+        // Find mutual buddy relationships among assigned workers
+        $buddyPairs = WorkerRelationship::whereIn('worker_id', $assignedWorkerIds)
+            ->whereIn('related_worker_id', $assignedWorkerIds)
+            ->where('relationship_type', WorkerRelationship::TYPE_BUDDY)
+            ->where('status', WorkerRelationship::STATUS_ACTIVE)
+            ->where('is_mutual', true)
+            ->with(['worker:id,name', 'relatedWorker:id,name'])
+            ->get()
+            ->map(function ($relation) {
+                // Only include each pair once (worker_id < related_worker_id)
+                if ($relation->worker_id > $relation->related_worker_id) {
+                    return null;
+                }
+
+                return [
+                    'worker_1' => [
+                        'id' => $relation->worker_id,
+                        'name' => $relation->worker->name ?? 'Unknown',
+                    ],
+                    'worker_2' => [
+                        'id' => $relation->related_worker_id,
+                        'name' => $relation->relatedWorker->name ?? 'Unknown',
+                    ],
+                    'compatibility_score' => $relation->compatibility_score,
+                    'shifts_together' => $relation->shifts_together,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->toArray();
+
+        return $buddyPairs;
+    }
+
+    /**
+     * Suggest optimal worker assignments based on relationships.
+     * WKR-014: Team Formation
+     *
+     * Given a shift and a list of applicants, suggests the best combination
+     * considering buddy pairs and avoided worker conflicts.
+     */
+    public function suggestOptimalAssignments(Shift $shift, array $applicantIds): array
+    {
+        $requiredWorkers = $shift->required_workers - $shift->filled_workers;
+
+        if ($requiredWorkers <= 0 || empty($applicantIds)) {
+            return [];
+        }
+
+        // Score each applicant considering existing assignments
+        $scoredApplicants = [];
+
+        foreach ($applicantIds as $applicantId) {
+            $worker = User::find($applicantId);
+            if (! $worker) {
+                continue;
+            }
+
+            $matchScore = $this->calculateWorkerShiftMatch($worker, $shift);
+            $conflictCheck = $this->checkAvoidanceConflicts($worker, $shift);
+
+            $scoredApplicants[] = [
+                'worker_id' => $applicantId,
+                'match_score' => $matchScore['final_score'],
+                'has_conflict' => $conflictCheck['has_conflict'],
+                'conflict_count' => count($conflictCheck['conflicts']),
+                'conflicts' => $conflictCheck['conflicts'],
+            ];
+        }
+
+        // Sort by match score (highest first), deprioritizing those with conflicts
+        usort($scoredApplicants, function ($a, $b) {
+            // First prioritize no-conflict workers
+            if ($a['has_conflict'] !== $b['has_conflict']) {
+                return $a['has_conflict'] ? 1 : -1;
+            }
+
+            // Then by conflict count (fewer is better)
+            if ($a['conflict_count'] !== $b['conflict_count']) {
+                return $a['conflict_count'] - $b['conflict_count'];
+            }
+
+            // Finally by match score
+            return $b['match_score'] <=> $a['match_score'];
+        });
+
+        // Return top candidates up to required count
+        return array_slice($scoredApplicants, 0, $requiredWorkers);
+    }
+
+    /**
+     * Prioritize team applications for a shift.
+     * WKR-014: Team Formation
+     *
+     * Returns team applications sorted by priority score.
+     */
+    public function getTeamApplicationsForShift(Shift $shift): array
+    {
+        return TeamShiftRequest::where('shift_id', $shift->id)
+            ->whereIn('status', [
+                TeamShiftRequest::STATUS_PENDING,
+                TeamShiftRequest::STATUS_PARTIAL,
+            ])
+            ->with(['team', 'requester:id,name'])
+            ->orderByDesc('priority_score')
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($request) {
+                return [
+                    'request_id' => $request->id,
+                    'team_id' => $request->team_id,
+                    'team_name' => $request->team->name ?? 'Unknown Team',
+                    'members_needed' => $request->members_needed,
+                    'members_confirmed' => $request->members_confirmed,
+                    'progress' => $request->getProgressPercentage(),
+                    'priority_score' => $request->priority_score,
+                    'status' => $request->status,
+                    'requested_by' => $request->requester->name ?? 'Unknown',
+                    'application_message' => $request->application_message,
+                    'created_at' => $request->created_at->toISOString(),
+                ];
+            })
+            ->toArray();
     }
 }

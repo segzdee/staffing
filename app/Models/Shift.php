@@ -127,6 +127,7 @@ use Illuminate\Support\Facades\Cache;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftSwap> $swapRequests
  * @property-read int|null $swap_requests_count
  * @property-read \App\Models\ShiftTemplate|null $template
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift byIndustry($industry)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift demoShifts()
  * @method static \Database\Factories\ShiftFactory factory($count = null, $state = [])
@@ -234,6 +235,7 @@ use Illuminate\Support\Facades\Cache;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift whereWorkerCompensationAmount($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Shift withoutTrashed()
+ *
  * @mixin \Eloquent
  */
 class Shift extends Model
@@ -347,6 +349,14 @@ class Shift extends Model
         'market_applications',
         'agency_client_id',
         'posted_by_agency_id',
+
+        // SAF-005: Health protocol fields
+        'requires_health_declaration',
+        'requires_vaccination',
+        'required_vaccinations',
+        'ppe_requirements',
+        'max_capacity',
+        'health_protocols_notes',
     ];
 
     /**
@@ -426,6 +436,13 @@ class Shift extends Model
         'market_posted_at' => 'datetime',
         'market_views' => 'integer',
         'market_applications' => 'integer',
+
+        // SAF-005: Health protocol casts
+        'requires_health_declaration' => 'boolean',
+        'requires_vaccination' => 'boolean',
+        'required_vaccinations' => 'array',
+        'ppe_requirements' => 'array',
+        'max_capacity' => 'integer',
     ];
 
     /**
@@ -477,6 +494,14 @@ class Shift extends Model
     }
 
     /**
+     * SAF-005: Get all health declarations for this shift.
+     */
+    public function healthDeclarations()
+    {
+        return $this->hasMany(HealthDeclaration::class);
+    }
+
+    /**
      * Get pending applications.
      */
     public function pendingApplications()
@@ -507,7 +532,7 @@ class Shift extends Model
      */
     public function isOpen()
     {
-        return $this->status === 'open' && !$this->isFull();
+        return $this->status === 'open' && ! $this->isFull();
     }
 
     /**
@@ -552,7 +577,7 @@ class Shift extends Model
     {
         // Haversine formula for nearby locations (radius in miles)
         // Using whereRaw instead of havingRaw for SQLite compatibility
-        return $query->selectRaw("
+        return $query->selectRaw('
             *,
             ( 3959 * acos( cos( radians(?) ) *
               cos( radians( location_lat ) ) *
@@ -560,15 +585,15 @@ class Shift extends Model
               sin( radians(?) ) *
               sin( radians( location_lat ) ) )
             ) AS distance
-        ", [$lat, $lng, $lat])
-            ->whereRaw("
+        ', [$lat, $lng, $lat])
+            ->whereRaw('
             ( 3959 * acos( cos( radians(?) ) *
               cos( radians( location_lat ) ) *
               cos( radians( location_lng ) - radians(?) ) +
               sin( radians(?) ) *
               sin( radians( location_lat ) ) )
             ) < ?
-        ", [$lat, $lng, $lat, $radius])
+        ', [$lat, $lng, $lat, $radius])
             ->orderBy('distance');
     }
 
@@ -589,6 +614,7 @@ class Shift extends Model
         $pricingService = app(\App\Services\ShiftPricingService::class);
         $pricingService->calculateCosts($this);
         $this->save();
+
         return $this;
     }
 
@@ -616,6 +642,7 @@ class Shift extends Model
     {
         $pricingService = app(\App\Services\ShiftPricingService::class);
         $pricingService->calculateSurge($this);
+
         return $this;
     }
 
@@ -708,14 +735,11 @@ class Shift extends Model
     /**
      * Cancel shift by worker with reliability impact.
      * SL-010: Worker Cancellation Logic
-     *
-     * @param ShiftAssignment $assignment
-     * @param array $cancellationData
-     * @return array
      */
     public function cancelByWorker(ShiftAssignment $assignment, array $cancellationData = []): array
     {
         $service = app(\App\Services\WorkerCancellationService::class);
+
         return $service->cancelByWorker($assignment, $cancellationData);
     }
 
@@ -728,7 +752,7 @@ class Shift extends Model
      */
     public function isConfirmed()
     {
-        return !is_null($this->confirmed_at);
+        return ! is_null($this->confirmed_at);
     }
 
     /**
@@ -736,7 +760,7 @@ class Shift extends Model
      */
     public function hasStarted()
     {
-        return !is_null($this->started_at);
+        return ! is_null($this->started_at);
     }
 
     /**
@@ -744,7 +768,7 @@ class Shift extends Model
      */
     public function isCompleted()
     {
-        return !is_null($this->completed_at);
+        return ! is_null($this->completed_at);
     }
 
     /**
@@ -752,7 +776,7 @@ class Shift extends Model
      */
     public function isVerified()
     {
-        return !is_null($this->verified_at) || !is_null($this->auto_approved_at);
+        return ! is_null($this->verified_at) || ! is_null($this->auto_approved_at);
     }
 
     /**
@@ -768,8 +792,9 @@ class Shift extends Model
      */
     public function shouldAutoApprove()
     {
-        if ($this->isCompleted() && !$this->isVerified() && $this->auto_approval_eligible) {
+        if ($this->isCompleted() && ! $this->isVerified() && $this->auto_approval_eligible) {
             $hoursElapsed = $this->completed_at->diffInHours(now());
+
             return $hoursElapsed >= 72;
         }
 
@@ -872,6 +897,7 @@ class Shift extends Model
         if ($this->required_workers == 0) {
             return 0;
         }
+
         return round(($this->filled_workers / $this->required_workers) * 100);
     }
 
@@ -885,7 +911,7 @@ class Shift extends Model
     public function getUrgencyAttribute(): string
     {
         $startDatetime = $this->getStartDatetimeCarbon();
-        if (!$startDatetime) {
+        if (! $startDatetime) {
             return 'open';
         }
 
@@ -903,6 +929,7 @@ class Shift extends Model
         if ($hoursUntil < 24) {
             return 'soon';
         }
+
         return 'open';
     }
 
@@ -926,7 +953,7 @@ class Shift extends Model
             $rate = ((float) $rateObj->getAmount()) / 100;
         }
 
-        if (!$rate || $avgRate == 0) {
+        if (! $rate || $avgRate == 0) {
             return 'gray';
         }
 
@@ -941,6 +968,7 @@ class Shift extends Model
         if ($diff >= -5) {
             return 'gray';
         }
+
         return 'orange';
     }
 
@@ -966,7 +994,7 @@ class Shift extends Model
             $rate = ((float) $rateObj->getAmount()) / 100;
         }
 
-        if (!$rate || $avgRate == 0) {
+        if (! $rate || $avgRate == 0) {
             return 0;
         }
 
@@ -979,7 +1007,7 @@ class Shift extends Model
     public function getTimeAwayAttribute(): string
     {
         $startDatetime = $this->getStartDatetimeCarbon();
-        if (!$startDatetime) {
+        if (! $startDatetime) {
             return 'TBD';
         }
 
@@ -992,7 +1020,7 @@ class Shift extends Model
     public function getFormattedDateAttribute(): string
     {
         $startDatetime = $this->getStartDatetimeCarbon();
-        if (!$startDatetime) {
+        if (! $startDatetime) {
             return 'TBD';
         }
 
@@ -1021,6 +1049,7 @@ class Shift extends Model
         if ($percent <= 50) {
             return 'yellow';
         }
+
         return 'green';
     }
 
@@ -1038,6 +1067,7 @@ class Shift extends Model
     public function getColorAttribute(): string
     {
         $colors = ['blue', 'green', 'purple', 'pink', 'orange'];
+
         return $colors[($this->business_id ?? 0) % count($colors)];
     }
 
@@ -1046,7 +1076,7 @@ class Shift extends Model
      */
     public function getHasAppliedAttribute(): bool
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return false;
         }
 
@@ -1159,6 +1189,80 @@ class Shift extends Model
     }
 
     // =========================================
+    // SL-012: Multi-Position Shifts
+    // =========================================
+
+    /**
+     * Get all positions for this shift.
+     */
+    public function positions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ShiftPosition::class);
+    }
+
+    /**
+     * Check if this is a multi-position shift (has more than one position defined).
+     */
+    public function isMultiPosition(): bool
+    {
+        return $this->positions()->count() > 1;
+    }
+
+    /**
+     * Check if this shift has any positions defined.
+     */
+    public function hasPositions(): bool
+    {
+        return $this->positions()->count() > 0;
+    }
+
+    /**
+     * Get available positions (not fully filled) for this shift.
+     */
+    public function availablePositions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->positions()
+            ->whereIn('status', [ShiftPosition::STATUS_OPEN, ShiftPosition::STATUS_PARTIALLY_FILLED])
+            ->whereColumn('filled_workers', '<', 'required_workers');
+    }
+
+    /**
+     * Get the total number of workers required across all positions.
+     */
+    public function getTotalPositionWorkersRequired(): int
+    {
+        return $this->positions()
+            ->where('status', '!=', ShiftPosition::STATUS_CANCELLED)
+            ->sum('required_workers');
+    }
+
+    /**
+     * Get the total number of workers filled across all positions.
+     */
+    public function getTotalPositionWorkersFilled(): int
+    {
+        return $this->positions()
+            ->where('status', '!=', ShiftPosition::STATUS_CANCELLED)
+            ->sum('filled_workers');
+    }
+
+    /**
+     * Get a summary of positions fill status.
+     */
+    public function getPositionsSummary(): array
+    {
+        $positions = $this->positions;
+
+        return [
+            'total' => $positions->count(),
+            'open' => $positions->where('status', ShiftPosition::STATUS_OPEN)->count(),
+            'partially_filled' => $positions->where('status', ShiftPosition::STATUS_PARTIALLY_FILLED)->count(),
+            'filled' => $positions->where('status', ShiftPosition::STATUS_FILLED)->count(),
+            'cancelled' => $positions->where('status', ShiftPosition::STATUS_CANCELLED)->count(),
+        ];
+    }
+
+    // =========================================
     // SL-006: Break Enforcement Methods
     // =========================================
 
@@ -1169,8 +1273,6 @@ class Shift extends Model
      * - EU/Malta: 30-minute break after 6 hours
      * - US: Varies by state
      * - Default: 30-minute break after 6 hours
-     *
-     * @return bool
      */
     public function requiresBreak(): bool
     {
@@ -1193,12 +1295,10 @@ class Shift extends Model
 
     /**
      * Get the minimum break duration required (in minutes).
-     *
-     * @return int
      */
     public function getRequiredBreakMinutes(): int
     {
-        if (!$this->requiresBreak()) {
+        if (! $this->requiresBreak()) {
             return 0;
         }
 
@@ -1215,8 +1315,6 @@ class Shift extends Model
 
     /**
      * Get jurisdiction code from shift location.
-     *
-     * @return string
      */
     protected function getJurisdiction(): string
     {
@@ -1258,12 +1356,10 @@ class Shift extends Model
 
     /**
      * Check break compliance for all assignments in this shift.
-     *
-     * @return array
      */
     public function checkBreakCompliance(): array
     {
-        if (!$this->requiresBreak()) {
+        if (! $this->requiresBreak()) {
             return [
                 'requires_break' => false,
                 'compliant' => true,
@@ -1294,7 +1390,7 @@ class Shift extends Model
                 'needs_reminder' => $assignmentCompliance['needs_reminder'],
             ];
 
-            if (!$assignmentCompliance['compliant']) {
+            if (! $assignmentCompliance['compliant']) {
                 $result['compliant'] = false;
             }
         }
@@ -1309,7 +1405,7 @@ class Shift extends Model
      */
     public function getAssignmentsNeedingBreakReminder()
     {
-        if (!$this->requiresBreak()) {
+        if (! $this->requiresBreak()) {
             return collect();
         }
 
@@ -1318,6 +1414,7 @@ class Shift extends Model
             ->get()
             ->filter(function ($assignment) {
                 $compliance = $assignment->checkBreakCompliance();
+
                 return $compliance['needs_reminder'];
             });
     }

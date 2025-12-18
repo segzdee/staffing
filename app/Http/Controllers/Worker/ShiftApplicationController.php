@@ -3,24 +3,30 @@
 namespace App\Http\Controllers\Worker;
 
 use App\Http\Controllers\Controller;
+use App\Models\AvailabilityBroadcast;
 use App\Models\Shift;
 use App\Models\ShiftApplication;
 use App\Models\ShiftAssignment;
-use App\Models\AvailabilityBroadcast;
+use App\Services\FaceRecognitionService;
 use App\Services\ShiftMatchingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 class ShiftApplicationController extends Controller
 {
     protected $matchingService;
 
-    public function __construct(ShiftMatchingService $matchingService)
-    {
+    protected $faceRecognitionService;
+
+    public function __construct(
+        ShiftMatchingService $matchingService,
+        FaceRecognitionService $faceRecognitionService
+    ) {
         $this->middleware('auth');
         $this->matchingService = $matchingService;
+        $this->faceRecognitionService = $faceRecognitionService;
     }
 
     /**
@@ -29,7 +35,7 @@ class ShiftApplicationController extends Controller
     public function dashboard()
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can access this page.');
         }
 
@@ -37,7 +43,7 @@ class ShiftApplicationController extends Controller
         $upcomingAssignments = ShiftAssignment::with(['shift.business'])
             ->where('worker_id', Auth::id())
             ->whereIn('status', ['assigned', 'checked_in'])
-            ->whereHas('shift', function($q) {
+            ->whereHas('shift', function ($q) {
                 $q->where('shift_date', '>=', Carbon::today());
             })
             ->orderBy('created_at', 'asc')
@@ -56,7 +62,7 @@ class ShiftApplicationController extends Controller
         $stats = [
             'upcoming_shifts' => $upcomingAssignments->count(),
             'completed_this_month' => $completedShifts->count(),
-            'earnings_this_month' => $completedShifts->sum(function($assignment) {
+            'earnings_this_month' => $completedShifts->sum(function ($assignment) {
                 return $assignment->payment ? $assignment->payment->amount_net : 0;
             }),
             'rating' => Auth::user()->rating_as_worker ?? 0,
@@ -75,7 +81,7 @@ class ShiftApplicationController extends Controller
     public function apply(Request $request, $shiftId)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can apply to shifts.');
         }
 
@@ -105,12 +111,12 @@ class ShiftApplicationController extends Controller
 
         // Check for conflicting shifts
         $conflictingAssignment = ShiftAssignment::where('worker_id', Auth::id())
-            ->whereHas('shift', function($q) use ($shift) {
+            ->whereHas('shift', function ($q) use ($shift) {
                 $q->where('shift_date', $shift->shift_date)
-                  ->where(function($query) use ($shift) {
-                      $query->whereBetween('start_time', [$shift->start_time, $shift->end_time])
+                    ->where(function ($query) use ($shift) {
+                        $query->whereBetween('start_time', [$shift->start_time, $shift->end_time])
                             ->orWhereBetween('end_time', [$shift->start_time, $shift->end_time]);
-                  });
+                    });
             })
             ->whereIn('status', ['assigned', 'checked_in'])
             ->exists();
@@ -242,7 +248,7 @@ class ShiftApplicationController extends Controller
     public function myApplications(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can view applications.');
         }
 
@@ -267,7 +273,7 @@ class ShiftApplicationController extends Controller
     public function showAssignment($id)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can view assignments.');
         }
 
@@ -284,7 +290,7 @@ class ShiftApplicationController extends Controller
     public function myAssignments(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can view assignments.');
         }
 
@@ -303,14 +309,14 @@ class ShiftApplicationController extends Controller
             switch ($filter) {
                 case 'upcoming':
                     $query->whereIn('status', ['assigned', 'checked_in'])
-                          ->whereHas('shift', function($q) {
-                              $q->where('shift_date', '>=', Carbon::today());
-                          })
-                          ->orderBy('created_at', 'asc');
+                        ->whereHas('shift', function ($q) {
+                            $q->where('shift_date', '>=', Carbon::today());
+                        })
+                        ->orderBy('created_at', 'asc');
                     break;
                 case 'completed':
                     $query->where('status', 'completed')
-                          ->orderBy('completed_at', 'desc');
+                        ->orderBy('completed_at', 'desc');
                     break;
                 case 'all':
                 default:
@@ -345,7 +351,7 @@ class ShiftApplicationController extends Controller
 
         $shift = $assignment->shift;
         $now = Carbon::now();
-        $shiftStartTime = Carbon::parse($shift->shift_date . ' ' . $shift->start_time);
+        $shiftStartTime = Carbon::parse($shift->shift_date.' '.$shift->start_time);
 
         // ===== SL-005: Clock-In Verification Protocol =====
 
@@ -407,37 +413,60 @@ class ShiftApplicationController extends Controller
                 ->with('error', "You must be at the shift location to clock in. You are {$distanceMeters}m away.");
         }
 
-        // 3. Face Recognition Verification (if photo provided)
+        // 3. Face Recognition Verification (SL-005 - Real Implementation)
         $faceMatchConfidence = null;
         $livenessPassed = false;
         $verificationMethod = 'manual_override'; // Default
+        $user = Auth::user();
 
-        if ($request->hasFile('selfie')) {
-            $request->validate([
-                'selfie' => 'required|image|max:10240', // Max 10MB
-            ]);
+        // Check if face recognition is enabled and user has a face image
+        $faceRecognitionEnabled = $this->faceRecognitionService->isEnabled();
+        $enrollmentStatus = $this->faceRecognitionService->getEnrollmentStatus($user);
 
-            // Upload photo
-            $photoPath = $request->file('selfie')->store('clock-in-photos', 'public');
-            $assignment->clock_in_photo_url = $photoPath;
-
-            // TODO: Integrate with face recognition API (AWS Rekognition, Azure Face API, etc.)
-            // For now, simulate verification
-            $faceMatchConfidence = 95.50; // Simulated confidence score
-            $livenessPassed = true; // Simulated liveness check
+        if ($faceRecognitionEnabled && $request->has('face_image')) {
             $verificationMethod = 'face_recognition';
 
-            // Face match threshold: 85%
-            if ($faceMatchConfidence < 85) {
-                $assignment->update([
-                    'clock_in_failure_reason' => "Face recognition failed: {$faceMatchConfidence}% confidence (need 85%+)",
-                ]);
-
+            // Check if user is enrolled
+            if (! $enrollmentStatus['enrolled']) {
                 return redirect()->back()
-                    ->with('error', 'Face recognition verification failed. Please try again with better lighting.');
+                    ->with('error', 'Please complete face enrollment before clocking in.')
+                    ->with('enrollment_required', true);
             }
 
-            if (!$livenessPassed) {
+            // Perform face verification using the real service
+            $verification = $this->faceRecognitionService->verifyFace(
+                $user,
+                $request->face_image,
+                $shift->id,
+                $assignment->id,
+                $request->latitude,
+                $request->longitude
+            );
+
+            $faceMatchConfidence = $verification['confidence'];
+            $livenessPassed = $verification['liveness'];
+
+            // Check minimum confidence threshold
+            $minConfidence = config('face_recognition.min_confidence', 85.0);
+
+            if (! $verification['match'] || $faceMatchConfidence < $minConfidence) {
+                $assignment->update([
+                    'clock_in_failure_reason' => "Face recognition failed: {$faceMatchConfidence}% confidence (need {$minConfidence}%+)",
+                ]);
+
+                // Check if manual override is allowed
+                if ($verification['allow_manual_override'] ?? false) {
+                    return redirect()->back()
+                        ->with('error', 'Face verification failed. Please contact your supervisor for manual verification.')
+                        ->with('allow_manual_override', true)
+                        ->with('verification_confidence', $faceMatchConfidence);
+                }
+
+                return redirect()->back()
+                    ->with('error', $verification['error'] ?? 'Face recognition verification failed. Please try again with better lighting.');
+            }
+
+            if (! $livenessPassed && config('face_recognition.require_liveness', true)) {
                 $assignment->update([
                     'clock_in_failure_reason' => 'Liveness detection failed',
                 ]);
@@ -445,6 +474,62 @@ class ShiftApplicationController extends Controller
                 return redirect()->back()
                     ->with('error', 'Liveness detection failed. Please ensure you are taking a live photo.');
             }
+
+            // Store the verification photo path
+            $assignment->clock_in_photo_url = $verification['verification_image'] ?? null;
+        } elseif ($request->hasFile('selfie')) {
+            // Legacy file upload support
+            $request->validate([
+                'selfie' => 'required|image|max:10240', // Max 10MB
+            ]);
+
+            $photoPath = $request->file('selfie')->store('clock-in-photos', 'public');
+            $assignment->clock_in_photo_url = $photoPath;
+
+            // If face recognition is enabled but no base64 image provided, try to use uploaded file
+            if ($faceRecognitionEnabled && $enrollmentStatus['enrolled']) {
+                $imageContent = file_get_contents($request->file('selfie')->getRealPath());
+                $base64Image = base64_encode($imageContent);
+
+                $verification = $this->faceRecognitionService->verifyFace(
+                    $user,
+                    $base64Image,
+                    $shift->id,
+                    $assignment->id,
+                    $request->latitude,
+                    $request->longitude
+                );
+
+                $faceMatchConfidence = $verification['confidence'];
+                $livenessPassed = $verification['liveness'];
+                $verificationMethod = 'face_recognition';
+
+                $minConfidence = config('face_recognition.min_confidence', 85.0);
+
+                if (! $verification['match'] || $faceMatchConfidence < $minConfidence) {
+                    $assignment->update([
+                        'clock_in_failure_reason' => "Face recognition failed: {$faceMatchConfidence}% confidence",
+                    ]);
+
+                    if ($verification['allow_manual_override'] ?? false) {
+                        return redirect()->back()
+                            ->with('error', 'Face verification failed. Contact supervisor for manual verification.')
+                            ->with('allow_manual_override', true);
+                    }
+
+                    return redirect()->back()
+                        ->with('error', $verification['error'] ?? 'Face recognition failed.');
+                }
+            } else {
+                // Face recognition disabled or not enrolled - use photo for manual verification
+                $verificationMethod = 'photo_manual';
+                $faceMatchConfidence = null;
+                $livenessPassed = null;
+            }
+        } elseif ($faceRecognitionEnabled && $shift->require_face_verification ?? false) {
+            // Face verification required but no image provided
+            return redirect()->back()
+                ->with('error', 'Face verification is required for this shift. Please capture a selfie to clock in.');
         }
 
         // 4. Update Assignment with SL-005 Data
@@ -473,7 +558,7 @@ class ShiftApplicationController extends Controller
             ]);
         }
 
-        if (!$shift->first_worker_clocked_in_at) {
+        if (! $shift->first_worker_clocked_in_at) {
             $shift->update(['first_worker_clocked_in_at' => $now]);
         }
 
@@ -565,9 +650,9 @@ class ShiftApplicationController extends Controller
         $grossHours = $checkInTime->diffInHours($now, true);
         $mandatoryBreakRequired = $grossHours >= 6; // Example: 6+ hour shifts require break
         $mandatoryBreakTaken = $totalBreakMinutes >= 30; // Example: Minimum 30 min break
-        $breakComplianceMet = !$mandatoryBreakRequired || $mandatoryBreakTaken;
+        $breakComplianceMet = ! $mandatoryBreakRequired || $mandatoryBreakTaken;
 
-        if ($mandatoryBreakRequired && !$mandatoryBreakTaken) {
+        if ($mandatoryBreakRequired && ! $mandatoryBreakTaken) {
             return redirect()->back()
                 ->with('warning', 'You worked over 6 hours but did not take a mandatory 30-minute break. Please confirm with supervisor before clocking out.');
         }
@@ -609,7 +694,7 @@ class ShiftApplicationController extends Controller
         // Detect early departure
         $earlyDeparture = false;
         $earlyDepartureMinutes = 0;
-        $shiftEndTime = Carbon::parse($shift->shift_date . ' ' . $shift->end_time);
+        $shiftEndTime = Carbon::parse($shift->shift_date.' '.$shift->end_time);
 
         if ($now->isBefore($shiftEndTime)) {
             $earlyDeparture = true;
@@ -649,7 +734,7 @@ class ShiftApplicationController extends Controller
         ]);
 
         // Update shift status
-        if (!$shift->last_worker_clocked_out_at || $now->isAfter($shift->last_worker_clocked_out_at)) {
+        if (! $shift->last_worker_clocked_out_at || $now->isAfter($shift->last_worker_clocked_out_at)) {
             $shift->update(['last_worker_clocked_out_at' => $now]);
         }
 
@@ -673,19 +758,19 @@ class ShiftApplicationController extends Controller
                 $workerProfile->decrement('reliability_score', 3); // -3 points for significant early departure
             }
 
-            if (!$breakComplianceMet) {
+            if (! $breakComplianceMet) {
                 $workerProfile->decrement('reliability_score', 2); // -2 points for break non-compliance
             }
         }
 
         $message = "Checked out successfully!\n";
-        $message .= "Gross Hours: " . number_format($grossHours, 2) . "\n";
-        $message .= "Break Time: " . number_format($breakDeductionHours, 2) . " hours\n";
-        $message .= "Net Hours: " . number_format($netHoursWorked, 2) . "\n";
-        $message .= "Billable Hours: " . number_format($billableHours, 2) . "\n";
+        $message .= 'Gross Hours: '.number_format($grossHours, 2)."\n";
+        $message .= 'Break Time: '.number_format($breakDeductionHours, 2)." hours\n";
+        $message .= 'Net Hours: '.number_format($netHoursWorked, 2)."\n";
+        $message .= 'Billable Hours: '.number_format($billableHours, 2)."\n";
 
-        if ($overtimeWorked && !$overtimeApproved) {
-            $message .= "\nNote: " . number_format($overtimeHours, 2) . " hours of overtime requires business approval.";
+        if ($overtimeWorked && ! $overtimeApproved) {
+            $message .= "\nNote: ".number_format($overtimeHours, 2).' hours of overtime requires business approval.';
         }
 
         if ($earlyDeparture) {
@@ -742,7 +827,7 @@ class ShiftApplicationController extends Controller
     public function broadcastAvailability(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can broadcast availability.');
         }
 
@@ -761,7 +846,7 @@ class ShiftApplicationController extends Controller
 
         // Calculate availability window
         $availableFrom = now();
-        $availableTo = match($request->broadcast_type) {
+        $availableTo = match ($request->broadcast_type) {
             'immediate' => now()->addHours(4),
             'today' => Carbon::today()->endOfDay(),
             'this_week' => Carbon::today()->endOfWeek(),
@@ -815,7 +900,7 @@ class ShiftApplicationController extends Controller
     public function earnings(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can view earnings.');
         }
 
@@ -843,20 +928,20 @@ class ShiftApplicationController extends Controller
         $completedShifts = $query->orderBy('completed_at', 'desc')->get();
 
         $earnings = [
-            'total' => $completedShifts->sum(function($assignment) {
+            'total' => $completedShifts->sum(function ($assignment) {
                 return $assignment->payment ? $assignment->payment->amount_net : 0;
             }),
             'shifts_count' => $completedShifts->count(),
             'hours_worked' => $completedShifts->sum('hours_worked'),
             'average_per_shift' => $completedShifts->count() > 0
-                ? $completedShifts->avg(function($assignment) {
+                ? $completedShifts->avg(function ($assignment) {
                     return $assignment->payment ? $assignment->payment->amount_net : 0;
-                  })
+                })
                 : 0,
             'average_hourly' => $completedShifts->sum('hours_worked') > 0
-                ? $completedShifts->sum(function($assignment) {
-                      return $assignment->payment ? $assignment->payment->amount_net : 0;
-                  }) / $completedShifts->sum('hours_worked')
+                ? $completedShifts->sum(function ($assignment) {
+                    return $assignment->payment ? $assignment->payment->amount_net : 0;
+                }) / $completedShifts->sum('hours_worked')
                 : 0,
         ];
 
@@ -888,7 +973,7 @@ class ShiftApplicationController extends Controller
      */
     protected function calculateProximityScore($workerProfile, $shift)
     {
-        if (!$workerProfile || !$workerProfile->location_lat || !$shift->location_lat) {
+        if (! $workerProfile || ! $workerProfile->location_lat || ! $shift->location_lat) {
             return 15; // Neutral score if no location data
         }
 
@@ -944,7 +1029,7 @@ class ShiftApplicationController extends Controller
             ->orderBy('completed_at', 'desc')
             ->first();
 
-        if (!$lastShift) {
+        if (! $lastShift) {
             return 5; // New worker, neutral score
         }
 

@@ -2,6 +2,8 @@
     x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0"
     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0"
     x-transition:leave-end="-translate-x-full"
+    role="navigation"
+    aria-label="Main navigation"
     class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform lg:translate-x-0 lg:static lg:inset-0 lg:block custom-scrollbar overflow-y-auto flex flex-col"
     @click.away="if (window.innerWidth < 1024) { sidebarOpen = false }">
     <!-- Logo -->
@@ -10,8 +12,9 @@
             <x-logo class="h-8 w-auto" />
         </a>
         <button @click="sidebarOpen = false"
-            class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            aria-label="Close sidebar"
+            class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>

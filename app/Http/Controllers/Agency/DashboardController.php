@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
+use App\Models\AgencyWorker;
 use App\Models\Shift;
 use App\Models\ShiftAssignment;
-use App\Models\AgencyWorker;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -124,7 +124,7 @@ class DashboardController extends Controller
                 ],
                 [
                     'label' => 'Commission Earned',
-                    'value' => '$' . number_format($totalEarnings, 2),
+                    'value' => '$'.number_format($totalEarnings, 2),
                     'subtitle' => 'All time',
                     'icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
                 ],
@@ -145,9 +145,9 @@ class DashboardController extends Controller
                 'unreadMessages'
             ));
         } catch (\Exception $e) {
-            \Log::error('Agency Dashboard Error: ' . $e->getMessage(), [
+            \Log::error('Agency Dashboard Error: '.$e->getMessage(), [
                 'user_id' => Auth::id(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return view('agency.dashboard', [
@@ -176,7 +176,7 @@ class DashboardController extends Controller
                 ],
                 'onboardingProgress' => 0,
                 'unreadNotifications' => 0,
-                'unreadMessages' => 0
+                'unreadMessages' => 0,
             ])->with('error', 'Unable to load dashboard data. Please refresh the page.');
         }
     }
@@ -192,28 +192,37 @@ class DashboardController extends Controller
         $completeness = 0;
 
         // Base user fields
-        if ($user->name)
+        if ($user->name) {
             $completeness += 15;
-        if ($user->email)
+        }
+        if ($user->email) {
             $completeness += 15;
-        if ($user->avatar && $user->avatar != 'avatar.jpg')
+        }
+        if ($user->avatar && $user->avatar != 'avatar.jpg') {
             $completeness += 10;
+        }
 
         // Agency profile fields
         if ($user->agencyProfile) {
             $profile = $user->agencyProfile;
-            if ($profile->agency_name)
+            if ($profile->agency_name) {
                 $completeness += 15;
-            if ($profile->agency_type)
+            }
+            if ($profile->agency_type) {
                 $completeness += 10;
-            if ($profile->address)
+            }
+            if ($profile->address) {
                 $completeness += 10;
-            if ($profile->city && $profile->state)
+            }
+            if ($profile->city && $profile->state) {
                 $completeness += 10;
-            if ($profile->phone)
+            }
+            if ($profile->phone) {
                 $completeness += 10;
-            if ($profile->description)
+            }
+            if ($profile->description) {
                 $completeness += 5;
+            }
         }
 
         return min($completeness, 100);
@@ -226,6 +235,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $assignments = []; // Placeholder for now - logic similar to index
+
         return view('agency.assignments', compact('assignments'));
     }
 
@@ -239,6 +249,7 @@ class DashboardController extends Controller
     {
         // Reuse the main shift detail view
         $shift = Shift::findOrFail($id);
+
         return view('shifts.show', compact('shift'));
     }
 
@@ -246,11 +257,165 @@ class DashboardController extends Controller
     {
         // Fetch agency workers
         $workers = AgencyWorker::where('agency_id', Auth::id())->with('user')->paginate(20);
+
         return view('agency.workers.index', compact('workers'));
     }
 
     public function commissions()
     {
         return view('transactions.index');
+    }
+
+    /**
+     * Display agency profile page.
+     */
+    public function profile(): \Illuminate\View\View
+    {
+        return view('agency.profile');
+    }
+
+    /**
+     * Display agency branding settings.
+     */
+    public function branding(): \Illuminate\View\View
+    {
+        return view('agency.branding');
+    }
+
+    /**
+     * Display agency compliance page.
+     */
+    public function compliance(): \Illuminate\View\View
+    {
+        return view('agency.compliance');
+    }
+
+    /**
+     * Display agency team page.
+     */
+    public function team(): \Illuminate\View\View
+    {
+        return view('agency.team');
+    }
+
+    // Analytics routes
+    public function analyticsDashboard(): \Illuminate\View\View
+    {
+        return view('agency.analytics.dashboard');
+    }
+
+    public function analyticsReports(): \Illuminate\View\View
+    {
+        return view('agency.analytics.reports');
+    }
+
+    public function analyticsRevenue(): \Illuminate\View\View
+    {
+        return view('agency.analytics.revenue');
+    }
+
+    public function analyticsUtilization(): \Illuminate\View\View
+    {
+        return view('agency.analytics.utilization');
+    }
+
+    // Finance routes
+    public function financeOverview(): \Illuminate\View\View
+    {
+        return view('agency.finance.overview');
+    }
+
+    public function financeCommissions(): \Illuminate\View\View
+    {
+        return view('agency.finance.commissions');
+    }
+
+    public function financePayroll(): \Illuminate\View\View
+    {
+        return view('agency.finance.payroll');
+    }
+
+    public function financeInvoices(): \Illuminate\View\View
+    {
+        return view('agency.finance.invoices');
+    }
+
+    public function financeSettlements(): \Illuminate\View\View
+    {
+        return view('agency.finance.settlements');
+    }
+
+    public function financeReports(): \Illuminate\View\View
+    {
+        return view('agency.finance.reports');
+    }
+
+    // Placements routes
+    public function placementsActive(): \Illuminate\View\View
+    {
+        return view('agency.placements.active');
+    }
+
+    public function placementsHistory(): \Illuminate\View\View
+    {
+        return view('agency.placements.history');
+    }
+
+    // Shifts routes
+    public function shiftsAssign(): \Illuminate\View\View
+    {
+        return view('agency.shifts.assign');
+    }
+
+    public function shiftsCalendar(): \Illuminate\View\View
+    {
+        return view('agency.shifts.calendar');
+    }
+
+    // Venues routes
+    public function venuesIndex(): \Illuminate\View\View
+    {
+        return view('agency.venues.index');
+    }
+
+    public function venuesContracts(): \Illuminate\View\View
+    {
+        return view('agency.venues.contracts');
+    }
+
+    public function venuesPerformance(): \Illuminate\View\View
+    {
+        return view('agency.venues.performance');
+    }
+
+    public function venuesRequests(): \Illuminate\View\View
+    {
+        return view('agency.venues.requests');
+    }
+
+    // Workers routes
+    public function workersCreate(): \Illuminate\View\View
+    {
+        return view('agency.workers.create');
+    }
+
+    public function workersPending(): \Illuminate\View\View
+    {
+        return view('agency.workers.pending');
+    }
+
+    public function workersCompliance(): \Illuminate\View\View
+    {
+        return view('agency.workers.compliance');
+    }
+
+    public function workersDocuments(): \Illuminate\View\View
+    {
+        return view('agency.workers.documents');
+    }
+
+    public function workersGroups(): \Illuminate\View\View
+    {
+        return view('agency.workers.groups');
     }
 }

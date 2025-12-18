@@ -42,10 +42,10 @@ return [
     ],
 
     'facebook' => [
-      'client_id' => env('FACEBOOK_CLIENT_ID'),
-      'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-      'redirect' => env('APP_URL').'/oauth/facebook/callback',
-      ],
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('APP_URL').'/oauth/facebook/callback',
+    ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
@@ -57,6 +57,50 @@ return [
         'client_id' => env('TWITTER_CLIENT_ID'),
         'client_secret' => env('TWITTER_CLIENT_SECRET'),
         'redirect' => env('APP_URL').'/oauth/twitter/callback',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | SMS Service Configuration (COM-004)
+    |--------------------------------------------------------------------------
+    */
+    'sms' => [
+        'provider' => env('SMS_PROVIDER', 'twilio'), // twilio, vonage, messagebird, sns, log
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Twilio Configuration (COM-004)
+    |--------------------------------------------------------------------------
+    */
+    'twilio' => [
+        'sid' => env('TWILIO_ACCOUNT_SID'),
+        'token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_PHONE_NUMBER'),
+        'webhook_url' => env('TWILIO_WEBHOOK_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vonage (Nexmo) Configuration (COM-004)
+    |--------------------------------------------------------------------------
+    */
+    'vonage' => [
+        'key' => env('VONAGE_API_KEY'),
+        'secret' => env('VONAGE_API_SECRET'),
+        'from' => env('VONAGE_FROM', 'OvertimeStaff'),
+        'webhook_url' => env('VONAGE_WEBHOOK_URL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MessageBird Configuration (COM-004)
+    |--------------------------------------------------------------------------
+    */
+    'messagebird' => [
+        'key' => env('MESSAGEBIRD_API_KEY'),
+        'from' => env('MESSAGEBIRD_FROM', 'OvertimeStaff'),
+        'webhook_url' => env('MESSAGEBIRD_WEBHOOK_URL'),
     ],
 
 ];

@@ -155,6 +155,13 @@ class Venue extends Model
         'status',
         'first_shift_posted_at',
         'active_shifts_count',
+        // SAF-004: Safety fields
+        'safety_score',
+        'safety_ratings_count',
+        'active_safety_flags',
+        'safety_verified',
+        'last_safety_audit',
+        'safety_status',
     ];
 
     protected $casts = [
@@ -180,6 +187,12 @@ class Venue extends Model
         'require_checkout_signature' => 'boolean',
         'first_shift_posted_at' => 'datetime',
         'active_shifts_count' => 'integer',
+        // SAF-004: Safety casts
+        'safety_score' => 'decimal:2',
+        'safety_ratings_count' => 'integer',
+        'active_safety_flags' => 'integer',
+        'safety_verified' => 'boolean',
+        'last_safety_audit' => 'datetime',
     ];
 
     protected $appends = [
@@ -189,6 +202,29 @@ class Venue extends Model
         'type_label',
         'status_label',
         'dress_code_label',
+        // SAF-004: Safety appends
+        'safety_status_label',
+        'safety_status_color',
+    ];
+
+    /**
+     * SAF-004: Safety status labels.
+     */
+    public const SAFETY_STATUSES = [
+        'good' => 'Good Standing',
+        'caution' => 'Caution',
+        'warning' => 'Warning',
+        'restricted' => 'Restricted',
+    ];
+
+    /**
+     * SAF-004: Safety status colors for UI.
+     */
+    public const SAFETY_STATUS_COLORS = [
+        'good' => 'green',
+        'caution' => 'yellow',
+        'warning' => 'orange',
+        'restricted' => 'red',
     ];
 
     // =========================================
@@ -253,6 +289,30 @@ class Venue extends Model
     public function primaryManager()
     {
         return $this->managers()->wherePivot('is_primary', true)->first();
+    }
+
+    /**
+     * SAF-004: Get safety ratings for this venue.
+     */
+    public function safetyRatings()
+    {
+        return $this->hasMany(VenueSafetyRating::class);
+    }
+
+    /**
+     * SAF-004: Get safety flags for this venue.
+     */
+    public function safetyFlags()
+    {
+        return $this->hasMany(VenueSafetyFlag::class);
+    }
+
+    /**
+     * SAF-004: Get active (open) safety flags for this venue.
+     */
+    public function activeSafetyFlags()
+    {
+        return $this->hasMany(VenueSafetyFlag::class)->open();
     }
 
     // =========================================
@@ -343,6 +403,43 @@ class Venue extends Model
         return $this->default_hourly_rate ? $this->default_hourly_rate / 100 : null;
     }
 
+    /**
+     * SAF-004: Get the safety status label.
+     */
+    public function getSafetyStatusLabelAttribute(): string
+    {
+        return self::SAFETY_STATUSES[$this->safety_status] ?? ucfirst($this->safety_status ?? 'good');
+    }
+
+    /**
+     * SAF-004: Get the safety status color for UI.
+     */
+    public function getSafetyStatusColorAttribute(): string
+    {
+        return self::SAFETY_STATUS_COLORS[$this->safety_status] ?? 'green';
+    }
+
+    /**
+     * SAF-004: Check if venue has safety concerns.
+     */
+    public function getHasSafetyConcernsAttribute(): bool
+    {
+        return $this->safety_score !== null && $this->safety_score < 3.0
+            || $this->active_safety_flags > 0;
+    }
+
+    /**
+     * SAF-004: Get safety score display (e.g., "4.2/5").
+     */
+    public function getSafetyScoreDisplayAttribute(): string
+    {
+        if ($this->safety_score === null) {
+            return 'No ratings yet';
+        }
+
+        return number_format($this->safety_score, 1).'/5';
+    }
+
     // =========================================
     // Geofencing Methods
     // =========================================
@@ -352,7 +449,7 @@ class Venue extends Model
      */
     public function isWithinGeofence(float $lat, float $lng, ?int $accuracy = null): bool
     {
-        if (!$this->latitude || !$this->longitude) {
+        if (! $this->latitude || ! $this->longitude) {
             return true; // No geofence configured
         }
 
@@ -367,7 +464,7 @@ class Venue extends Model
         $distance = $this->calculateDistance($lat, $lng);
 
         // Check if polygon geofence is configured
-        if (!empty($this->geofence_polygon)) {
+        if (! empty($this->geofence_polygon)) {
             return $this->isWithinPolygon($lat, $lng);
         }
 
@@ -421,7 +518,7 @@ class Venue extends Model
 
             if ((($yi > $lng) != ($yj > $lng)) &&
                 ($lat < ($xj - $xi) * ($lng - $yi) / ($yj - $yi) + $xi)) {
-                $inside = !$inside;
+                $inside = ! $inside;
             }
         }
 
@@ -490,12 +587,13 @@ class Venue extends Model
                 ->where('day_of_week', $index)
                 ->get();
 
-            if ($hours->isEmpty() || !$hours->first()->is_open) {
+            if ($hours->isEmpty() || ! $hours->first()->is_open) {
                 $formatted[$day] = 'Closed';
             } else {
                 $slots = $hours->map(function ($hour) {
                     $open = \Carbon\Carbon::parse($hour->open_time)->format('g:i A');
                     $close = \Carbon\Carbon::parse($hour->close_time)->format('g:i A');
+
                     return "{$open} - {$close}";
                 })->implode(', ');
 
@@ -551,7 +649,7 @@ class Venue extends Model
         $this->increment('total_shifts');
         $this->increment('active_shifts_count');
 
-        if (!$this->first_shift_posted_at) {
+        if (! $this->first_shift_posted_at) {
             $this->update(['first_shift_posted_at' => now()]);
         }
     }
@@ -646,11 +744,11 @@ class Venue extends Model
     public function scopeWithinRadius($query, float $lat, float $lng, float $radiusKm)
     {
         // Haversine formula for distance calculation
-        $haversine = "(6371 * acos(cos(radians(?))
+        $haversine = '(6371 * acos(cos(radians(?))
                      * cos(radians(latitude))
                      * cos(radians(longitude) - radians(?))
                      + sin(radians(?))
-                     * sin(radians(latitude))))";
+                     * sin(radians(latitude))))';
 
         return $query
             ->selectRaw("*, {$haversine} AS distance", [$lat, $lng, $lat])

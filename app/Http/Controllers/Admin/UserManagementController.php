@@ -258,6 +258,90 @@ class UserManagementController extends Controller
     }
 
     /**
+     * Show a user's details
+     *
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function show($id)
+    {
+        $user = User::with(['workerProfile', 'businessProfile', 'agencyProfile'])->findOrFail($id);
+
+        return view('admin.users.show', compact('user'));
+    }
+
+    /**
+     * Suspend a user account
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    public function suspend(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'nullable|string|max:500',
+            'duration' => 'nullable|integer|min:1|max:365',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        if ($user->id == 1 || $user->id == auth()->user()->id) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Cannot suspend this user.'], 403);
+            }
+
+            return redirect()->back()->with('error', 'Cannot suspend this user.');
+        }
+
+        $user->update([
+            'status' => 'suspended',
+            'suspended_at' => Carbon::now(),
+            'suspension_reason' => $request->reason,
+            'suspension_expires_at' => $request->duration ? Carbon::now()->addDays($request->duration) : null,
+        ]);
+
+        // Log the action
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->user())
+            ->withProperties(['reason' => $request->reason, 'duration' => $request->duration])
+            ->log('User suspended');
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'User suspended successfully.']);
+        }
+
+        return redirect()->back()->with('success', 'User has been suspended.');
+    }
+
+    /**
+     * Activate/Unsuspend a user account
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    public function activate(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->update([
+            'status' => 'active',
+            'suspended_at' => null,
+            'suspension_reason' => null,
+            'suspension_expires_at' => null,
+        ]);
+
+        // Log the action
+        activity()
+            ->performedOn($user)
+            ->causedBy(auth()->user())
+            ->log('User activated');
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'User activated successfully.']);
+        }
+
+        return redirect()->back()->with('success', 'User has been activated.');
+    }
+
+    /**
      * Login as user (admin impersonation)
      *
      * @return \Illuminate\Http\RedirectResponse

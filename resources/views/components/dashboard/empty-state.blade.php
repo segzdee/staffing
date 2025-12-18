@@ -7,7 +7,7 @@
 ])
 
 <div class="text-center py-12">
-    <svg class="mx-auto h-12 w-12 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg class="mx-auto h-12 w-12 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $icon }}"/>
     </svg>
     <h3 class="mt-2 text-sm font-medium text-foreground">{{ $title }}</h3>
@@ -16,7 +16,7 @@
     @endif
     @if($actionUrl)
     <div class="mt-6">
-        <a href="{{ $actionUrl }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 transition-colors">
+        <a href="{{ $actionUrl }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
             {{ $actionLabel }}
         </a>
     </div>

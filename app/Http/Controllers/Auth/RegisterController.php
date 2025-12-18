@@ -73,11 +73,9 @@ class RegisterController extends Controller
             'password' => [
                 'required',
                 'confirmed',
-                Password::min(12)
+                Password::min(8)
                     ->mixedCase()
-                    ->numbers()
-                    ->symbols()
-                    ->uncompromised(),
+                    ->numbers(),
             ],
             'user_type' => 'required|in:worker,business,agency',
             'agree_terms' => 'required|accepted',

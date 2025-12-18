@@ -2,21 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Schema;
-use Laravel\Cashier\Billable;
-use Illuminate\Notifications\Notifiable;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Notifications\ResetPassword as ResetPasswordNotification;
-use Illuminate\Contracts\Translation\HasLocalePreference;
-use App\Models\Notifications;
-use App\Models\AgencyClient;
 use App\Traits\CachesUserProfile;
 use Carbon\Carbon;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Translation\HasLocalePreference;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
+use Laravel\Cashier\Billable;
 
 /**
  * @property int $id
@@ -100,6 +97,7 @@ use Carbon\Carbon;
  * @property-read int|null $subscriptions_count
  * @property-read \App\Models\VerificationQueue|null $verificationRequest
  * @property-read \App\Models\WorkerProfile|null $workerProfile
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User hasExpiredGenericTrial()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
@@ -134,11 +132,12 @@ use Carbon\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUserType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUsername($value)
+ *
  * @mixin \Eloquent
  */
-class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail, FilamentUser
+class User extends Authenticatable implements FilamentUser, HasLocalePreference, MustVerifyEmail
 {
-    use HasFactory, Notifiable, Billable, \Laravel\Sanctum\HasApiTokens, CachesUserProfile;
+    use Billable, CachesUserProfile, HasFactory, \Laravel\Sanctum\HasApiTokens, Notifiable;
 
     // Use standard Laravel timestamps for OvertimeStaff
     // const CREATED_AT = 'date';
@@ -251,7 +250,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function isTaxable()
     {
         // Check if TaxRates model and table exist
-        if (!class_exists('App\Models\TaxRates') || !\Schema::hasTable('tax_rates')) {
+        if (! class_exists('App\Models\TaxRates') || ! \Schema::hasTable('tax_rates')) {
             return collect(); // Return empty collection if table doesn't exist
         }
 
@@ -278,15 +277,16 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function getCountry()
     {
         $ip = request()->ip();
-        return cache('userCountry-' . $ip) ?? ($this->country()->country_code ?? null);
+
+        return cache('userCountry-'.$ip) ?? ($this->country()->country_code ?? null);
     }
 
     public function getRegion()
     {
         $ip = request()->ip();
-        return cache('userRegion-' . $ip);
-    }
 
+        return cache('userRegion-'.$ip);
+    }
 
     public function sendPasswordResetNotification($token)
     {
@@ -303,6 +303,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         } catch (\Exception $e) {
             // Table doesn't exist, return null
         }
+
         return null;
     }
 
@@ -311,15 +312,17 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return $this->hasMany(Notifications::class, 'destination');
     }
 
-    function getFirstNameAttribute()
+    public function getFirstNameAttribute()
     {
         $name = explode(' ', $this->name);
+
         return $name[0] ?? null;
     }
 
-    function getLastNameAttribute()
+    public function getLastNameAttribute()
     {
         $name = explode(' ', $this->name);
+
         return $name[1] ?? null;
     }
 
@@ -339,6 +342,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         if ($this->permissions == 'full_access') {
             return $this->id;
         }
+
         return false;
     }
 
@@ -363,7 +367,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     {
         return explode(',', $this->blocked_countries);
     }
-
 
     // ==================== OVERTIMESTAFF SHIFT MARKETPLACE METHODS ====================
 
@@ -418,7 +421,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         }
 
         // Build the route name based on user type
-        $routeName = $this->user_type . '.profile';
+        $routeName = $this->user_type.'.profile';
 
         // Check if the route exists, otherwise fallback to dashboard or home
         if (\Route::has($routeName)) {
@@ -426,7 +429,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         }
 
         // Fallback to dashboard
-        $dashboardRoute = $this->user_type . '.dashboard';
+        $dashboardRoute = $this->user_type.'.dashboard';
         if (\Route::has($dashboardRoute)) {
             return route($dashboardRoute);
         }
@@ -464,6 +467,21 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         return $this->hasOne(AgencyProfile::class);
     }
 
+    /**
+     * SL-005: Face Profile for clock-in/out verification
+     */
+    public function faceProfile()
+    {
+        return $this->hasOne(FaceProfile::class);
+    }
+
+    /**
+     * SL-005: Face Verification Logs
+     */
+    public function faceVerificationLogs()
+    {
+        return $this->hasMany(FaceVerificationLog::class);
+    }
 
     /**
      * Agency Relationships
@@ -478,6 +496,14 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     public function agencyClients()
     {
         return $this->hasMany(AgencyClient::class, 'agency_id');
+    }
+
+    /**
+     * AGY-006: White-Label Configuration for Agencies
+     */
+    public function whiteLabelConfig()
+    {
+        return $this->hasOne(WhiteLabelConfig::class, 'agency_id');
     }
 
     /**
@@ -655,6 +681,90 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
+     * Loyalty Points Account
+     */
+    public function loyaltyPoints()
+    {
+        return $this->hasOne(LoyaltyPoints::class);
+    }
+
+    /**
+     * Loyalty Transactions
+     */
+    public function loyaltyTransactions()
+    {
+        return $this->hasMany(LoyaltyTransaction::class);
+    }
+
+    /**
+     * Loyalty Redemptions
+     */
+    public function loyaltyRedemptions()
+    {
+        return $this->hasMany(LoyaltyRedemption::class);
+    }
+
+    /**
+     * WKR-013: Availability Patterns - Historical availability patterns for ML predictions
+     */
+    public function availabilityPatterns()
+    {
+        return $this->hasMany(AvailabilityPattern::class);
+    }
+
+    /**
+     * WKR-013: Availability Predictions - Predicted future availability
+     */
+    public function availabilityPredictions()
+    {
+        return $this->hasMany(AvailabilityPrediction::class);
+    }
+
+    /**
+     * WKR-013: Get availability prediction for a specific date
+     */
+    public function getAvailabilityPredictionFor(\Carbon\Carbon $date): ?AvailabilityPrediction
+    {
+        return $this->availabilityPredictions()
+            ->where('prediction_date', $date->toDateString())
+            ->first();
+    }
+
+    /**
+     * WKR-013: Get availability pattern for a specific day of week
+     */
+    public function getAvailabilityPatternFor(int $dayOfWeek): ?AvailabilityPattern
+    {
+        return $this->availabilityPatterns()
+            ->where('day_of_week', $dayOfWeek)
+            ->first();
+    }
+
+    /**
+     * GLO-001: Currency Wallets - Multi-currency wallet support
+     */
+    public function currencyWallets()
+    {
+        return $this->hasMany(CurrencyWallet::class);
+    }
+
+    /**
+     * GLO-001: Primary Currency Wallet
+     */
+    public function primaryCurrencyWallet()
+    {
+        return $this->hasOne(CurrencyWallet::class)->where('is_primary', true);
+    }
+
+    /**
+     * GLO-001: Currency Conversions
+     */
+    public function currencyConversions()
+    {
+        return $this->hasMany(CurrencyConversion::class);
+    }
+
+    /**
      * WKR-010: Portfolio Items - For Workers
      */
     public function portfolioItems()
@@ -698,6 +808,121 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
+     * SAF-005: Health Declarations - For Workers
+     */
+    public function healthDeclarations()
+    {
+        return $this->hasMany(HealthDeclaration::class);
+    }
+
+    /**
+     * SAF-005: Vaccination Records - For Workers
+     */
+    public function vaccinationRecords()
+    {
+        return $this->hasMany(VaccinationRecord::class);
+    }
+
+    /**
+     * SAF-005: Verified Vaccination Records - For Workers
+     */
+    public function verifiedVaccinations()
+    {
+        return $this->vaccinationRecords()->verified();
+    }
+
+    /**
+     * SAF-005: Vaccination Records Verified By This Admin
+     */
+    public function verifiedVaccinationRecords()
+    {
+        return $this->hasMany(VaccinationRecord::class, 'verified_by');
+    }
+
+    /**
+     * SAF-001: Emergency Contacts
+     */
+    public function emergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class)->orderBy('priority');
+    }
+
+    /**
+     * SAF-001: Primary Emergency Contact
+     */
+    public function primaryEmergencyContact()
+    {
+        return $this->hasOne(EmergencyContact::class)->where('is_primary', true);
+    }
+
+    /**
+     * SAF-001: Verified Emergency Contacts
+     */
+    public function verifiedEmergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class)
+            ->where('is_verified', true)
+            ->orderBy('priority');
+    }
+
+    /**
+     * SAF-001: Emergency Alerts (triggered by this user)
+     */
+    public function emergencyAlerts()
+    {
+        return $this->hasMany(EmergencyAlert::class);
+    }
+
+    /**
+     * SAF-001: Active Emergency Alert
+     */
+    public function activeEmergencyAlert()
+    {
+        return $this->hasOne(EmergencyAlert::class)
+            ->where('status', 'active');
+    }
+
+    /**
+     * SAF-001: Emergency Alerts Acknowledged By This Admin
+     */
+    public function acknowledgedEmergencyAlerts()
+    {
+        return $this->hasMany(EmergencyAlert::class, 'acknowledged_by');
+    }
+
+    /**
+     * SAF-001: Emergency Alerts Resolved By This Admin
+     */
+    public function resolvedEmergencyAlerts()
+    {
+        return $this->hasMany(EmergencyAlert::class, 'resolved_by');
+    }
+
+    /**
+     * COM-002: Push Notification Tokens
+     */
+    public function pushNotificationTokens()
+    {
+        return $this->hasMany(PushNotificationToken::class);
+    }
+
+    /**
+     * COM-002: Active Push Notification Tokens
+     */
+    public function activePushTokens()
+    {
+        return $this->pushNotificationTokens()->active();
+    }
+
+    /**
+     * COM-002: Push Notification Logs
+     */
+    public function pushNotificationLogs()
+    {
+        return $this->hasMany(PushNotificationLog::class);
+    }
+
+    /**
      * Rating Calculation Methods
      */
     public function averageRatingAsWorker()
@@ -715,6 +940,30 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     }
 
     /**
+     * GLO-008: Bank Accounts - For Cross-Border Payments
+     */
+    public function bankAccounts()
+    {
+        return $this->hasMany(BankAccount::class);
+    }
+
+    /**
+     * GLO-008: Primary Bank Account
+     */
+    public function primaryBankAccount()
+    {
+        return $this->hasOne(BankAccount::class)->where('is_primary', true);
+    }
+
+    /**
+     * GLO-008: Cross Border Transfers
+     */
+    public function crossBorderTransfers()
+    {
+        return $this->hasMany(CrossBorderTransfer::class);
+    }
+
+    /**
      * Payment Methods
      */
     public function canReceiveInstantPayouts()
@@ -727,7 +976,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     public function hasValidPayoutMethod()
     {
-        return !empty($this->stripe_connect_id) && $this->completed_stripe_onboarding;
+        return ! empty($this->stripe_connect_id) && $this->completed_stripe_onboarding;
     }
 
     /**
@@ -822,11 +1071,12 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
      */
     public static function notificationsCount()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return 0;
         }
 
         $user = auth()->user();
+
         return $user->notifications()
             ->where('read', false)
             ->count();
@@ -860,7 +1110,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
      */
     public function getProfileCompletenessAttribute()
     {
-        if ($this->user_type !== 'worker' || !$this->workerProfile) {
+        if ($this->user_type !== 'worker' || ! $this->workerProfile) {
             return [
                 'score' => 0,
                 'percentage' => 0,
@@ -870,6 +1120,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         }
 
         $service = app(\App\Services\ProfileCompletionService::class);
+
         return $service->calculateCompletion($this);
     }
 
@@ -887,12 +1138,10 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Check if user account is currently locked.
-     *
-     * @return bool
      */
     public function isLocked(): bool
     {
-        if (!$this->locked_until) {
+        if (! $this->locked_until) {
             return false;
         }
 
@@ -900,6 +1149,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         if (Carbon::now()->gte($this->locked_until)) {
             // Auto-unlock expired locks
             $this->unlock();
+
             return false;
         }
 
@@ -908,12 +1158,10 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Get the number of minutes remaining until account unlocks.
-     *
-     * @return int|null
      */
     public function lockoutMinutesRemaining(): ?int
     {
-        if (!$this->isLocked()) {
+        if (! $this->isLocked()) {
             return null;
         }
 
@@ -922,10 +1170,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Lock the user account due to failed login attempts.
-     *
-     * @param string $reason
-     * @param int|null $durationMinutes
-     * @return void
      */
     public function lockAccount(string $reason = 'Too many failed login attempts', ?int $durationMinutes = null): void
     {
@@ -940,11 +1184,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Lock the user account by an admin (manual lock).
-     *
-     * @param int $adminId
-     * @param string $reason
-     * @param int|null $durationMinutes
-     * @return void
      */
     public function lockByAdmin(int $adminId, string $reason, ?int $durationMinutes = null): void
     {
@@ -962,8 +1201,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Unlock the user account.
-     *
-     * @return void
      */
     public function unlock(): void
     {
@@ -994,6 +1231,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         // Check if we should lock the account
         if ($this->failed_login_attempts >= self::MAX_LOGIN_ATTEMPTS) {
             $this->lockAccount();
+
             return true;
         }
 
@@ -1002,8 +1240,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Reset failed login attempts (called on successful login).
-     *
-     * @return void
      */
     public function resetFailedLoginAttempts(): void
     {
@@ -1027,8 +1263,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Check if account was locked by an admin (vs auto-locked).
-     *
-     * @return bool
      */
     public function wasLockedByAdmin(): bool
     {
@@ -1037,8 +1271,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Get remaining failed login attempts before lockout.
-     *
-     * @return int
      */
     public function remainingLoginAttempts(): int
     {
@@ -1048,7 +1280,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     /**
      * Scope for locked accounts.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeLocked($query)
@@ -1060,8 +1292,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     /**
      * Scope for accounts with failed login attempts.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param int $minAttempts
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeWithFailedAttempts($query, int $minAttempts = 1)
@@ -1082,7 +1313,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             return false;
         }
 
-        if (!$this->suspended_until) {
+        if (! $this->suspended_until) {
             return true; // Indefinite suspension
         }
 
@@ -1092,8 +1323,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     /**
      * Suspend the user
      *
-     * @param int $days
-     * @param string $reason
      * @return void
      */
     public function suspend(int $days, string $reason)
@@ -1103,7 +1332,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
             'suspended_until' => Carbon::now()->addDays($days),
             'suspension_reason' => $reason,
             'suspension_count' => $this->suspension_count + 1,
-            'last_suspended_at' => Carbon::now()
+            'last_suspended_at' => Carbon::now(),
         ]);
     }
 
@@ -1117,7 +1346,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
         $this->update([
             'status' => 'active',
             'suspended_until' => null,
-            'suspension_reason' => null
+            'suspension_reason' => null,
         ]);
     }
 
@@ -1128,7 +1357,7 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
      */
     public function suspensionDaysRemaining()
     {
-        if (!$this->isSuspended() || !$this->suspended_until) {
+        if (! $this->isSuspended() || ! $this->suspended_until) {
             return null;
         }
 
@@ -1189,7 +1418,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     /**
      * Update cached reliability score
      *
-     * @param float $score
      * @return void
      */
     public function updateReliabilityScore(float $score)
@@ -1232,22 +1460,18 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Check if two-factor authentication is enabled for this user.
-     *
-     * @return bool
      */
     public function hasTwoFactorEnabled(): bool
     {
-        return !is_null($this->two_factor_secret) && !is_null($this->two_factor_confirmed_at);
+        return ! is_null($this->two_factor_secret) && ! is_null($this->two_factor_confirmed_at);
     }
 
     /**
      * Check if two-factor authentication has been confirmed (setup complete).
-     *
-     * @return bool
      */
     public function hasConfirmedTwoFactor(): bool
     {
-        return !is_null($this->two_factor_confirmed_at);
+        return ! is_null($this->two_factor_confirmed_at);
     }
 
     /**
@@ -1262,8 +1486,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Get the count of remaining recovery codes.
-     *
-     * @return int
      */
     public function recoveryCodesCount(): int
     {
@@ -1272,9 +1494,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Replace the current recovery codes with new ones.
-     *
-     * @param array $codes
-     * @return void
      */
     public function replaceRecoveryCodes(array $codes): void
     {
@@ -1285,9 +1504,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Enable two-factor authentication for the user.
-     *
-     * @param string $secret
-     * @return void
      */
     public function enableTwoFactorAuth(string $secret): void
     {
@@ -1298,8 +1514,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Confirm two-factor authentication for the user.
-     *
-     * @return void
      */
     public function confirmTwoFactorAuth(): void
     {
@@ -1310,8 +1524,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Disable two-factor authentication for the user.
-     *
-     * @return void
      */
     public function disableTwoFactorAuth(): void
     {
@@ -1324,9 +1536,6 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Use a recovery code (removes it from the list).
-     *
-     * @param string $code
-     * @return bool
      */
     public function useRecoveryCode(string $code): bool
     {
@@ -1345,19 +1554,126 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
 
     /**
      * Check if the provided code is a valid recovery code.
-     *
-     * @param string $code
-     * @return bool
      */
     public function isValidRecoveryCode(string $code): bool
     {
         return in_array($code, $this->recoveryCodes());
     }
+
     /**
      * Determine if the user can access the Filament panel.
      */
     public function canAccessPanel(Panel $panel): bool
     {
         return $this->role === 'admin' || $this->user_type === 'admin';
+    }
+
+    // ==================== GLO-002: TAX JURISDICTION ENGINE ====================
+
+    /**
+     * GLO-002: Tax Forms submitted by this user.
+     */
+    public function taxForms()
+    {
+        return $this->hasMany(TaxForm::class);
+    }
+
+    /**
+     * GLO-002: Valid/active tax forms for this user.
+     */
+    public function validTaxForms()
+    {
+        return $this->taxForms()
+            ->where('status', TaxForm::STATUS_VERIFIED)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
+    }
+
+    /**
+     * GLO-002: Tax calculations for this user.
+     */
+    public function taxCalculations()
+    {
+        return $this->hasMany(TaxCalculation::class);
+    }
+
+    /**
+     * GLO-002: Check if user has a valid W-9 form.
+     */
+    public function hasValidW9(): bool
+    {
+        return $this->validTaxForms()
+            ->where('form_type', TaxForm::TYPE_W9)
+            ->exists();
+    }
+
+    /**
+     * GLO-002: Check if user has a valid W-8BEN form.
+     */
+    public function hasValidW8BEN(): bool
+    {
+        return $this->validTaxForms()
+            ->where('form_type', TaxForm::TYPE_W8BEN)
+            ->exists();
+    }
+
+    /**
+     * GLO-002: Check if user has any required tax forms missing.
+     */
+    public function hasMissingTaxForms(): bool
+    {
+        $taxService = app(\App\Services\TaxJurisdictionService::class);
+        $requiredForms = $taxService->getRequiredForms($this);
+
+        foreach ($requiredForms as $form) {
+            if ($form['required'] && ! $form['submitted']) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * GLO-002: Get the user's effective tax rate based on their jurisdiction.
+     */
+    public function getEffectiveTaxRate(): float
+    {
+        $taxService = app(\App\Services\TaxJurisdictionService::class);
+        $jurisdiction = $taxService->getJurisdiction(
+            $this->getCountry() ?? 'US',
+            $this->getRegion()
+        );
+
+        if (! $jurisdiction) {
+            return 0;
+        }
+
+        return $taxService->getEffectiveTaxRate($this, $jurisdiction);
+    }
+
+    /**
+     * GLO-002: Get the user's tax jurisdiction based on their profile.
+     */
+    public function getTaxJurisdiction(): ?TaxJurisdiction
+    {
+        $taxService = app(\App\Services\TaxJurisdictionService::class);
+
+        return $taxService->getJurisdiction(
+            $this->getCountry() ?? 'US',
+            $this->getRegion()
+        );
+    }
+
+    /**
+     * GLO-002: Get annual tax summary for this user.
+     */
+    public function getTaxSummary(int $year): array
+    {
+        $taxService = app(\App\Services\TaxJurisdictionService::class);
+
+        return $taxService->generateTaxSummary($this, $year);
     }
 }

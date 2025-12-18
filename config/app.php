@@ -180,6 +180,7 @@ return [
         App\Providers\Filament\AdminPanelProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
+        App\Providers\LocalizationServiceProvider::class, // GLO-006: Localization Engine
         ProtoneMedia\LaravelFFMpeg\Support\ServiceProvider::class,
     ],
 
@@ -240,7 +241,6 @@ return [
         'Pages' => App\Models\Pages::class,
         'User' => App\Models\User::class,
         'FFMpeg' => ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::class,
-        
 
     ],
 

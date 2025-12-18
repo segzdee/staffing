@@ -18,6 +18,9 @@
 /* Global Form Styles */
 @import './forms.css';
 
+/* RTL (Right-to-Left) Support - GLO-006 */
+@import './rtl.css';
+
 /* Inter Font Import */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 

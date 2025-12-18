@@ -1,0 +1,477 @@
+/**
+ * GLO-006: Localization Engine - RTL (Right-to-Left) Support
+ * This stylesheet provides RTL layout support for Arabic, Hebrew, and other RTL languages.
+ * Applied when html[dir="rtl"] is set.
+ */
+
+/* Base RTL direction */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Reset for specific elements that should remain LTR */
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="url"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="number"],
+[dir="rtl"] .ltr-force {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Flex direction reversal */
+[dir="rtl"] .rtl\:flex-row-reverse {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Reset flex for specific containers */
+[dir="rtl"] .flex-row-ltr {
+  flex-direction: row;
+}
+
+/* Margin and Padding adjustments */
+[dir="rtl"] .ml-auto {
+  margin-left: unset;
+  margin-right: auto;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-right: unset;
+  margin-left: auto;
+}
+
+[dir="rtl"] .ml-2 {
+  margin-left: unset;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .mr-2 {
+  margin-right: unset;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .ml-3 {
+  margin-left: unset;
+  margin-right: 0.75rem;
+}
+
+[dir="rtl"] .mr-3 {
+  margin-right: unset;
+  margin-left: 0.75rem;
+}
+
+[dir="rtl"] .ml-4 {
+  margin-left: unset;
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .mr-4 {
+  margin-right: unset;
+  margin-left: 1rem;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-left: unset;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-right: unset;
+  padding-left: 1rem;
+}
+
+/* Border radius adjustments */
+[dir="rtl"] .rounded-l-lg {
+  border-top-left-radius: unset;
+  border-bottom-left-radius: unset;
+  border-top-right-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+[dir="rtl"] .rounded-r-lg {
+  border-top-right-radius: unset;
+  border-bottom-right-radius: unset;
+  border-top-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.5rem;
+}
+
+/* Border adjustments */
+[dir="rtl"] .border-l {
+  border-left: unset;
+  border-right-width: 1px;
+}
+
+[dir="rtl"] .border-r {
+  border-right: unset;
+  border-left-width: 1px;
+}
+
+[dir="rtl"] .border-l-4 {
+  border-left: unset;
+  border-right-width: 4px;
+}
+
+[dir="rtl"] .border-r-4 {
+  border-right: unset;
+  border-left-width: 4px;
+}
+
+/* Text alignment */
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] .text-left-force {
+  text-align: left !important;
+}
+
+/* Float adjustments */
+[dir="rtl"] .float-left {
+  float: right;
+}
+
+[dir="rtl"] .float-right {
+  float: left;
+}
+
+/* Position adjustments */
+[dir="rtl"] .left-0 {
+  left: unset;
+  right: 0;
+}
+
+[dir="rtl"] .right-0 {
+  right: unset;
+  left: 0;
+}
+
+[dir="rtl"] .left-4 {
+  left: unset;
+  right: 1rem;
+}
+
+[dir="rtl"] .right-4 {
+  right: unset;
+  left: 1rem;
+}
+
+/* Transform/rotate icons */
+[dir="rtl"] .rtl\:rotate-180 {
+  transform: rotate(180deg);
+}
+
+[dir="rtl"] .rtl\:-scale-x-100 {
+  transform: scaleX(-1);
+}
+
+/* Chevron/arrow icons flip */
+[dir="rtl"] .icon-chevron-left,
+[dir="rtl"] .icon-chevron-right,
+[dir="rtl"] [data-icon="chevron-left"],
+[dir="rtl"] [data-icon="chevron-right"] {
+  transform: scaleX(-1);
+}
+
+/* Space between elements */
+[dir="rtl"] .space-x-2 > * + * {
+  margin-left: unset;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .space-x-4 > * + * {
+  margin-left: unset;
+  margin-right: 1rem;
+}
+
+[dir="rtl"] .space-x-reverse > * + * {
+  --tw-space-x-reverse: 1;
+}
+
+/* Grid adjustments */
+[dir="rtl"] .gap-x-4 {
+  column-gap: 1rem;
+}
+
+/* Form elements */
+[dir="rtl"] .form-checkbox,
+[dir="rtl"] .form-radio {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] label {
+  text-align: right;
+}
+
+/* Navigation menus */
+[dir="rtl"] .nav-menu {
+  padding-right: 0;
+}
+
+[dir="rtl"] .nav-item {
+  text-align: right;
+}
+
+/* Dropdown positioning */
+[dir="rtl"] .dropdown-menu {
+  left: unset;
+  right: 0;
+}
+
+[dir="rtl"] .dropdown-menu.dropdown-menu-end {
+  left: 0;
+  right: unset;
+}
+
+/* Table adjustments */
+[dir="rtl"] th,
+[dir="rtl"] td {
+  text-align: right;
+}
+
+[dir="rtl"] th:first-child,
+[dir="rtl"] td:first-child {
+  padding-right: 1rem;
+  padding-left: 0;
+}
+
+[dir="rtl"] th:last-child,
+[dir="rtl"] td:last-child {
+  padding-right: 0;
+  padding-left: 1rem;
+}
+
+/* List items */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+[dir="rtl"] ul.list-none,
+[dir="rtl"] ol.list-none {
+  padding-right: 0;
+}
+
+/* Progress bars */
+[dir="rtl"] .progress-bar {
+  direction: ltr; /* Keep progress bars LTR */
+}
+
+/* Breadcrumbs */
+[dir="rtl"] .breadcrumb {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .breadcrumb-separator {
+  transform: scaleX(-1);
+}
+
+/* Sidebar positioning */
+[dir="rtl"] .sidebar {
+  left: unset;
+  right: 0;
+}
+
+[dir="rtl"] .sidebar-toggle {
+  left: unset;
+  right: 0;
+}
+
+/* Card actions */
+[dir="rtl"] .card-actions {
+  margin-left: unset;
+  margin-right: auto;
+}
+
+/* Badge positioning */
+[dir="rtl"] .badge-corner {
+  right: unset;
+  left: 0;
+}
+
+/* Avatar with status indicator */
+[dir="rtl"] .avatar-status {
+  right: unset;
+  left: 0;
+}
+
+/* Timeline */
+[dir="rtl"] .timeline {
+  border-left: unset;
+  border-right: 2px solid #e5e7eb;
+  padding-left: unset;
+  padding-right: 1.5rem;
+}
+
+[dir="rtl"] .timeline-marker {
+  left: unset;
+  right: -0.5rem;
+}
+
+/* Scrollbar positioning (WebKit browsers) */
+[dir="rtl"]::-webkit-scrollbar {
+  /* Keep scrollbar on left in RTL */
+}
+
+/* Currency and number display */
+[dir="rtl"] .currency-value,
+[dir="rtl"] .number-value {
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+/* Phone numbers */
+[dir="rtl"] .phone-number {
+  direction: ltr;
+  unicode-bidi: embed;
+  text-align: left;
+}
+
+/* Code blocks */
+[dir="rtl"] pre,
+[dir="rtl"] code {
+  direction: ltr;
+  text-align: left;
+}
+
+/* Date/time picker */
+[dir="rtl"] .datepicker,
+[dir="rtl"] .timepicker {
+  direction: ltr;
+}
+
+/* Tooltip arrow positioning */
+[dir="rtl"] .tooltip-arrow-left {
+  left: unset;
+  right: -0.5rem;
+}
+
+[dir="rtl"] .tooltip-arrow-right {
+  right: unset;
+  left: -0.5rem;
+}
+
+/* Modal close button */
+[dir="rtl"] .modal-close {
+  right: unset;
+  left: 1rem;
+}
+
+/* Notification/Alert icon positioning */
+[dir="rtl"] .alert-icon {
+  margin-right: unset;
+  margin-left: 0.75rem;
+}
+
+/* Search input icon */
+[dir="rtl"] .search-icon {
+  left: unset;
+  right: 0.75rem;
+}
+
+[dir="rtl"] .search-input {
+  padding-left: 0.75rem;
+  padding-right: 2.5rem;
+}
+
+/* Steps/wizard */
+[dir="rtl"] .steps {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .step-connector {
+  transform: scaleX(-1);
+}
+
+/* RTL-specific utility classes */
+.rtl\:text-right {
+  text-align: right;
+}
+
+.rtl\:text-left {
+  text-align: left;
+}
+
+.rtl\:mr-0 {
+  margin-right: 0;
+}
+
+.rtl\:ml-0 {
+  margin-left: 0;
+}
+
+.rtl\:pr-0 {
+  padding-right: 0;
+}
+
+.rtl\:pl-0 {
+  padding-left: 0;
+}
+
+/* Ensure icons in buttons stay aligned */
+[dir="rtl"] .btn-icon-left {
+  order: 2;
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+[dir="rtl"] .btn-icon-right {
+  order: -1;
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+/* Select dropdown arrow */
+[dir="rtl"] select {
+  background-position: left 0.5rem center;
+  padding-left: 2rem;
+  padding-right: 0.75rem;
+}
+
+/* Checkbox/Radio label spacing */
+[dir="rtl"] .checkbox-label,
+[dir="rtl"] .radio-label {
+  margin-left: unset;
+  margin-right: 0.5rem;
+}
+
+/* Animation adjustments for RTL */
+[dir="rtl"] .slide-in-left {
+  animation-name: slideInRight;
+}
+
+[dir="rtl"] .slide-in-right {
+  animation-name: slideInLeft;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

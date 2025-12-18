@@ -2,16 +2,33 @@
 
 namespace App\Services;
 
-use App\Models\ShiftNotification;
 use App\Models\Shift;
-use App\Models\ShiftAssignment;
 use App\Models\ShiftApplication;
+use App\Models\ShiftAssignment;
+use App\Models\ShiftNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
+    /**
+     * COM-002: Push Notification Service instance.
+     */
+    protected ?PushNotificationService $pushService = null;
+
+    /**
+     * Get the PushNotificationService instance (lazy loaded).
+     */
+    protected function getPushService(): PushNotificationService
+    {
+        if ($this->pushService === null) {
+            $this->pushService = app(PushNotificationService::class);
+        }
+
+        return $this->pushService;
+    }
+
     /**
      * Send notification to user
      */
@@ -48,11 +65,12 @@ class NotificationService
             return $notification;
 
         } catch (\Exception $e) {
-            Log::error("Notification send error", [
+            Log::error('Notification send error', [
                 'user_id' => $user->id,
                 'type' => $type,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -341,6 +359,7 @@ class NotificationService
     protected function shouldSendPush(User $user, $type)
     {
         $preferences = $user->notification_preferences ?? [];
+
         return $preferences['push'] ?? true;
     }
 
@@ -369,7 +388,7 @@ class NotificationService
 
         // Only send SMS for critical notifications
         $smsAllowed = ['shift_reminder_30m', 'worker_no_show', 'emergency_alert', 'shift_cancelled'];
-        if (!in_array($type, $smsAllowed)) {
+        if (! in_array($type, $smsAllowed)) {
             return false;
         }
 
@@ -377,16 +396,53 @@ class NotificationService
     }
 
     /**
-     * Send push notification (via FCM, OneSignal, etc.)
+     * Send push notification via FCM/APNs (COM-002).
+     *
+     * Uses the PushNotificationService to deliver actual push notifications
+     * to registered devices via Firebase Cloud Messaging.
      */
     protected function sendPushNotification(User $user, ShiftNotification $notification)
     {
-        // TODO: Implement push notification service
-        // Example: OneSignal, Firebase Cloud Messaging, Pusher
-        Log::info("Push notification sent", [
-            'user_id' => $user->id,
-            'notification_id' => $notification->id,
-        ]);
+        try {
+            $pushService = $this->getPushService();
+
+            $log = $pushService->send(
+                $user,
+                $notification->title,
+                $notification->message,
+                [
+                    'type' => $notification->type,
+                    'notification_id' => (string) $notification->id,
+                    'shift_id' => $notification->shift_id ? (string) $notification->shift_id : null,
+                    'assignment_id' => $notification->assignment_id ? (string) $notification->assignment_id : null,
+                ]
+            );
+
+            if ($log && $log->wasSent()) {
+                Log::info('Push notification delivered via FCM', [
+                    'user_id' => $user->id,
+                    'notification_id' => $notification->id,
+                    'log_id' => $log->id,
+                ]);
+            } elseif ($log) {
+                Log::warning('Push notification failed', [
+                    'user_id' => $user->id,
+                    'notification_id' => $notification->id,
+                    'error' => $log->error_message,
+                ]);
+            } else {
+                Log::debug('No push tokens registered for user', [
+                    'user_id' => $user->id,
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Push notification error', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -398,17 +454,17 @@ class NotificationService
             Mail::send('emails.shift_notification', [
                 'user' => $user,
                 'notification' => $notification,
-            ], function($message) use ($user, $notification) {
+            ], function ($message) use ($user, $notification) {
                 $message->to($user->email, $user->name);
                 $message->subject($notification->title);
             });
 
-            Log::info("Email notification sent", [
+            Log::info('Email notification sent', [
                 'user_id' => $user->id,
                 'notification_id' => $notification->id,
             ]);
         } catch (\Exception $e) {
-            Log::error("Email notification error", [
+            Log::error('Email notification error', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
             ]);
@@ -421,7 +477,7 @@ class NotificationService
     protected function sendSMSNotification(User $user, ShiftNotification $notification)
     {
         // TODO: Implement SMS service (Twilio)
-        Log::info("SMS notification sent", [
+        Log::info('SMS notification sent', [
             'user_id' => $user->id,
             'notification_id' => $notification->id,
         ]);

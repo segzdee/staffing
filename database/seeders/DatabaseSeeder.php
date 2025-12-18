@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             CountriesSeeder::class,
             StatesSeeder::class,
             TaxRatesSeeder::class,
+            TaxJurisdictionSeeder::class, // GLO-002: Tax Jurisdiction Engine
             SkillsSeeder::class,
             CertificationsSeeder::class,
         ]);
@@ -36,6 +37,9 @@ class DatabaseSeeder extends Seeder
             IndustriesSeeder::class,
             BusinessTypesSeeder::class,
         ]);
+
+        // Content moderation (COM-005)
+        $this->call(BlockedPhrasesSeeder::class);
 
         // Development accounts - only seed in non-production environments
         if (app()->environment('local', 'development', 'testing')) {

@@ -164,4 +164,372 @@ class DashboardController extends Controller
             'unreadMessages' => $unreadMessages,
         ]);
     }
+
+    // Access Control routes
+    public function accessAdmins(): \Illuminate\View\View
+    {
+        return view('admin.access.admins');
+    }
+
+    public function accessRoles(): \Illuminate\View\View
+    {
+        return view('admin.access.roles');
+    }
+
+    public function accessAudit(): \Illuminate\View\View
+    {
+        return view('admin.access.audit');
+    }
+
+    // Activity & Alerts
+    public function activity(): \Illuminate\View\View
+    {
+        return view('admin.activity');
+    }
+
+    public function alerts(): \Illuminate\View\View
+    {
+        return view('admin.alerts');
+    }
+
+    // Analytics routes
+    public function analyticsExport(): \Illuminate\View\View
+    {
+        return view('admin.analytics.export');
+    }
+
+    public function analyticsGeographic(): \Illuminate\View\View
+    {
+        return view('admin.analytics.geographic');
+    }
+
+    public function analyticsGrowth(): \Illuminate\View\View
+    {
+        return view('admin.analytics.growth');
+    }
+
+    public function analyticsPlatform(): \Illuminate\View\View
+    {
+        return view('admin.analytics.platform');
+    }
+
+    public function analyticsRevenue(): \Illuminate\View\View
+    {
+        return view('admin.analytics.revenue');
+    }
+
+    // Finance routes
+    public function financeTransactions(): \Illuminate\View\View
+    {
+        return view('admin.finance.transactions');
+    }
+
+    public function financeEscrow(): \Illuminate\View\View
+    {
+        return view('admin.finance.escrow');
+    }
+
+    public function financePayouts(): \Illuminate\View\View
+    {
+        return view('admin.finance.payouts');
+    }
+
+    public function financeRefunds(): \Illuminate\View\View
+    {
+        return view('admin.finance.refunds');
+    }
+
+    public function financeDisputed(): \Illuminate\View\View
+    {
+        return view('admin.finance.disputed');
+    }
+
+    public function financeCommissions(): \Illuminate\View\View
+    {
+        return view('admin.finance.commissions');
+    }
+
+    public function financeReports(): \Illuminate\View\View
+    {
+        return view('admin.finance.reports');
+    }
+
+    // Moderation routes
+    public function moderationReports(): \Illuminate\View\View
+    {
+        return view('admin.moderation.reports');
+    }
+
+    public function moderationDisputes(): \Illuminate\View\View
+    {
+        return view('admin.moderation.disputes');
+    }
+
+    public function moderationBans(): \Illuminate\View\View
+    {
+        return view('admin.moderation.bans');
+    }
+
+    public function moderationReviews(): \Illuminate\View\View
+    {
+        return view('admin.moderation.reviews');
+    }
+
+    // Revenue
+    public function revenue(): \Illuminate\View\View
+    {
+        return view('admin.revenue');
+    }
+
+    // Settings routes
+    public function settingsGeneral(): \Illuminate\View\View
+    {
+        return view('admin.settings.general');
+    }
+
+    public function settingsCategories(): \Illuminate\View\View
+    {
+        return view('admin.settings.categories');
+    }
+
+    public function settingsSkills(): \Illuminate\View\View
+    {
+        return view('admin.settings.skills');
+    }
+
+    public function settingsAreas(): \Illuminate\View\View
+    {
+        return view('admin.settings.areas');
+    }
+
+    public function settingsCommissions(): \Illuminate\View\View
+    {
+        return view('admin.settings.commissions');
+    }
+
+    public function settingsFeatures(): \Illuminate\View\View
+    {
+        return view('admin.settings.features');
+    }
+
+    public function settingsNotifications(): \Illuminate\View\View
+    {
+        return view('admin.settings.notifications');
+    }
+
+    public function settingsEmails(): \Illuminate\View\View
+    {
+        return view('admin.settings.emails');
+    }
+
+    // Shifts routes
+    public function shiftsIndex(): \Illuminate\View\View
+    {
+        return view('admin.shifts.index');
+    }
+
+    public function shiftsActive(): \Illuminate\View\View
+    {
+        return view('admin.shifts.active');
+    }
+
+    public function shiftsPending(): \Illuminate\View\View
+    {
+        return view('admin.shifts.pending');
+    }
+
+    public function shiftsCancelled(): \Illuminate\View\View
+    {
+        return view('admin.shifts.cancelled');
+    }
+
+    public function shiftsDisputed(): \Illuminate\View\View
+    {
+        return view('admin.shifts.disputed');
+    }
+
+    public function shiftsAudit(): \Illuminate\View\View
+    {
+        return view('admin.shifts.audit');
+    }
+
+    // Statistics
+    public function statistics(): \Illuminate\View\View
+    {
+        return view('admin.statistics');
+    }
+
+    // Support routes
+    public function supportTickets(): \Illuminate\View\View
+    {
+        return view('admin.support.tickets');
+    }
+
+    // System routes
+    public function systemHealth(): \Illuminate\View\View
+    {
+        return view('admin.system-health');
+    }
+
+    public function systemLogs(): \Illuminate\View\View
+    {
+        return view('admin.system.logs');
+    }
+
+    public function systemJobs(): \Illuminate\View\View
+    {
+        return view('admin.system.jobs');
+    }
+
+    public function systemApiKeys(): \Illuminate\View\View
+    {
+        return view('admin.system.api-keys');
+    }
+
+    public function systemWebhooks(): \Illuminate\View\View
+    {
+        return view('admin.system.webhooks');
+    }
+
+    public function systemIntegrations(): \Illuminate\View\View
+    {
+        return view('admin.system.integrations');
+    }
+
+    // Users routes
+    public function users(): \Illuminate\View\View
+    {
+        // Get filter parameters
+        $type = request('type', 'all');
+        $status = request('status', 'all');
+        $search = request('search', '');
+
+        // Base query
+        $query = User::query()->with('workerProfile', 'businessProfile', 'agencyProfile');
+
+        // Apply type filter
+        if ($type !== 'all') {
+            $query->where('user_type', $type);
+        }
+
+        // Apply status filter
+        if ($status !== 'all') {
+            if ($status === 'active') {
+                $query->where('is_active', true)->whereNull('suspended_at');
+            } elseif ($status === 'suspended') {
+                $query->whereNotNull('suspended_at');
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        // Apply search
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Get paginated users
+        $users = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+
+        // Get stats
+        $stats = [
+            'total' => User::count(),
+            'workers' => User::where('user_type', 'worker')->count(),
+            'businesses' => User::where('user_type', 'business')->count(),
+            'agencies' => User::where('user_type', 'agency')->count(),
+            'suspended' => User::whereNotNull('suspended_at')->count(),
+            'new_today' => User::whereDate('created_at', today())->count(),
+        ];
+
+        return view('admin.users.index', compact('users', 'stats', 'type', 'status', 'search'));
+    }
+
+    public function usersWorkers(): \Illuminate\View\View
+    {
+        return view('admin.users.workers');
+    }
+
+    public function usersVenues(): \Illuminate\View\View
+    {
+        return view('admin.users.venues');
+    }
+
+    public function usersAgencies(): \Illuminate\View\View
+    {
+        return view('admin.users.agencies');
+    }
+
+    public function usersSuspended(): \Illuminate\View\View
+    {
+        return view('admin.users.suspended');
+    }
+
+    public function usersReports(): \Illuminate\View\View
+    {
+        return view('admin.users.reports');
+    }
+
+    // Verification routes
+    public function verificationsPending(): \Illuminate\View\View
+    {
+        // Get filter parameters
+        $type = request('type', 'all');
+        $sla = request('sla', 'all');
+
+        // Base query
+        $query = VerificationQueue::with('verifiable')
+            ->whereIn('status', ['pending', 'in_review']);
+
+        // Apply type filter
+        if ($type !== 'all') {
+            $query->where('verification_type', $type);
+        }
+
+        // Apply SLA filter
+        if ($sla !== 'all') {
+            $query->where('sla_status', $sla);
+        }
+
+        // Get paginated results ordered by priority
+        $verifications = $query->orderBy('priority_score', 'desc')
+            ->orderBy('submitted_at', 'asc')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Get stats
+        $stats = [
+            'total_pending' => VerificationQueue::pending()->count(),
+            'in_review' => VerificationQueue::inReview()->count(),
+            'at_risk' => VerificationQueue::atRisk()->count(),
+            'breached' => VerificationQueue::breached()->count(),
+            'identity' => VerificationQueue::pending()->where('verification_type', 'identity')->count(),
+            'business' => VerificationQueue::pending()->where('verification_type', 'business_license')->count(),
+        ];
+
+        return view('admin.verifications.pending', compact('verifications', 'stats', 'type', 'sla'));
+    }
+
+    public function verificationId(): \Illuminate\View\View
+    {
+        return view('admin.verification.id');
+    }
+
+    public function verificationDocuments(): \Illuminate\View\View
+    {
+        return view('admin.verification.documents');
+    }
+
+    public function verificationBusiness(): \Illuminate\View\View
+    {
+        return view('admin.verification.business');
+    }
+
+    public function verificationCompliance(): \Illuminate\View\View
+    {
+        return view('admin.verification.compliance');
+    }
 }

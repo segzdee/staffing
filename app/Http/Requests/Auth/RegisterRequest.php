@@ -22,11 +22,9 @@ class RegisterRequest extends FormRequest
                 'required',
                 'string',
                 'confirmed',
-                Password::min(12)
+                Password::min(8)
                     ->mixedCase()
-                    ->numbers()
-                    ->symbols()
-                    ->uncompromised(),
+                    ->numbers(),
             ],
             'user_type' => ['required', 'in:worker,business,agency'], // Changed 'role' to 'user_type' to match existing form
             'agree_terms' => ['required', 'accepted'], // Changed 'terms' to 'agree_terms'

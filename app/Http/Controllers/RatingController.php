@@ -2,171 +2,152 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ShiftAssignment;
+use App\Http\Requests\StoreBusinessRatingRequest;
+use App\Http\Requests\StoreWorkerRatingRequest;
 use App\Models\Rating;
+use App\Models\ShiftAssignment;
+use App\Services\BadgeService;
+use App\Services\RatingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
+/**
+ * WKR-004: Rating Controller with 4-Category Rating System
+ */
 class RatingController extends Controller
 {
-    public function __construct()
+    protected RatingService $ratingService;
+
+    protected BadgeService $badgeService;
+
+    public function __construct(RatingService $ratingService, BadgeService $badgeService)
     {
         $this->middleware('auth');
+        $this->ratingService = $ratingService;
+        $this->badgeService = $badgeService;
     }
 
     /**
-     * Show rating form for worker rating business
+     * Show rating form for worker rating business.
      */
     public function createWorkerRating(ShiftAssignment $assignment)
     {
         $this->authorize('view', $assignment);
-        
-        if (!$assignment->worker_id === Auth::id()) {
+
+        if ($assignment->worker_id !== Auth::id()) {
             abort(403, 'You can only rate shifts you worked.');
         }
 
-        // Check if already rated
-        $existingRating = Rating::where('shift_assignment_id', $assignment->id)
-            ->where('rater_id', Auth::id())
-            ->where('rater_type', 'worker')
-            ->first();
+        // Check if can rate
+        $canRate = $this->ratingService->canRate(
+            Auth::user(),
+            $assignment->shift->business,
+            $assignment
+        );
 
-        if ($existingRating) {
+        if (! $canRate['can_rate']) {
             return redirect()->route('worker.assignments.show', $assignment->id)
-                ->with('info', 'You have already rated this shift.');
+                ->with('error', $canRate['reason']);
         }
 
-        // Check deadline (14 days)
-        $deadline = $assignment->shift->shift_date->addDays(14);
-        if (now()->gt($deadline)) {
-            return redirect()->route('worker.assignments.show', $assignment->id)
-                ->with('error', 'Rating deadline has passed (14 days after shift).');
-        }
+        // Get business category config
+        $categories = config('ratings.business_categories');
 
         return view('worker.shifts.rate', [
             'assignment' => $assignment,
             'rated' => $assignment->shift->business,
             'raterType' => 'worker',
+            'categories' => $categories,
         ]);
     }
 
     /**
-     * Show rating form for business rating worker
+     * Show rating form for business rating worker.
      */
     public function createBusinessRating(ShiftAssignment $assignment)
     {
         $this->authorize('view', $assignment);
-        
+
         if ($assignment->shift->business_id !== Auth::id()) {
             abort(403, 'You can only rate shifts you posted.');
         }
 
-        // Check if already rated
-        $existingRating = Rating::where('shift_assignment_id', $assignment->id)
-            ->where('rater_id', Auth::id())
-            ->where('rater_type', 'business')
-            ->first();
+        // Check if can rate
+        $canRate = $this->ratingService->canRate(
+            Auth::user(),
+            $assignment->worker,
+            $assignment
+        );
 
-        if ($existingRating) {
+        if (! $canRate['can_rate']) {
             return redirect()->route('business.shifts.show', $assignment->shift->id)
-                ->with('info', 'You have already rated this worker.');
+                ->with('error', $canRate['reason']);
         }
 
-        // Check deadline (14 days)
-        $deadline = $assignment->shift->shift_date->addDays(14);
-        if (now()->gt($deadline)) {
-            return redirect()->route('business.shifts.show', $assignment->shift->id)
-                ->with('error', 'Rating deadline has passed (14 days after shift).');
-        }
+        // Get worker category config
+        $categories = config('ratings.worker_categories');
 
         return view('business.shifts.rate', [
             'assignment' => $assignment,
             'rated' => $assignment->worker,
             'raterType' => 'business',
+            'categories' => $categories,
         ]);
     }
 
     /**
-     * Store worker rating of business
+     * Store worker rating of business.
      */
-    public function storeWorkerRating(Request $request, ShiftAssignment $assignment)
+    public function storeWorkerRating(StoreBusinessRatingRequest $request, ShiftAssignment $assignment)
     {
         $this->authorize('view', $assignment);
 
-        $validated = $request->validate([
-            'overall' => 'required|integer|min:1|max:5',
-            'communication' => 'nullable|integer|min:1|max:5',
-            'work_environment' => 'nullable|integer|min:1|max:5',
-            'would_work_again' => 'required|boolean',
-            'comment' => 'nullable|string|max:500',
-        ]);
+        if ($assignment->worker_id !== Auth::id()) {
+            abort(403, 'You can only rate shifts you worked.');
+        }
 
-        $rating = Rating::create([
-            'shift_assignment_id' => $assignment->id,
-            'rater_id' => Auth::id(),
-            'rated_id' => $assignment->shift->business_id,
-            'rater_type' => 'worker',
-            'rating' => $validated['overall'],
-            'review_text' => $validated['comment'] ?? null,
-            'categories' => [
-                'communication' => $validated['communication'] ?? null,
-                'work_environment' => $validated['work_environment'] ?? null,
-                'would_work_again' => $validated['would_work_again'],
-            ],
-        ]);
-
-        // Update business rating average
-        $this->updateBusinessRating($assignment->shift->business_id);
+        // Submit rating using RatingService
+        $rating = $this->ratingService->submitRating(
+            Auth::user(),
+            $assignment->shift->business,
+            $assignment,
+            $request->getCategoryRatings(),
+            $request->input('review_text')
+        );
 
         return redirect()->route('worker.assignments.show', $assignment->id)
             ->with('success', 'Thank you for your rating!');
     }
 
     /**
-     * Store business rating of worker
+     * Store business rating of worker.
      */
-    public function storeBusinessRating(Request $request, ShiftAssignment $assignment)
+    public function storeBusinessRating(StoreWorkerRatingRequest $request, ShiftAssignment $assignment)
     {
         $this->authorize('view', $assignment);
 
-        $validated = $request->validate([
-            'overall' => 'required|integer|min:1|max:5',
-            'punctuality' => 'nullable|integer|min:1|max:5',
-            'professionalism' => 'nullable|integer|min:1|max:5',
-            'skill_level' => 'nullable|integer|min:1|max:5',
-            'would_hire_again' => 'required|boolean',
-            'comment' => 'nullable|string|max:500',
-        ]);
+        if ($assignment->shift->business_id !== Auth::id()) {
+            abort(403, 'You can only rate shifts you posted.');
+        }
 
-        $rating = Rating::create([
-            'shift_assignment_id' => $assignment->id,
-            'rater_id' => Auth::id(),
-            'rated_id' => $assignment->worker_id,
-            'rater_type' => 'business',
-            'rating' => $validated['overall'],
-            'review_text' => $validated['comment'] ?? null,
-            'categories' => [
-                'punctuality' => $validated['punctuality'] ?? null,
-                'professionalism' => $validated['professionalism'] ?? null,
-                'skill_level' => $validated['skill_level'] ?? null,
-                'would_hire_again' => $validated['would_hire_again'],
-            ],
-        ]);
+        // Submit rating using RatingService
+        $rating = $this->ratingService->submitRating(
+            Auth::user(),
+            $assignment->worker,
+            $assignment,
+            $request->getCategoryRatings(),
+            $request->input('review_text')
+        );
 
-        // Update worker rating average and trigger badge check
-        $this->updateWorkerRating($assignment->worker_id);
-        
         // Check for rating-based badges
-        $badgeService = app(\App\Services\BadgeService::class);
-        $badgeService->checkAndAward($assignment->worker, 'rating_received');
+        $this->badgeService->checkAndAward($assignment->worker, 'rating_received');
 
         return redirect()->route('business.shifts.show', $assignment->shift->id)
             ->with('success', 'Rating submitted successfully!');
     }
 
     /**
-     * Add response to a rating
+     * Add response to a rating.
      */
     public function respond(Request $request, Rating $rating)
     {
@@ -176,7 +157,7 @@ class RatingController extends Controller
         }
 
         // Check if already responded
-        if ($rating->response_text) {
+        if ($rating->hasResponse()) {
             return redirect()->back()
                 ->with('error', 'You have already responded to this rating.');
         }
@@ -185,52 +166,115 @@ class RatingController extends Controller
             'response_text' => 'required|string|max:500',
         ]);
 
-        $rating->update([
-            'response_text' => $validated['response_text'],
-            'responded_at' => now(),
-        ]);
+        $rating->addResponse($validated['response_text']);
 
         return redirect()->back()
             ->with('success', 'Response added successfully!');
     }
 
     /**
-     * Update business rating average
+     * Get rating summary for a user (API endpoint).
      */
-    protected function updateBusinessRating($businessId)
+    public function getSummary(Request $request, int $userId)
     {
-        $avgRating = Rating::where('rated_id', $businessId)
-            ->where('rater_type', 'worker')
-            ->avg('rating');
+        $user = \App\Models\User::findOrFail($userId);
 
-        $business = \App\Models\User::find($businessId);
-        if ($business && $business->businessProfile) {
-            $business->businessProfile->update([
-                'rating_average' => round($avgRating, 2),
-            ]);
+        if ($user->isWorker()) {
+            $summary = $this->ratingService->getWorkerRatingSummary($user);
+        } elseif ($user->isBusiness()) {
+            $summary = $this->ratingService->getBusinessRatingSummary($user);
+        } else {
+            return response()->json(['error' => 'Invalid user type'], 400);
         }
+
+        return response()->json($summary);
     }
 
     /**
-     * Update worker rating average
+     * Get rating trend for a user (API endpoint).
      */
-    protected function updateWorkerRating($workerId)
+    public function getTrend(Request $request, int $userId)
     {
-        $avgRating = Rating::where('rated_id', $workerId)
-            ->where('rater_type', 'business')
-            ->avg('rating');
+        $user = \App\Models\User::findOrFail($userId);
+        $months = $request->input('months', config('ratings.trend.default_months', 6));
 
-        $worker = \App\Models\User::find($workerId);
-        if ($worker) {
-            $worker->update([
-                'rating_as_worker' => round($avgRating, 2),
-            ]);
-            
-            if ($worker->workerProfile) {
-                $worker->workerProfile->update([
-                    'rating_average' => round($avgRating, 2),
-                ]);
-            }
+        $trend = $this->ratingService->getRatingTrend($user, $months);
+
+        return response()->json($trend);
+    }
+
+    /**
+     * Get rating distribution for a user (API endpoint).
+     */
+    public function getDistribution(Request $request, int $userId)
+    {
+        $user = \App\Models\User::findOrFail($userId);
+
+        $distribution = $this->ratingService->getRatingDistribution($user);
+
+        return response()->json($distribution);
+    }
+
+    /**
+     * Get recent ratings for a user (API endpoint).
+     */
+    public function getRecent(Request $request, int $userId)
+    {
+        $user = \App\Models\User::findOrFail($userId);
+        $limit = $request->input('limit', 10);
+
+        $ratings = $this->ratingService->getRecentRatings($user, $limit);
+
+        return response()->json($ratings);
+    }
+
+    /**
+     * Display rating breakdown for worker profile.
+     */
+    public function workerBreakdown()
+    {
+        $user = Auth::user();
+
+        if (! $user->isWorker()) {
+            abort(403);
         }
+
+        $summary = $this->ratingService->getWorkerRatingSummary($user);
+        $trend = $this->ratingService->getRatingTrend($user);
+        $distribution = $this->ratingService->getRatingDistribution($user);
+        $recentRatings = $this->ratingService->getRecentRatings($user);
+
+        return view('worker.ratings.breakdown', [
+            'summary' => $summary,
+            'trend' => $trend,
+            'distribution' => $distribution,
+            'recentRatings' => $recentRatings,
+            'categories' => config('ratings.worker_categories'),
+        ]);
+    }
+
+    /**
+     * Display rating breakdown for business profile.
+     */
+    public function businessBreakdown()
+    {
+        $user = Auth::user();
+
+        if (! $user->isBusiness()) {
+            abort(403);
+        }
+
+        $summary = $this->ratingService->getBusinessRatingSummary($user);
+        $trend = $this->ratingService->getRatingTrend($user);
+        $distribution = $this->ratingService->getRatingDistribution($user);
+        $recentRatings = $this->ratingService->getRecentRatings($user);
+
+        return view('business.ratings.breakdown', [
+            'summary' => $summary,
+            'trend' => $trend,
+            'distribution' => $distribution,
+            'recentRatings' => $recentRatings,
+            'categories' => config('ratings.business_categories'),
+        ]);
     }
 }

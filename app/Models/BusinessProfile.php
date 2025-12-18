@@ -92,6 +92,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftTemplate> $templates
  * @property-read int|null $templates_count
  * @property-read \App\Models\User $user
+ *
  * @method static \Database\Factories\BusinessProfileFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile newQuery()
@@ -173,6 +174,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereVerifiedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereWebsite($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|BusinessProfile whereZipCode($value)
+ *
  * @mixin \Eloquent
  */
 class BusinessProfile extends Model
@@ -286,6 +288,19 @@ class BusinessProfile extends Model
         'referral_code_used',
         'profile_completion_percentage',
         'profile_completion_details',
+
+        // FIN-001: Volume Discount Tiers
+        'current_volume_tier_id',
+        'lifetime_shifts',
+        'lifetime_spend',
+        'lifetime_savings',
+        'custom_pricing',
+        'custom_fee_percent',
+        'custom_pricing_notes',
+        'custom_pricing_expires_at',
+        'tier_upgraded_at',
+        'tier_downgraded_at',
+        'months_at_current_tier',
     ];
 
     protected $casts = [
@@ -342,6 +357,17 @@ class BusinessProfile extends Model
         'activation_requirements_met' => 'integer',
         'activation_requirements_total' => 'integer',
         'activation_blocked_reasons' => 'array',
+        // FIN-001: Volume Discount Tiers
+        'current_volume_tier_id' => 'integer',
+        'lifetime_shifts' => 'integer',
+        'lifetime_spend' => 'decimal:2',
+        'lifetime_savings' => 'decimal:2',
+        'custom_pricing' => 'boolean',
+        'custom_fee_percent' => 'decimal:2',
+        'custom_pricing_expires_at' => 'date',
+        'tier_upgraded_at' => 'datetime',
+        'tier_downgraded_at' => 'datetime',
+        'months_at_current_tier' => 'integer',
     ];
 
     public function user()
@@ -372,6 +398,69 @@ class BusinessProfile extends Model
     {
         return $this->hasMany(Rating::class, 'rated_id', 'user_id')
             ->where('rater_type', 'worker');
+    }
+
+    // ===== FIN-001: Volume Discount Tier Relationships =====
+
+    /**
+     * Get the current volume discount tier.
+     */
+    public function currentVolumeTier()
+    {
+        return $this->belongsTo(VolumeDiscountTier::class, 'current_volume_tier_id');
+    }
+
+    /**
+     * Get all volume tracking records for this business.
+     */
+    public function volumeTrackings()
+    {
+        return $this->hasMany(BusinessVolumeTracking::class, 'business_id', 'user_id');
+    }
+
+    /**
+     * Get the current month's volume tracking.
+     */
+    public function currentMonthTracking()
+    {
+        return $this->hasOne(BusinessVolumeTracking::class, 'business_id', 'user_id')
+            ->where('month', now()->startOfMonth()->toDateString());
+    }
+
+    /**
+     * Check if business has custom pricing.
+     */
+    public function hasCustomPricing(): bool
+    {
+        if (! $this->custom_pricing) {
+            return false;
+        }
+
+        if ($this->custom_fee_percent === null) {
+            return false;
+        }
+
+        if ($this->custom_pricing_expires_at && $this->custom_pricing_expires_at->isPast()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the effective platform fee percent for this business.
+     */
+    public function getEffectiveFeePercent(): float
+    {
+        if ($this->hasCustomPricing()) {
+            return (float) $this->custom_fee_percent;
+        }
+
+        if ($this->currentVolumeTier) {
+            return (float) $this->currentVolumeTier->platform_fee_percent;
+        }
+
+        return config('overtimestaff.financial.platform_fee_rate', 35.00);
     }
 
     public function isVerified()
@@ -439,9 +528,9 @@ class BusinessProfile extends Model
      */
     public function hasSubmittedAllDocuments()
     {
-        return !empty($this->business_license_url) &&
-               !empty($this->insurance_certificate_url) &&
-               !empty($this->tax_document_url);
+        return ! empty($this->business_license_url) &&
+               ! empty($this->insurance_certificate_url) &&
+               ! empty($this->tax_document_url);
     }
 
     // ===== BIZ-002: Venue Management Methods =====
@@ -551,7 +640,7 @@ class BusinessProfile extends Model
     {
         // Check if worker has worked before
         $existingWorker = \DB::table('shift_assignments')
-            ->where('shift_id', 'IN', function($query) {
+            ->where('shift_id', 'IN', function ($query) {
                 $query->select('id')
                     ->from('shifts')
                     ->where('business_id', $this->user_id);
@@ -658,7 +747,7 @@ class BusinessProfile extends Model
      */
     public function hasExceededCreditLimit()
     {
-        if (!$this->monthly_credit_limit) {
+        if (! $this->monthly_credit_limit) {
             return false;
         }
 
@@ -673,7 +762,7 @@ class BusinessProfile extends Model
     public function addPreferredWorker($workerId)
     {
         $preferred = $this->preferred_worker_ids ?? [];
-        if (!in_array($workerId, $preferred)) {
+        if (! in_array($workerId, $preferred)) {
             $preferred[] = $workerId;
             $this->preferred_worker_ids = $preferred;
             $this->save();
@@ -686,7 +775,7 @@ class BusinessProfile extends Model
     public function blacklistWorker($workerId)
     {
         $blacklisted = $this->blacklisted_worker_ids ?? [];
-        if (!in_array($workerId, $blacklisted)) {
+        if (! in_array($workerId, $blacklisted)) {
             $blacklisted[] = $workerId;
             $this->blacklisted_worker_ids = $blacklisted;
             $this->save();
@@ -702,7 +791,7 @@ class BusinessProfile extends Model
     public function removePreferredWorker($workerId)
     {
         $preferred = $this->preferred_worker_ids ?? [];
-        $preferred = array_values(array_filter($preferred, fn($id) => $id != $workerId));
+        $preferred = array_values(array_filter($preferred, fn ($id) => $id != $workerId));
         $this->preferred_worker_ids = $preferred;
         $this->save();
     }
@@ -713,6 +802,7 @@ class BusinessProfile extends Model
     public function isWorkerBlacklisted($workerId)
     {
         $blacklisted = $this->blacklisted_worker_ids ?? [];
+
         return in_array($workerId, $blacklisted);
     }
 
@@ -725,7 +815,7 @@ class BusinessProfile extends Model
             return false;
         }
 
-        if (!$this->allow_new_workers && $worker->workerProfile->total_shifts_completed === 0) {
+        if (! $this->allow_new_workers && $worker->workerProfile->total_shifts_completed === 0) {
             return false;
         }
 
@@ -970,6 +1060,7 @@ class BusinessProfile extends Model
             'email_verification_token' => $token,
             'email_verification_sent_at' => now(),
         ]);
+
         return $token;
     }
 
@@ -984,8 +1075,10 @@ class BusinessProfile extends Model
                 'work_email_verified_at' => now(),
                 'email_verification_token' => null,
             ]);
+
             return true;
         }
+
         return false;
     }
 
@@ -1090,7 +1183,7 @@ class BusinessProfile extends Model
      */
     public function updateActivationStatus(array $requirementsStatus): void
     {
-        $metCount = collect($requirementsStatus)->filter(fn($req) => $req['met'])->count();
+        $metCount = collect($requirementsStatus)->filter(fn ($req) => $req['met'])->count();
         $totalCount = count($requirementsStatus);
         $percentage = $totalCount > 0 ? round(($metCount / $totalCount) * 100, 2) : 0;
 
@@ -1152,7 +1245,7 @@ class BusinessProfile extends Model
     public function getCachedActivationStatus(): ?array
     {
         // Cache is valid for 1 hour
-        if (!$this->activation_checked || !$this->last_activation_check) {
+        if (! $this->activation_checked || ! $this->last_activation_check) {
             return null;
         }
 

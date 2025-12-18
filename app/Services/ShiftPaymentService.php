@@ -2,27 +2,32 @@
 
 namespace App\Services;
 
+use App\Models\Shift;
 use App\Models\ShiftAssignment;
 use App\Models\ShiftPayment;
-use App\Models\Shift;
-use App\Models\User;
+use App\Models\TaxCalculation;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Stripe\StripeClient;
 use Stripe\Exception\ApiErrorException;
+use Stripe\StripeClient;
 
 class ShiftPaymentService
 {
     protected $stripe;
+
     protected $platformFeePercentage;
 
-    public function __construct()
+    protected TaxJurisdictionService $taxService;
+
+    public function __construct(?TaxJurisdictionService $taxService = null)
     {
         $stripeSecret = config('services.stripe.secret');
         $this->stripe = $stripeSecret ? new StripeClient($stripeSecret) : null;
         $this->platformFeePercentage = config('platform.fee_rate', 0.35);
+        $this->taxService = $taxService ?? app(TaxJurisdictionService::class);
     }
 
     /**
@@ -30,7 +35,6 @@ class ShiftPaymentService
      * Captures funds from business and holds in platform account.
      * SL-004: Booking confirmation & escrow capture
      *
-     * @param ShiftAssignment $assignment
      * @return ShiftPayment|null
      */
     public function holdInEscrow(ShiftAssignment $assignment)
@@ -107,7 +111,7 @@ class ShiftPaymentService
                 'payment_status' => 'escrowed',
             ]);
 
-            Log::info("Escrow held successfully", [
+            Log::info('Escrow held successfully', [
                 'shift_id' => $shift->id,
                 'assignment_id' => $assignment->id,
                 'amount' => $amountGross,
@@ -117,7 +121,7 @@ class ShiftPaymentService
             return $shiftPayment;
 
         } catch (ApiErrorException $e) {
-            Log::error("Stripe escrow error", [
+            Log::error('Stripe escrow error', [
                 'assignment_id' => $assignment->id,
                 'error' => $e->getMessage(),
             ]);
@@ -135,7 +139,6 @@ class ShiftPaymentService
      * Release payment from escrow after shift completion.
      * Called 15 minutes after shift check-out or manual completion.
      *
-     * @param ShiftAssignment $assignment
      * @return bool
      */
     public function releaseFromEscrow(ShiftAssignment $assignment)
@@ -145,10 +148,11 @@ class ShiftPaymentService
                 ->where('status', 'in_escrow')
                 ->first();
 
-            if (!$shiftPayment) {
-                Log::warning("No escrow payment found to release", [
+            if (! $shiftPayment) {
+                Log::warning('No escrow payment found to release', [
                     'assignment_id' => $assignment->id,
                 ]);
+
                 return false;
             }
 
@@ -181,7 +185,7 @@ class ShiftPaymentService
                 'payment_status' => 'released',
             ]);
 
-            Log::info("Escrow released successfully", [
+            Log::info('Escrow released successfully', [
                 'assignment_id' => $assignment->id,
                 'payment_id' => $shiftPayment->id,
                 'amount' => $amountNet,
@@ -190,10 +194,11 @@ class ShiftPaymentService
             return true;
 
         } catch (\Exception $e) {
-            Log::error("Escrow release error", [
+            Log::error('Escrow release error', [
                 'assignment_id' => $assignment->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -201,55 +206,78 @@ class ShiftPaymentService
     /**
      * Initiate instant payout to worker via Stripe Connect.
      * Called automatically 15 minutes after escrow release.
+     * GLO-002: Now includes tax calculation based on work location.
      *
-     * @param ShiftPayment $shiftPayment
      * @return bool
      */
     public function instantPayout(ShiftPayment $shiftPayment)
     {
         try {
             $worker = $shiftPayment->worker;
+            $shift = $shiftPayment->shift;
 
             // Verify worker can receive instant payouts
-            if (!$worker->canReceiveInstantPayouts()) {
-                Log::warning("Worker cannot receive instant payouts", [
+            if (! $worker->canReceiveInstantPayouts()) {
+                Log::warning('Worker cannot receive instant payouts', [
                     'worker_id' => $worker->id,
                     'payment_id' => $shiftPayment->id,
                 ]);
+
                 return false;
             }
 
+            // GLO-002: Calculate taxes based on shift location jurisdiction
+            $grossAmount = $shiftPayment->amount_net; // This is worker's share before taxes
+            if (is_object($grossAmount) && method_exists($grossAmount, 'getAmount')) {
+                $grossAmount = ((float) $grossAmount->getAmount()) / 100;
+            }
+
+            $taxCalculation = $this->calculateShiftTax($worker, $shift, $grossAmount, $shiftPayment->id);
+            $netPayoutAmount = $taxCalculation ? $taxCalculation->net_amount : $grossAmount;
+
             // Create instant payout via Stripe Connect
             // Validate amount to prevent -INF/INF casting errors
-            $amountCents = $this->validateAndConvertToCents($shiftPayment->amount_net);
+            $amountCents = $this->validateAndConvertToCents($netPayoutAmount);
             $payout = $this->stripe->transfers->create([
                 'amount' => $amountCents, // Convert to cents
                 'currency' => 'usd',
                 'destination' => $worker->stripe_connect_id,
-                'description' => "Instant payout for shift: {$shiftPayment->shift->title}",
+                'description' => "Instant payout for shift: {$shift->title}",
                 'metadata' => [
-                    'shift_id' => $shiftPayment->shift_id,
+                    'shift_id' => $shift->id,
                     'payment_id' => $shiftPayment->id,
                     'worker_id' => $worker->id,
                     'type' => 'shift_payout',
+                    'tax_calculation_id' => $taxCalculation?->id,
+                    'gross_amount' => $grossAmount,
+                    'net_amount' => $netPayoutAmount,
                 ],
             ]);
 
-            // Update payment record
-            $shiftPayment->update([
+            // Update payment record with tax information
+            $updateData = [
                 'stripe_transfer_id' => $payout->id,
                 'status' => 'paid_out',
                 'payout_initiated_at' => now(),
                 'payout_completed_at' => now(), // Instant payouts are immediate
-            ]);
+            ];
+
+            // Store tax calculation reference if applicable
+            if ($taxCalculation) {
+                $updateData['tax_calculation_id'] = $taxCalculation->id;
+                $updateData['tax_withheld'] = $taxCalculation->total_deductions;
+            }
+
+            $shiftPayment->update($updateData);
 
             // Create transaction record for worker
             Transaction::create([
                 'user_id' => $worker->id,
-                'amount' => $shiftPayment->amount_net,
+                'amount' => $netPayoutAmount,
                 'type' => 'shift_earning',
                 'status' => 'completed',
-                'description' => "Instant payout for shift: {$shiftPayment->shift->title}",
+                'description' => "Instant payout for shift: {$shift->title}".
+                    ($taxCalculation ? ' (after tax withholding)' : ''),
                 'reference_id' => $shiftPayment->id,
             ]);
 
@@ -257,7 +285,7 @@ class ShiftPaymentService
             $workerProfile = $worker->workerProfile;
             if ($workerProfile) {
                 $workerProfile->increment('total_shifts_completed');
-                $amount = $shiftPayment->amount_net;
+                $amount = $netPayoutAmount;
                 if (is_object($amount) && method_exists($amount, 'getAmount')) {
                     $amount = (int) $amount->getAmount();
                 }
@@ -270,10 +298,12 @@ class ShiftPaymentService
                 'payment_status' => 'completed',
             ]);
 
-            Log::info("Instant payout completed successfully", [
+            Log::info('Instant payout completed successfully', [
                 'worker_id' => $worker->id,
                 'payment_id' => $shiftPayment->id,
-                'amount' => $shiftPayment->amount_net,
+                'gross_amount' => $grossAmount,
+                'tax_withheld' => $taxCalculation?->total_deductions ?? 0,
+                'net_amount' => $netPayoutAmount,
                 'transfer_id' => $payout->id,
             ]);
 
@@ -283,7 +313,7 @@ class ShiftPaymentService
             return true;
 
         } catch (ApiErrorException $e) {
-            Log::error("Instant payout error", [
+            Log::error('Instant payout error', [
                 'payment_id' => $shiftPayment->id,
                 'worker_id' => $shiftPayment->worker_id,
                 'error' => $e->getMessage(),
@@ -296,6 +326,88 @@ class ShiftPaymentService
 
             return false;
         }
+    }
+
+    /**
+     * GLO-002: Calculate taxes for a shift payment based on work location.
+     */
+    protected function calculateShiftTax(User $worker, Shift $shift, float $grossAmount, ?int $shiftPaymentId = null): ?TaxCalculation
+    {
+        try {
+            // Get jurisdiction based on shift location (where work was performed)
+            $jurisdiction = $this->taxService->getJurisdiction(
+                $shift->location_country ?? 'US',
+                $shift->location_state,
+                $shift->location_city
+            );
+
+            if (! $jurisdiction) {
+                Log::info('No tax jurisdiction found for shift location', [
+                    'shift_id' => $shift->id,
+                    'country' => $shift->location_country,
+                    'state' => $shift->location_state,
+                ]);
+
+                return null;
+            }
+
+            // Calculate taxes using the tax service
+            $taxCalculation = $this->taxService->calculateTax(
+                $worker,
+                $grossAmount,
+                $jurisdiction,
+                [
+                    'shift_id' => $shift->id,
+                    'shift_payment_id' => $shiftPaymentId,
+                    'calculation_type' => TaxCalculation::TYPE_SHIFT_PAYMENT,
+                    'is_applied' => true,
+                ]
+            );
+
+            Log::info('Tax calculated for shift payment', [
+                'shift_id' => $shift->id,
+                'worker_id' => $worker->id,
+                'jurisdiction' => $jurisdiction->name,
+                'gross' => $grossAmount,
+                'income_tax' => $taxCalculation->income_tax,
+                'social_security' => $taxCalculation->social_security,
+                'withholding' => $taxCalculation->withholding,
+                'net' => $taxCalculation->net_amount,
+            ]);
+
+            return $taxCalculation;
+
+        } catch (\Exception $e) {
+            Log::error('Tax calculation error', [
+                'shift_id' => $shift->id,
+                'worker_id' => $worker->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Return null to proceed without tax deduction rather than failing the payment
+            return null;
+        }
+    }
+
+    /**
+     * GLO-002: Get tax estimate for a shift before booking.
+     */
+    public function getShiftTaxEstimate(User $worker, Shift $shift): array
+    {
+        // Calculate estimated earnings
+        $hourlyRate = $shift->final_rate ?? $shift->base_rate;
+        if (is_object($hourlyRate) && method_exists($hourlyRate, 'getAmount')) {
+            $hourlyRate = ((float) $hourlyRate->getAmount()) / 100;
+        }
+
+        $estimatedGross = $hourlyRate * $shift->duration_hours;
+
+        return $this->taxService->estimateTax(
+            $worker,
+            $estimatedGross,
+            $shift->location_country ?? 'US',
+            $shift->location_state
+        );
     }
 
     /**
@@ -321,7 +433,7 @@ class ShiftPaymentService
             }
         }
 
-        Log::info("Processed ready payouts", [
+        Log::info('Processed ready payouts', [
             'total' => $readyPayments->count(),
             'successful' => $successCount,
             'failed' => $failureCount,
@@ -338,8 +450,6 @@ class ShiftPaymentService
      * Handle payment dispute.
      * Freezes payment until dispute is resolved.
      *
-     * @param ShiftAssignment $assignment
-     * @param string $reason
      * @return bool
      */
     public function handleDispute(ShiftAssignment $assignment, string $reason)
@@ -347,7 +457,7 @@ class ShiftPaymentService
         try {
             $shiftPayment = ShiftPayment::where('assignment_id', $assignment->id)->first();
 
-            if (!$shiftPayment) {
+            if (! $shiftPayment) {
                 return false;
             }
 
@@ -364,7 +474,7 @@ class ShiftPaymentService
                 'payment_status' => 'disputed',
             ]);
 
-            Log::info("Payment dispute created", [
+            Log::info('Payment dispute created', [
                 'assignment_id' => $assignment->id,
                 'payment_id' => $shiftPayment->id,
                 'reason' => $reason,
@@ -376,10 +486,11 @@ class ShiftPaymentService
             return true;
 
         } catch (\Exception $e) {
-            Log::error("Dispute handling error", [
+            Log::error('Dispute handling error', [
                 'assignment_id' => $assignment->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -387,10 +498,9 @@ class ShiftPaymentService
     /**
      * Resolve a payment dispute.
      *
-     * @param ShiftPayment $shiftPayment
-     * @param string $resolution ('release_to_worker', 'refund_to_business', 'split')
-     * @param float|null $workerAmount
-     * @param float|null $businessRefund
+     * @param  string  $resolution  ('release_to_worker', 'refund_to_business', 'split')
+     * @param  float|null  $workerAmount
+     * @param  float|null  $businessRefund
      * @return bool
      */
     public function resolveDispute(ShiftPayment $shiftPayment, string $resolution, $workerAmount = null, $businessRefund = null)
@@ -441,7 +551,7 @@ class ShiftPaymentService
 
             DB::commit();
 
-            Log::info("Dispute resolved successfully", [
+            Log::info('Dispute resolved successfully', [
                 'payment_id' => $shiftPayment->id,
                 'resolution' => $resolution,
             ]);
@@ -450,10 +560,11 @@ class ShiftPaymentService
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Dispute resolution error", [
+            Log::error('Dispute resolution error', [
                 'payment_id' => $shiftPayment->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -489,7 +600,7 @@ class ShiftPaymentService
                 'reference_id' => $shiftPayment->id,
             ]);
 
-            Log::info("Refund processed successfully", [
+            Log::info('Refund processed successfully', [
                 'business_id' => $business->id,
                 'payment_id' => $shiftPayment->id,
                 'amount' => $amount,
@@ -498,10 +609,11 @@ class ShiftPaymentService
             return true;
 
         } catch (ApiErrorException $e) {
-            Log::error("Refund error", [
+            Log::error('Refund error', [
                 'payment_id' => $shiftPayment->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -574,7 +686,7 @@ class ShiftPaymentService
             $hoursElapsed = Carbon::parse($assignment->created_at)->diffInHours($now);
 
             // Send reminder if 2 hours passed and no reminder sent yet
-            if ($hoursElapsed >= 2 && !$application->reminder_sent_at) {
+            if ($hoursElapsed >= 2 && ! $application->reminder_sent_at) {
                 $application->update(['reminder_sent_at' => $now]);
                 // TODO: Send reminder notification to worker
                 // event(new ShiftAcknowledgmentReminder($assignment));
@@ -618,7 +730,7 @@ class ShiftPaymentService
 
                 $autoCancelled++;
 
-                Log::info("Shift auto-cancelled due to no acknowledgment", [
+                Log::info('Shift auto-cancelled due to no acknowledgment', [
                     'assignment_id' => $assignment->id,
                     'worker_id' => $assignment->worker_id,
                     'shift_id' => $assignment->shift_id,
@@ -637,7 +749,6 @@ class ShiftPaymentService
      * Worker acknowledges shift assignment.
      * Must be done within 2-6 hours of assignment to avoid auto-cancellation.
      *
-     * @param ShiftAssignment $assignment
      * @return bool
      */
     public function acknowledgeShift(ShiftAssignment $assignment)
@@ -665,7 +776,7 @@ class ShiftPaymentService
             }
         }
 
-        Log::info("Shift acknowledged by worker", [
+        Log::info('Shift acknowledged by worker', [
             'assignment_id' => $assignment->id,
             'worker_id' => $assignment->worker_id,
             'shift_id' => $assignment->shift_id,
@@ -678,8 +789,9 @@ class ShiftPaymentService
     /**
      * Validate amount and convert to cents, preventing -INF/INF casting errors.
      *
-     * @param float|int|\Money\Money|null $amount
+     * @param  float|int|\Money\Money|null  $amount
      * @return int
+     *
      * @throws \InvalidArgumentException
      */
     protected function validateAndConvertToCents($amount)
@@ -705,7 +817,7 @@ class ShiftPaymentService
         }
 
         // Ensure amount is numeric
-        if (!is_numeric($amount)) {
+        if (! is_numeric($amount)) {
             throw new \InvalidArgumentException('Amount must be numeric');
         }
 

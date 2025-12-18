@@ -30,17 +30,6 @@ class HomeController extends Controller
      */
     public function index()
     {
-        try {
-            // Check Database access
-            if (!$this->settings) {
-                // Redirect to Installer if database not set up
-                return redirect('install/script');
-            }
-        } catch (\Exception $e) {
-            // Redirect to Installer
-            return redirect('install/script');
-        }
-
         // If user is logged in, redirect to their dashboard
         if (Auth::check()) {
             return redirect()->route('dashboard.index');

@@ -199,6 +199,14 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         'last_failed_login_at',
         'locked_at',
         'locked_by_admin_id',
+        // KYC fields
+        'kyc_verified',
+        'kyc_verified_at',
+        'kyc_level',
+        // Strike/suspension status fields (WKR-009)
+        'is_suspended',
+        'strike_count',
+        'last_strike_at',
     ];
 
     /**
@@ -233,6 +241,13 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',
         'two_factor_confirmed_at' => 'datetime',
+        // KYC casts
+        'kyc_verified' => 'boolean',
+        'kyc_verified_at' => 'datetime',
+        // Strike/suspension casts (WKR-009)
+        'is_suspended' => 'boolean',
+        'strike_count' => 'integer',
+        'last_strike_at' => 'datetime',
     ];
 
     /**
@@ -507,6 +522,22 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     }
 
     /**
+     * GLO-010: Data Residency - User's data region assignment
+     */
+    public function dataResidency()
+    {
+        return $this->hasOne(UserDataResidency::class);
+    }
+
+    /**
+     * GLO-010: Data Residency - User's data transfer logs
+     */
+    public function dataTransferLogs()
+    {
+        return $this->hasMany(DataTransferLog::class);
+    }
+
+    /**
      * Get the active profile based on user type
      */
     public function profile()
@@ -689,6 +720,22 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     }
 
     /**
+     * QUA-002: Mystery Shopper Profile
+     */
+    public function mysteryShopper()
+    {
+        return $this->hasOne(MysteryShopper::class);
+    }
+
+    /**
+     * QUA-002: Shift Audits conducted by this user (as auditor)
+     */
+    public function conductedAudits()
+    {
+        return $this->hasMany(ShiftAudit::class, 'auditor_id');
+    }
+
+    /**
      * Loyalty Transactions
      */
     public function loyaltyTransactions()
@@ -702,6 +749,22 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     public function loyaltyRedemptions()
     {
         return $this->hasMany(LoyaltyRedemption::class);
+    }
+
+    /**
+     * WKR-006: Worker Earnings - Individual earnings records
+     */
+    public function workerEarnings()
+    {
+        return $this->hasMany(WorkerEarning::class);
+    }
+
+    /**
+     * WKR-006: Earnings Summaries - Cached aggregate summaries
+     */
+    public function earningsSummaries()
+    {
+        return $this->hasMany(EarningsSummary::class);
     }
 
     /**
@@ -977,6 +1040,94 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
     public function hasValidPayoutMethod()
     {
         return ! empty($this->stripe_connect_id) && $this->completed_stripe_onboarding;
+    }
+
+    // ==================== FIN-004: INSTAPAY METHODS ====================
+
+    /**
+     * FIN-004: InstaPay Requests - All instant payout requests by this user
+     */
+    public function instapayRequests()
+    {
+        return $this->hasMany(InstapayRequest::class);
+    }
+
+    /**
+     * FIN-004: InstaPay Settings - User's InstaPay preferences
+     */
+    public function instapaySettings()
+    {
+        return $this->hasOne(InstapaySettings::class);
+    }
+
+    /**
+     * FIN-004: Get or create InstaPay settings for this user
+     */
+    public function getOrCreateInstapaySettings(): InstapaySettings
+    {
+        return InstapaySettings::getOrCreateForUser($this);
+    }
+
+    /**
+     * FIN-004: Check if user is eligible for InstaPay
+     */
+    public function isEligibleForInstapay(): bool
+    {
+        // Must be a worker
+        if (! $this->isWorker()) {
+            return false;
+        }
+
+        // Must have completed minimum shifts
+        $minShifts = config('instapay.eligibility.min_completed_shifts', 3);
+        if ($this->total_shifts_completed < $minShifts) {
+            return false;
+        }
+
+        // Must have minimum reliability score
+        $minReliability = config('instapay.eligibility.min_reliability_score', 70);
+        if ($this->reliability_score < $minReliability) {
+            return false;
+        }
+
+        // Must be verified if required
+        if (config('instapay.eligibility.require_verified', true) && ! $this->is_verified_worker) {
+            return false;
+        }
+
+        // Must have a valid payout method
+        if (config('instapay.eligibility.require_payment_method', true) && ! $this->hasValidPayoutMethod()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * FIN-004: Get today's InstaPay total for this user
+     */
+    public function getTodayInstapayTotal(): float
+    {
+        return $this->instapayRequests()
+            ->today()
+            ->whereIn('status', [
+                InstapayRequest::STATUS_PENDING,
+                InstapayRequest::STATUS_PROCESSING,
+                InstapayRequest::STATUS_COMPLETED,
+            ])
+            ->sum('gross_amount');
+    }
+
+    /**
+     * FIN-004: Get remaining daily InstaPay limit
+     */
+    public function getRemainingInstapayLimit(): float
+    {
+        $settings = $this->instapaySettings;
+        $dailyLimit = $settings ? $settings->getEffectiveDailyLimit() : config('instapay.daily_limit', 500.00);
+        $usedToday = $this->getTodayInstapayTotal();
+
+        return max(0, $dailyLimit - $usedToday);
     }
 
     /**
@@ -1568,6 +1719,32 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         return $this->role === 'admin' || $this->user_type === 'admin';
     }
 
+    // ==================== GLO-003: LABOR LAW COMPLIANCE ====================
+
+    /**
+     * GLO-003: Compliance Violations for this user.
+     */
+    public function complianceViolations()
+    {
+        return $this->hasMany(ComplianceViolation::class);
+    }
+
+    /**
+     * GLO-003: Worker Exemptions (opt-outs) for this user.
+     */
+    public function workerExemptions()
+    {
+        return $this->hasMany(WorkerExemption::class);
+    }
+
+    /**
+     * GLO-003: Active Worker Exemptions.
+     */
+    public function activeExemptions()
+    {
+        return $this->workerExemptions()->active();
+    }
+
     // ==================== GLO-002: TAX JURISDICTION ENGINE ====================
 
     /**
@@ -1675,5 +1852,216 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         $taxService = app(\App\Services\TaxJurisdictionService::class);
 
         return $taxService->generateTaxSummary($this, $year);
+    }
+
+    // ==================== BIZ-005: ROSTER MANAGEMENT ====================
+
+    /**
+     * BIZ-005: Rosters owned by this business.
+     */
+    public function businessRosters()
+    {
+        return $this->hasMany(BusinessRoster::class, 'business_id');
+    }
+
+    /**
+     * BIZ-005: Roster memberships for this worker.
+     */
+    public function rosterMemberships()
+    {
+        return $this->hasMany(RosterMember::class, 'worker_id');
+    }
+
+    /**
+     * BIZ-005: Active roster memberships for this worker.
+     */
+    public function activeRosterMemberships()
+    {
+        return $this->rosterMemberships()->where('status', 'active');
+    }
+
+    /**
+     * BIZ-005: Roster invitations received by this worker.
+     */
+    public function rosterInvitations()
+    {
+        return $this->hasMany(RosterInvitation::class, 'worker_id');
+    }
+
+    /**
+     * BIZ-005: Pending roster invitations for this worker.
+     */
+    public function pendingRosterInvitations()
+    {
+        return $this->rosterInvitations()
+            ->where('status', 'pending')
+            ->where('expires_at', '>', now());
+    }
+
+    /**
+     * BIZ-005: Check if this worker is on a business's roster.
+     */
+    public function isOnRoster(User|int $business, ?string $rosterType = null): bool
+    {
+        $businessId = $business instanceof User ? $business->id : $business;
+
+        $query = $this->rosterMemberships()
+            ->whereHas('roster', function ($q) use ($businessId, $rosterType) {
+                $q->where('business_id', $businessId);
+                if ($rosterType) {
+                    $q->where('type', $rosterType);
+                }
+            })
+            ->where('status', 'active');
+
+        return $query->exists();
+    }
+
+    /**
+     * BIZ-005: Check if this worker is blacklisted by a business.
+     */
+    public function isBlacklistedBy(User|int $business): bool
+    {
+        return $this->isOnRoster($business, BusinessRoster::TYPE_BLACKLIST);
+    }
+
+    /**
+     * BIZ-005: Check if this worker is a preferred worker for a business.
+     */
+    public function isPreferredWorkerFor(User|int $business): bool
+    {
+        return $this->isOnRoster($business, BusinessRoster::TYPE_PREFERRED);
+    }
+
+    /**
+     * BIZ-005: Get the custom rate for this worker from a business roster.
+     */
+    public function getCustomRateForBusiness(User|int $business): ?float
+    {
+        $businessId = $business instanceof User ? $business->id : $business;
+
+        $membership = $this->rosterMemberships()
+            ->whereHas('roster', function ($q) use ($businessId) {
+                $q->where('business_id', $businessId);
+            })
+            ->where('status', 'active')
+            ->whereNotNull('custom_rate')
+            ->first();
+
+        return $membership?->custom_rate;
+    }
+
+    // ==================== COM-003: EMAIL PREFERENCES ====================
+
+    /**
+     * COM-003: Email Preferences for this user.
+     */
+    public function emailPreferences()
+    {
+        return $this->hasOne(EmailPreference::class);
+    }
+
+    /**
+     * COM-003: Get or create email preferences for this user.
+     */
+    public function getOrCreateEmailPreferences(): EmailPreference
+    {
+        return EmailPreference::getOrCreateForUser($this);
+    }
+
+    /**
+     * COM-003: Email Logs for this user.
+     */
+    public function emailLogs()
+    {
+        return $this->hasMany(EmailLog::class);
+    }
+
+    /**
+     * COM-003: Check if user allows a specific email category.
+     */
+    public function allowsEmailCategory(string $category): bool
+    {
+        $preferences = $this->emailPreferences;
+
+        if (! $preferences) {
+            return true; // Default to allowing if no preferences set
+        }
+
+        return $preferences->allowsCategory($category);
+    }
+
+    // ==================== WKR-007: WORKER CAREER TIERS ====================
+
+    /**
+     * WKR-007: Worker Tier History
+     */
+    public function tierHistory()
+    {
+        return $this->hasMany(WorkerTierHistory::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * WKR-007: Get current worker tier through profile.
+     */
+    public function getWorkerTierAttribute(): ?WorkerTier
+    {
+        if (! $this->isWorker()) {
+            return null;
+        }
+
+        return $this->workerProfile?->workerTier;
+    }
+
+    /**
+     * WKR-007: Get tier progress for this worker.
+     */
+    public function getTierProgressAttribute(): array
+    {
+        if (! $this->isWorker()) {
+            return [];
+        }
+
+        return app(\App\Services\WorkerTierService::class)->getTierProgress($this);
+    }
+
+    /**
+     * WKR-007: Check if worker has access to premium shifts.
+     */
+    public function hasPremiumShiftsAccess(): bool
+    {
+        $tier = $this->workerTier;
+
+        return $tier && $tier->premium_shifts_access;
+    }
+
+    /**
+     * WKR-007: Check if worker has instant payout access.
+     */
+    public function hasTierInstantPayout(): bool
+    {
+        $tier = $this->workerTier;
+
+        return $tier && $tier->instant_payout;
+    }
+
+    /**
+     * WKR-007: Get the worker's fee discount percentage based on tier.
+     */
+    public function getTierFeeDiscount(): float
+    {
+        $tier = $this->workerTier;
+
+        return $tier ? $tier->fee_discount_percent : 0;
+    }
+
+    /**
+     * WKR-007: Get the worker's priority booking hours based on tier.
+     */
+    public function getTierPriorityHours(): int
+    {
+        $tier = $this->workerTier;
+
+        return $tier ? $tier->priority_booking_hours : 0;
     }
 }

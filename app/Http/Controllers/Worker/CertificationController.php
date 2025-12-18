@@ -38,6 +38,7 @@ class CertificationController extends Controller
         $worker = auth()->user();
         $certifications = $this->certificationService->getWorkerCertifications($worker);
         $availableTypes = $this->certificationService->getAvailableCertificationTypes();
+
         return view('worker.certifications', compact('certifications', 'availableTypes'));
     }
 
@@ -45,9 +46,6 @@ class CertificationController extends Controller
      * Get available certification types.
      *
      * GET /api/worker/certifications/types
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getAvailableTypes(Request $request): JsonResponse
     {
@@ -74,15 +72,12 @@ class CertificationController extends Controller
      * Get the worker's certifications (API route).
      *
      * GET /api/worker/certifications
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getCertifications(Request $request): JsonResponse
     {
         $worker = $request->user();
 
-        if (!$worker->isWorker()) {
+        if (! $worker->isWorker()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can access certifications.',
@@ -125,10 +120,6 @@ class CertificationController extends Controller
      * Get a single certification.
      *
      * GET /api/worker/certifications/{id}
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(Request $request, int $id): JsonResponse
     {
@@ -138,7 +129,7 @@ class CertificationController extends Controller
             ->with(['certificationType', 'documents'])
             ->find($id);
 
-        if (!$certification) {
+        if (! $certification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Certification not found.',
@@ -155,15 +146,12 @@ class CertificationController extends Controller
      * Submit a new certification.
      *
      * POST /api/worker/certifications
-     *
-     * @param SubmitCertificationRequest $request
-     * @return JsonResponse
      */
     public function store(SubmitCertificationRequest $request): JsonResponse
     {
         $worker = $request->user();
 
-        if (!$worker->isWorker()) {
+        if (! $worker->isWorker()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can submit certifications.',
@@ -179,8 +167,9 @@ class CertificationController extends Controller
             $document
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             $statusCode = isset($result['existing_certification_id']) ? 409 : 422;
+
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -200,10 +189,6 @@ class CertificationController extends Controller
      * Update a certification.
      *
      * PUT /api/worker/certifications/{id}
-     *
-     * @param UpdateCertificationRequest $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(UpdateCertificationRequest $request, int $id): JsonResponse
     {
@@ -211,7 +196,7 @@ class CertificationController extends Controller
 
         $certification = WorkerCertification::where('worker_id', $worker->id)->find($id);
 
-        if (!$certification) {
+        if (! $certification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Certification not found.',
@@ -231,7 +216,7 @@ class CertificationController extends Controller
             $request->validated()
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -249,10 +234,6 @@ class CertificationController extends Controller
      * Delete a certification.
      *
      * DELETE /api/worker/certifications/{id}
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
@@ -260,7 +241,7 @@ class CertificationController extends Controller
 
         $certification = WorkerCertification::where('worker_id', $worker->id)->find($id);
 
-        if (!$certification) {
+        if (! $certification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Certification not found.',
@@ -269,7 +250,7 @@ class CertificationController extends Controller
 
         $result = $this->certificationService->deleteCertification($certification);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -286,10 +267,6 @@ class CertificationController extends Controller
      * Upload an additional document for a certification.
      *
      * POST /api/worker/certifications/{id}/documents
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function uploadDocument(Request $request, int $id): JsonResponse
     {
@@ -302,7 +279,7 @@ class CertificationController extends Controller
 
         $certification = WorkerCertification::where('worker_id', $worker->id)->find($id);
 
-        if (!$certification) {
+        if (! $certification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Certification not found.',
@@ -316,7 +293,7 @@ class CertificationController extends Controller
             $request->document_type
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -334,10 +311,6 @@ class CertificationController extends Controller
      * Start renewal process for a certification.
      *
      * POST /api/worker/certifications/{id}/renew
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function startRenewal(Request $request, int $id): JsonResponse
     {
@@ -345,7 +318,7 @@ class CertificationController extends Controller
 
         $certification = WorkerCertification::where('worker_id', $worker->id)->find($id);
 
-        if (!$certification) {
+        if (! $certification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Certification not found.',
@@ -369,10 +342,6 @@ class CertificationController extends Controller
      * Get certification expiry status.
      *
      * GET /api/worker/certifications/{id}/expiry
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function checkExpiry(Request $request, int $id): JsonResponse
     {
@@ -380,7 +349,7 @@ class CertificationController extends Controller
 
         $certification = WorkerCertification::where('worker_id', $worker->id)->find($id);
 
-        if (!$certification) {
+        if (! $certification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Certification not found.',
@@ -390,6 +359,158 @@ class CertificationController extends Controller
         return response()->json([
             'success' => true,
             'data' => $certification->checkExpiry(),
+        ]);
+    }
+
+    // =========================================
+    // SAF-003: Safety Certifications Methods
+    // =========================================
+
+    /**
+     * Get available safety certifications.
+     *
+     * GET /api/worker/certifications/safety-types
+     */
+    public function getSafetyCertificationTypes(Request $request): JsonResponse
+    {
+        $industry = $request->query('industry');
+        $position = $request->query('position');
+
+        $query = \App\Models\SafetyCertification::active()
+            ->orderBy('category')
+            ->orderBy('name');
+
+        if ($industry) {
+            $query->forIndustry($industry);
+        }
+
+        if ($position) {
+            $query->forPosition($position);
+        }
+
+        $certifications = $query->get()->groupBy('category');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'safety_certifications' => $certifications,
+                'categories' => \App\Models\SafetyCertification::getCategoryOptions(),
+            ],
+        ]);
+    }
+
+    /**
+     * Submit a safety certification.
+     *
+     * POST /api/worker/certifications/safety
+     */
+    public function storeSafetyCertification(Request $request): JsonResponse
+    {
+        $request->validate([
+            'safety_certification_id' => 'required|exists:safety_certifications,id',
+            'certificate_number' => 'nullable|string|max:100',
+            'issue_date' => 'required|date|before_or_equal:today',
+            'expiry_date' => 'nullable|date|after:issue_date',
+            'issuing_authority' => 'nullable|string|max:255',
+            'document' => 'nullable|file|mimes:jpeg,jpg,png,pdf|max:10240',
+        ]);
+
+        $worker = $request->user();
+
+        if (! $worker->isWorker()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only workers can submit certifications.',
+            ], 403);
+        }
+
+        $result = $this->certificationService->addWorkerCertification($worker, [
+            'safety_certification_id' => $request->safety_certification_id,
+            'certificate_number' => $request->certificate_number,
+            'issue_date' => $request->issue_date,
+            'expiry_date' => $request->expiry_date,
+            'issuing_authority' => $request->issuing_authority,
+            'document' => $request->file('document'),
+        ]);
+
+        if (! $result['success']) {
+            $statusCode = isset($result['existing_certification_id']) ? 409 : 422;
+
+            return response()->json([
+                'success' => false,
+                'message' => $result['error'],
+                'existing_certification_id' => $result['existing_certification_id'] ?? null,
+            ], $statusCode);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Safety certification submitted successfully.',
+            'data' => $result['certification'],
+        ], 201);
+    }
+
+    /**
+     * Request re-verification for a certification.
+     *
+     * POST /api/worker/certifications/{id}/reverify
+     */
+    public function requestReverification(Request $request, int $id): JsonResponse
+    {
+        $worker = $request->user();
+
+        $certification = WorkerCertification::where('worker_id', $worker->id)->find($id);
+
+        if (! $certification) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Certification not found.',
+            ], 404);
+        }
+
+        $result = $this->certificationService->requestReverification($certification);
+
+        if (! $result['success']) {
+            return response()->json([
+                'success' => false,
+                'message' => $result['error'],
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Re-verification requested successfully.',
+            'data' => $result['certification'],
+        ]);
+    }
+
+    /**
+     * Check if worker meets requirements for a shift.
+     *
+     * GET /api/worker/certifications/check-shift/{shiftId}
+     */
+    public function checkShiftRequirements(Request $request, int $shiftId): JsonResponse
+    {
+        $worker = $request->user();
+        $shift = \App\Models\Shift::find($shiftId);
+
+        if (! $shift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shift not found.',
+            ], 404);
+        }
+
+        $meetsRequirements = $this->certificationService->workerMeetsShiftRequirements($worker, $shift);
+        $missing = $this->certificationService->getMissingCertifications($worker, $shift);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'meets_requirements' => $meetsRequirements,
+                'missing_certifications' => $missing,
+                'can_apply' => $meetsRequirements || $missing->where('is_mandatory', true)->isEmpty(),
+            ],
         ]);
     }
 }

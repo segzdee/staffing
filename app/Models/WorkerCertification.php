@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Carbon\Carbon;
 
 /**
  * STAFF-REG-007: Enhanced WorkerCertification Model
@@ -51,22 +51,29 @@ class WorkerCertification extends Model
      * Verification status constants
      */
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_VERIFIED = 'verified';
+
     public const STATUS_REJECTED = 'rejected';
+
     public const STATUS_EXPIRED = 'expired';
 
     /**
      * Verification method constants
      */
     public const METHOD_MANUAL = 'manual';
+
     public const METHOD_API = 'api';
+
     public const METHOD_OCR = 'ocr';
+
     public const METHOD_ISSUER_LOOKUP = 'issuer_lookup';
 
     protected $fillable = [
         'worker_id',
         'certification_id',
         'certification_type_id',
+        'safety_certification_id',
         'certification_number',
         'issue_date',
         'expiry_date',
@@ -83,6 +90,7 @@ class WorkerCertification extends Model
         'verified_at',
         'verified_by',
         'verification_notes',
+        'rejection_reason',
         'expiry_reminder_sent',
         'expiry_reminders_sent',
         'last_reminder_sent_at',
@@ -141,6 +149,14 @@ class WorkerCertification extends Model
     public function certificationType()
     {
         return $this->belongsTo(CertificationType::class);
+    }
+
+    /**
+     * SAF-003: Get the safety certification (new system).
+     */
+    public function safetyCertification()
+    {
+        return $this->belongsTo(SafetyCertification::class);
     }
 
     /**
@@ -264,7 +280,7 @@ class WorkerCertification extends Model
     {
         return $this->verified &&
                $this->verification_status === self::STATUS_VERIFIED &&
-               !$this->isExpired();
+               ! $this->isExpired();
     }
 
     /**
@@ -272,11 +288,11 @@ class WorkerCertification extends Model
      */
     public function isExpiringSoon(int $days = 60): bool
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return false;
         }
 
-        return !$this->isExpired() &&
+        return ! $this->isExpired() &&
                $this->expiry_date->lte(now()->addDays($days));
     }
 
@@ -285,7 +301,7 @@ class WorkerCertification extends Model
      */
     public function getDaysUntilExpiry(): ?int
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return null;
         }
 
@@ -297,7 +313,7 @@ class WorkerCertification extends Model
      */
     public function checkExpiry(): array
     {
-        if (!$this->expiry_date) {
+        if (! $this->expiry_date) {
             return [
                 'has_expiry' => false,
                 'is_expired' => false,
@@ -312,7 +328,7 @@ class WorkerCertification extends Model
         return [
             'has_expiry' => true,
             'is_expired' => $isExpired,
-            'is_expiring_soon' => !$isExpired && $daysUntilExpiry <= 60,
+            'is_expiring_soon' => ! $isExpired && $daysUntilExpiry <= 60,
             'days_until_expiry' => $isExpired ? 0 : $daysUntilExpiry,
             'expiry_date' => $this->expiry_date,
             'status' => $this->getExpiryStatus($daysUntilExpiry),

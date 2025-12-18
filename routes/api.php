@@ -407,6 +407,49 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
         Route::get('/verification-status', [App\Http\Controllers\Worker\EmergencyContactController::class, 'verificationStatus'])
             ->name('verification-status');
     });
+
+    // ========================================
+    // FIN-004: InstaPay (Same-Day Payout) API Routes
+    // ========================================
+    Route::prefix('instapay')->name('instapay.')->group(function () {
+        // Get InstaPay status and eligibility
+        Route::get('/status', [App\Http\Controllers\Worker\InstaPayController::class, 'getStatus'])
+            ->name('status');
+
+        // Calculate fee preview
+        Route::post('/calculate', [App\Http\Controllers\Worker\InstaPayController::class, 'calculateFee'])
+            ->name('calculate');
+
+        // Request instant payout
+        Route::post('/request', [App\Http\Controllers\Worker\InstaPayController::class, 'requestPayout'])
+            ->name('request');
+
+        // Get request history
+        Route::get('/history', [App\Http\Controllers\Worker\InstaPayController::class, 'getHistory'])
+            ->name('history');
+
+        // Get specific request
+        Route::get('/{instapayRequest}', [App\Http\Controllers\Worker\InstaPayController::class, 'show'])
+            ->name('show');
+
+        // Cancel pending request
+        Route::post('/{instapayRequest}/cancel', [App\Http\Controllers\Worker\InstaPayController::class, 'cancelRequest'])
+            ->name('cancel');
+
+        // Get earnings awaiting payout
+        Route::get('/earnings', [App\Http\Controllers\Worker\InstaPayController::class, 'getEarnings'])
+            ->name('earnings');
+
+        // Get statistics
+        Route::get('/statistics', [App\Http\Controllers\Worker\InstaPayController::class, 'getStatistics'])
+            ->name('statistics');
+
+        // Settings
+        Route::get('/settings', [App\Http\Controllers\Worker\InstaPayController::class, 'getSettings'])
+            ->name('settings.show');
+        Route::put('/settings', [App\Http\Controllers\Worker\InstaPayController::class, 'updateSettings'])
+            ->name('settings.update');
+    });
 });
 
 // ============================================================================
@@ -714,4 +757,89 @@ Route::prefix('messaging')->name('api.messaging.')->middleware('auth:sanctum')->
     // Send test message (development only)
     Route::post('/test', [App\Http\Controllers\Api\MessagingController::class, 'sendTest'])
         ->name('test');
+});
+
+// ============================================================================
+// BIZ-012: Integration APIs - Calendar Feed (Public)
+// ============================================================================
+
+// Calendar iCal feed - public but token-secured
+Route::get('/calendar/{token}', [App\Http\Controllers\Api\CalendarFeedController::class, 'show'])
+    ->name('api.calendar.feed')
+    ->where('token', '[a-zA-Z0-9]+\.?ics?');
+
+// ============================================================================
+// BIZ-012: Integration APIs - Business Integrations
+// ============================================================================
+
+Route::prefix('business/integrations')->name('api.business.integrations.')->middleware(['auth:sanctum', 'business'])->group(function () {
+    // List integrations and providers
+    Route::get('/', [App\Http\Controllers\Business\IntegrationController::class, 'getIntegrations'])
+        ->name('index');
+    Route::get('/providers', [App\Http\Controllers\Business\IntegrationController::class, 'getProviders'])
+        ->name('providers');
+
+    // Connect/disconnect integrations
+    Route::post('/connect', [App\Http\Controllers\Business\IntegrationController::class, 'connect'])
+        ->name('connect');
+    Route::delete('/{integration}/disconnect', [App\Http\Controllers\Business\IntegrationController::class, 'disconnect'])
+        ->name('disconnect');
+
+    // Test connection
+    Route::get('/{integration}/test', [App\Http\Controllers\Business\IntegrationController::class, 'testConnection'])
+        ->name('test');
+
+    // Sync operations
+    Route::post('/{integration}/sync/shifts', [App\Http\Controllers\Business\IntegrationController::class, 'syncShifts'])
+        ->name('sync.shifts');
+    Route::post('/{integration}/sync/timesheets', [App\Http\Controllers\Business\IntegrationController::class, 'syncTimesheets'])
+        ->name('sync.timesheets');
+    Route::post('/{integration}/import/workers', [App\Http\Controllers\Business\IntegrationController::class, 'importWorkers'])
+        ->name('import.workers');
+    Route::post('/{integration}/export/payroll', [App\Http\Controllers\Business\IntegrationController::class, 'exportPayroll'])
+        ->name('export.payroll');
+
+    // Sync history
+    Route::get('/{integration}/history', [App\Http\Controllers\Business\IntegrationController::class, 'syncHistory'])
+        ->name('history');
+
+    // Settings
+    Route::put('/{integration}/settings', [App\Http\Controllers\Business\IntegrationController::class, 'updateSettings'])
+        ->name('settings');
+
+    // Calendar URL
+    Route::get('/calendar-url', [App\Http\Controllers\Business\IntegrationController::class, 'getCalendarUrl'])
+        ->name('calendar-url');
+    Route::post('/calendar-url/regenerate', [App\Http\Controllers\Business\IntegrationController::class, 'regenerateCalendarUrl'])
+        ->name('calendar-url.regenerate');
+});
+
+// ============================================================================
+// BIZ-012: Integration APIs - Business Webhooks
+// ============================================================================
+
+Route::prefix('business/webhooks')->name('api.business.webhooks.')->middleware(['auth:sanctum', 'business'])->group(function () {
+    // List and manage webhooks
+    Route::get('/', [App\Http\Controllers\Business\WebhookController::class, 'getWebhooks'])
+        ->name('index');
+    Route::get('/events', [App\Http\Controllers\Business\WebhookController::class, 'getEvents'])
+        ->name('events');
+    Route::post('/', [App\Http\Controllers\Business\WebhookController::class, 'store'])
+        ->name('store');
+    Route::get('/{webhook}', [App\Http\Controllers\Business\WebhookController::class, 'show'])
+        ->name('show');
+    Route::put('/{webhook}', [App\Http\Controllers\Business\WebhookController::class, 'update'])
+        ->name('update');
+    Route::delete('/{webhook}', [App\Http\Controllers\Business\WebhookController::class, 'destroy'])
+        ->name('destroy');
+
+    // Webhook operations
+    Route::post('/{webhook}/test', [App\Http\Controllers\Business\WebhookController::class, 'test'])
+        ->name('test');
+    Route::post('/{webhook}/regenerate-secret', [App\Http\Controllers\Business\WebhookController::class, 'regenerateSecret'])
+        ->name('regenerate-secret');
+    Route::post('/{webhook}/reactivate', [App\Http\Controllers\Business\WebhookController::class, 'reactivate'])
+        ->name('reactivate');
+    Route::post('/{webhook}/toggle', [App\Http\Controllers\Business\WebhookController::class, 'toggle'])
+        ->name('toggle');
 });

@@ -67,6 +67,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read \App\Models\User $user
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $workers
  * @property-read int|null $workers_count
+ *
  * @method static \Database\Factories\AgencyProfileFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AgencyProfile newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AgencyProfile newQuery()
@@ -121,6 +122,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AgencyProfile whereWorkerDropouts($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AgencyProfile whereWorkerSkillDistribution($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AgencyProfile whereZipCode($value)
+ *
  * @mixin \Eloquent
  */
 class AgencyProfile extends Model
@@ -137,6 +139,11 @@ class AgencyProfile extends Model
         'managed_workers',
         'total_shifts_managed',
         'total_workers_managed',
+        // Tier fields (AGY-001)
+        'agency_tier_id',
+        'tier_achieved_at',
+        'tier_review_at',
+        'tier_metrics_snapshot',
         // Contact & Location
         'phone',
         'address',
@@ -227,11 +234,32 @@ class AgencyProfile extends Model
         'test_shift_completed' => 'boolean',
         'manual_verifications' => 'array',
         'is_complete' => 'boolean',
+        // Tier casts (AGY-001)
+        'tier_achieved_at' => 'datetime',
+        'tier_review_at' => 'datetime',
+        'tier_metrics_snapshot' => 'array',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * AGY-001: Get the current tier for this agency.
+     */
+    public function tier()
+    {
+        return $this->belongsTo(AgencyTier::class, 'agency_tier_id');
+    }
+
+    /**
+     * AGY-001: Get tier history for this agency.
+     */
+    public function tierHistory()
+    {
+        return $this->hasMany(AgencyTierHistory::class, 'agency_id', 'user_id')
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -287,6 +315,7 @@ class AgencyProfile extends Model
     public function getShiftsFilledCountAttribute()
     {
         $workerIds = $this->agencyWorkers()->pluck('worker_id');
+
         return ShiftAssignment::whereIn('worker_id', $workerIds)
             ->where('status', 'completed')
             ->count();
@@ -301,7 +330,7 @@ class AgencyProfile extends Model
      */
     public function hasStripeConnectAccount(): bool
     {
-        return !empty($this->stripe_connect_account_id);
+        return ! empty($this->stripe_connect_account_id);
     }
 
     /**
@@ -328,7 +357,7 @@ class AgencyProfile extends Model
      */
     public function needsStripeOnboarding(): bool
     {
-        return !$this->hasCompletedStripeOnboarding();
+        return ! $this->hasCompletedStripeOnboarding();
     }
 
     /**
@@ -336,7 +365,7 @@ class AgencyProfile extends Model
      */
     public function hasPendingStripeRequirements(): bool
     {
-        return !empty($this->stripe_requirements);
+        return ! empty($this->stripe_requirements);
     }
 
     /**
@@ -344,11 +373,11 @@ class AgencyProfile extends Model
      */
     public function getStripeStatusAttribute(): string
     {
-        if (!$this->hasStripeConnectAccount()) {
+        if (! $this->hasStripeConnectAccount()) {
             return 'not_started';
         }
 
-        if (!$this->stripe_details_submitted) {
+        if (! $this->stripe_details_submitted) {
             return 'pending_details';
         }
 
@@ -356,7 +385,7 @@ class AgencyProfile extends Model
             return 'pending_verification';
         }
 
-        if (!$this->stripe_charges_enabled || !$this->stripe_payout_enabled) {
+        if (! $this->stripe_charges_enabled || ! $this->stripe_payout_enabled) {
             return 'restricted';
         }
 
@@ -552,7 +581,7 @@ class AgencyProfile extends Model
      */
     public function getLicenseExpiresInDaysAttribute(): ?int
     {
-        if (!$this->license_expires_at) {
+        if (! $this->license_expires_at) {
             return null;
         }
 
@@ -574,7 +603,7 @@ class AgencyProfile extends Model
      */
     public function isLicenseExpired(): bool
     {
-        if (!$this->license_expires_at) {
+        if (! $this->license_expires_at) {
             return false;
         }
 
@@ -599,7 +628,7 @@ class AgencyProfile extends Model
 
         $completedCount = 0;
         foreach ($requiredFields as $field) {
-            if (!empty($this->$field)) {
+            if (! empty($this->$field)) {
                 $completedCount++;
             }
         }

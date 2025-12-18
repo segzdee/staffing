@@ -203,6 +203,23 @@ Route::prefix('dashboard')
             Route::post('agency-applications/{id}/note', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'addNote'])->name('agency-applications.note');
             Route::post('agency-applications/{id}/start-compliance', [App\Http\Controllers\Admin\AgencyApplicationController::class, 'startComplianceChecks'])->name('agency-applications.start-compliance');
 
+            // AGY-001: Agency Tier Management
+            Route::prefix('agency-tiers')->name('agency-tiers.')->group(function () {
+                Route::get('/', [App\Http\Controllers\Admin\AgencyTierController::class, 'index'])->name('index');
+                Route::get('/create', [App\Http\Controllers\Admin\AgencyTierController::class, 'create'])->name('create');
+                Route::post('/', [App\Http\Controllers\Admin\AgencyTierController::class, 'store'])->name('store');
+                Route::get('/agencies', [App\Http\Controllers\Admin\AgencyTierController::class, 'agencies'])->name('agencies');
+                Route::get('/history', [App\Http\Controllers\Admin\AgencyTierController::class, 'history'])->name('history');
+                Route::post('/review', [App\Http\Controllers\Admin\AgencyTierController::class, 'runReview'])->name('review');
+                Route::post('/assign-initial', [App\Http\Controllers\Admin\AgencyTierController::class, 'assignInitialTiers'])->name('assign-initial');
+                Route::get('/{agencyTier}', [App\Http\Controllers\Admin\AgencyTierController::class, 'show'])->name('show');
+                Route::get('/{agencyTier}/edit', [App\Http\Controllers\Admin\AgencyTierController::class, 'edit'])->name('edit');
+                Route::put('/{agencyTier}', [App\Http\Controllers\Admin\AgencyTierController::class, 'update'])->name('update');
+                Route::delete('/{agencyTier}', [App\Http\Controllers\Admin\AgencyTierController::class, 'destroy'])->name('destroy');
+                Route::get('/agency/{agencyProfile}/adjust', [App\Http\Controllers\Admin\AgencyTierController::class, 'adjustForm'])->name('adjust-form');
+                Route::post('/agency/{agencyProfile}/adjust', [App\Http\Controllers\Admin\AgencyTierController::class, 'adjust'])->name('adjust');
+            });
+
             // Operations
             Route::view('/all-shifts', 'dashboard.admin.all-shifts')->name('all-shifts');
             Route::view('/disputes', 'dashboard.admin.disputes')->name('disputes');
@@ -218,6 +235,21 @@ Route::prefix('dashboard')
             // Compliance
             Route::view('/compliance', 'dashboard.admin.compliance')->name('compliance');
             Route::view('/security', 'dashboard.admin.security')->name('security');
+
+            // ========================================
+            // WKR-001: KYC REVIEW ROUTES
+            // ========================================
+            Route::prefix('kyc')->name('kyc.')->group(function () {
+                Route::get('/', [App\Http\Controllers\Admin\KycReviewController::class, 'index'])->name('index');
+                Route::get('/stats', [App\Http\Controllers\Admin\KycReviewController::class, 'stats'])->name('stats');
+                Route::get('/expiring', [App\Http\Controllers\Admin\KycReviewController::class, 'expiring'])->name('expiring');
+                Route::get('/{id}', [App\Http\Controllers\Admin\KycReviewController::class, 'show'])->name('show');
+                Route::post('/{id}/approve', [App\Http\Controllers\Admin\KycReviewController::class, 'approve'])->name('approve');
+                Route::post('/{id}/reject', [App\Http\Controllers\Admin\KycReviewController::class, 'reject'])->name('reject');
+                Route::get('/{id}/document/{type}', [App\Http\Controllers\Admin\KycReviewController::class, 'viewDocument'])->name('document');
+                Route::post('/bulk-approve', [App\Http\Controllers\Admin\KycReviewController::class, 'bulkApprove'])->name('bulk-approve');
+                Route::post('/bulk-reject', [App\Http\Controllers\Admin\KycReviewController::class, 'bulkReject'])->name('bulk-reject');
+            });
         });
 
         // Shared Authenticated Routes
@@ -449,6 +481,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         // ========================================
+        // GLO-003: LABOR LAW COMPLIANCE MANAGEMENT ROUTES
+        // ========================================
+        Route::prefix('labor-law')->name('labor-law.')->group(function () {
+            // Dashboard
+            Route::get('/dashboard', [App\Http\Controllers\Admin\LaborLawController::class, 'dashboard'])->name('dashboard');
+
+            // Rules Management
+            Route::get('/', [App\Http\Controllers\Admin\LaborLawController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Admin\LaborLawController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\LaborLawController::class, 'store'])->name('store');
+            Route::get('/{laborLaw}', [App\Http\Controllers\Admin\LaborLawController::class, 'show'])->name('show');
+            Route::get('/{laborLaw}/edit', [App\Http\Controllers\Admin\LaborLawController::class, 'edit'])->name('edit');
+            Route::put('/{laborLaw}', [App\Http\Controllers\Admin\LaborLawController::class, 'update'])->name('update');
+            Route::patch('/{laborLaw}/toggle-active', [App\Http\Controllers\Admin\LaborLawController::class, 'toggleActive'])->name('toggle-active');
+            Route::delete('/{laborLaw}', [App\Http\Controllers\Admin\LaborLawController::class, 'destroy'])->name('destroy');
+
+            // Violations
+            Route::get('/violations/list', [App\Http\Controllers\Admin\LaborLawController::class, 'violations'])->name('violations');
+            Route::get('/violations/{violation}', [App\Http\Controllers\Admin\LaborLawController::class, 'showViolation'])->name('violation');
+            Route::post('/violations/{violation}/resolve', [App\Http\Controllers\Admin\LaborLawController::class, 'resolveViolation'])->name('violation.resolve');
+
+            // Exemptions
+            Route::get('/exemptions/list', [App\Http\Controllers\Admin\LaborLawController::class, 'exemptions'])->name('exemptions');
+            Route::get('/exemptions/{exemption}', [App\Http\Controllers\Admin\LaborLawController::class, 'showExemption'])->name('exemption');
+            Route::post('/exemptions/{exemption}/approve', [App\Http\Controllers\Admin\LaborLawController::class, 'approveExemption'])->name('exemption.approve');
+            Route::post('/exemptions/{exemption}/reject', [App\Http\Controllers\Admin\LaborLawController::class, 'rejectExemption'])->name('exemption.reject');
+            Route::post('/exemptions/{exemption}/revoke', [App\Http\Controllers\Admin\LaborLawController::class, 'revokeExemption'])->name('exemption.revoke');
+        });
+
+        // ========================================
         // SHIFT MANAGEMENT ROUTES
         // ========================================
         Route::prefix('shift-management')->name('shift-management.')->group(function () {
@@ -460,6 +522,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/{shift}/unflag', [App\Http\Controllers\Admin\ShiftManagementController::class, 'unflagShift'])->name('unflag');
             Route::post('/{shift}/remove', [App\Http\Controllers\Admin\ShiftManagementController::class, 'removeShift'])->name('remove');
             Route::post('/bulk-approve', [App\Http\Controllers\Admin\ShiftManagementController::class, 'bulkApprove'])->name('bulk-approve');
+        });
+
+        // ========================================
+        // WKR-009: SUSPENSION MANAGEMENT ROUTES
+        // ========================================
+        Route::prefix('suspensions')->name('suspensions.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'store'])->name('store');
+            Route::get('/export', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'export'])->name('export');
+            Route::get('/analytics', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'analyticsJson'])->name('analytics');
+            Route::get('/search-workers', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'searchWorkers'])->name('search-workers');
+            Route::get('/appeals', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'appeals'])->name('appeals');
+            Route::get('/appeals/{appeal}', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'reviewAppeal'])->name('appeals.review');
+            Route::post('/appeals/{appeal}/start', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'startReview'])->name('appeals.start-review');
+            Route::post('/appeals/{appeal}/decide', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'decideAppeal'])->name('appeals.decide');
+            Route::get('/{suspension}', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'show'])->name('show');
+            Route::post('/{suspension}/lift', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'lift'])->name('lift');
+            Route::post('/workers/{worker}/reset-strikes', [App\Http\Controllers\Admin\SuspensionManagementController::class, 'resetStrikes'])->name('reset-strikes');
         });
 
         // ========================================
@@ -486,6 +567,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/generate/monthly-vat', [App\Http\Controllers\Admin\ReportsController::class, 'generateMonthlyVAT'])->name('generate.vat');
             Route::get('/{report}/download', [App\Http\Controllers\Admin\ReportsController::class, 'download'])->name('download');
             Route::get('/{report}/csv', [App\Http\Controllers\Admin\ReportsController::class, 'exportCSV'])->name('csv');
+        });
+
+        // ========================================
+        // FIN-007: TAX REPORTS MANAGEMENT ROUTES
+        // ========================================
+        Route::prefix('tax')->name('tax.')->group(function () {
+            // Tax Reports
+            Route::prefix('reports')->name('reports.')->group(function () {
+                Route::get('/', [App\Http\Controllers\Admin\TaxReportController::class, 'index'])->name('index');
+                Route::get('/bulk', [App\Http\Controllers\Admin\TaxReportController::class, 'bulkForm'])->name('bulk');
+                Route::post('/bulk-generate', [App\Http\Controllers\Admin\TaxReportController::class, 'bulkGenerate'])->name('bulk-generate');
+                Route::post('/bulk-send', [App\Http\Controllers\Admin\TaxReportController::class, 'bulkSend'])->name('bulk-send');
+                Route::get('/compliance', [App\Http\Controllers\Admin\TaxReportController::class, 'complianceReport'])->name('compliance');
+                Route::get('/export', [App\Http\Controllers\Admin\TaxReportController::class, 'exportCsv'])->name('export');
+                Route::get('/{taxReport}', [App\Http\Controllers\Admin\TaxReportController::class, 'show'])->name('show');
+                Route::post('/{taxReport}/regenerate', [App\Http\Controllers\Admin\TaxReportController::class, 'regenerate'])->name('regenerate');
+                Route::get('/{taxReport}/download', [App\Http\Controllers\Admin\TaxReportController::class, 'download'])->name('download');
+            });
         });
 
         // ========================================
@@ -593,6 +692,63 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/api/demand-data', [App\Http\Controllers\Admin\SurgeController::class, 'getDemandData'])->name('api.demand-data');
             Route::get('/api/events-calendar', [App\Http\Controllers\Admin\SurgeController::class, 'getEventsCalendar'])->name('api.events-calendar');
         });
+
+        // ========================================
+        // GLO-009: REGIONAL PRICING MANAGEMENT ROUTES
+        // ========================================
+        Route::prefix('regional-pricing')->name('regional-pricing.')->group(function () {
+            // Main CRUD routes
+            Route::get('/', [App\Http\Controllers\Admin\RegionalPricingController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Admin\RegionalPricingController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Admin\RegionalPricingController::class, 'store'])->name('store');
+            Route::get('/analytics', [App\Http\Controllers\Admin\RegionalPricingController::class, 'analytics'])->name('analytics');
+            Route::get('/export', [App\Http\Controllers\Admin\RegionalPricingController::class, 'export'])->name('export');
+            Route::post('/import', [App\Http\Controllers\Admin\RegionalPricingController::class, 'import'])->name('import');
+            Route::post('/sync-ppp', [App\Http\Controllers\Admin\RegionalPricingController::class, 'syncPPP'])->name('sync-ppp');
+            Route::post('/preview-pricing', [App\Http\Controllers\Admin\RegionalPricingController::class, 'previewPricing'])->name('preview-pricing');
+
+            // Individual region routes
+            Route::get('/{regionalPricing}', [App\Http\Controllers\Admin\RegionalPricingController::class, 'show'])->name('show');
+            Route::get('/{regionalPricing}/edit', [App\Http\Controllers\Admin\RegionalPricingController::class, 'edit'])->name('edit');
+            Route::put('/{regionalPricing}', [App\Http\Controllers\Admin\RegionalPricingController::class, 'update'])->name('update');
+            Route::delete('/{regionalPricing}', [App\Http\Controllers\Admin\RegionalPricingController::class, 'destroy'])->name('destroy');
+            Route::patch('/{regionalPricing}/toggle-status', [App\Http\Controllers\Admin\RegionalPricingController::class, 'toggleStatus'])->name('toggle-status');
+            Route::patch('/{regionalPricing}/update-ppp', [App\Http\Controllers\Admin\RegionalPricingController::class, 'updatePPP'])->name('update-ppp');
+
+            // Price adjustments
+            Route::get('/{regionalPricing}/adjustments', [App\Http\Controllers\Admin\RegionalPricingController::class, 'adjustments'])->name('adjustments');
+            Route::post('/{regionalPricing}/adjustments', [App\Http\Controllers\Admin\RegionalPricingController::class, 'storeAdjustment'])->name('adjustments.store');
+        });
+
+        // Price adjustment routes (outside regional pricing prefix for cleaner URLs)
+        Route::prefix('price-adjustments')->name('price-adjustments.')->group(function () {
+            Route::put('/{priceAdjustment}', [App\Http\Controllers\Admin\RegionalPricingController::class, 'updateAdjustment'])->name('update');
+            Route::delete('/{priceAdjustment}', [App\Http\Controllers\Admin\RegionalPricingController::class, 'destroyAdjustment'])->name('destroy');
+        });
+
+        // ========================================
+        // QUA-005: CONTINUOUS IMPROVEMENT SYSTEM ROUTES
+        // ========================================
+        Route::prefix('improvements')->name('improvements.')->group(function () {
+            // Dashboard
+            Route::get('/', [App\Http\Controllers\Admin\ImprovementController::class, 'index'])->name('index');
+
+            // Suggestions Management
+            Route::get('/suggestions', [App\Http\Controllers\Admin\ImprovementController::class, 'suggestions'])->name('suggestions');
+            Route::get('/suggestions/{suggestion}', [App\Http\Controllers\Admin\ImprovementController::class, 'showSuggestion'])->name('suggestion');
+            Route::put('/suggestions/{suggestion}', [App\Http\Controllers\Admin\ImprovementController::class, 'updateSuggestion'])->name('suggestion.update');
+            Route::post('/suggestions/bulk', [App\Http\Controllers\Admin\ImprovementController::class, 'bulkUpdate'])->name('suggestions.bulk');
+
+            // Metrics Management
+            Route::get('/metrics', [App\Http\Controllers\Admin\ImprovementController::class, 'metrics'])->name('metrics');
+            Route::put('/metrics/{metric}', [App\Http\Controllers\Admin\ImprovementController::class, 'updateMetric'])->name('metrics.update');
+            Route::post('/metrics/{metric}/record', [App\Http\Controllers\Admin\ImprovementController::class, 'recordMetricValue'])->name('metrics.record');
+            Route::post('/metrics/refresh', [App\Http\Controllers\Admin\ImprovementController::class, 'refreshMetrics'])->name('metrics.refresh');
+
+            // Reports
+            Route::get('/report', [App\Http\Controllers\Admin\ImprovementController::class, 'report'])->name('report');
+            Route::get('/report/export', [App\Http\Controllers\Admin\ImprovementController::class, 'exportReport'])->name('report.export');
+        });
     });
 
     // Business routes
@@ -687,6 +843,27 @@ Route::middleware(['web', 'auth', 'verified', 'role:admin'])->prefix('admin/feed
     Route::get('/bug-reports', [App\Http\Controllers\Admin\FeedbackAnalyticsController::class, 'bugReports'])->name('bug-reports');
     Route::get('/bug-reports/{id}', [App\Http\Controllers\Admin\FeedbackAnalyticsController::class, 'showBugReport'])->name('bug-reports.show');
     Route::put('/bug-reports/{id}', [App\Http\Controllers\Admin\FeedbackAnalyticsController::class, 'updateBugReportStatus'])->name('bug-reports.update');
+});
+
+// ============================================================================
+// QUA-005: IMPROVEMENT SUGGESTIONS ROUTES (User-Facing)
+// ============================================================================
+Route::middleware(['web'])->prefix('suggestions')->name('suggestions.')->group(function () {
+    // Public routes (no auth required)
+    Route::get('/', [App\Http\Controllers\SuggestionController::class, 'index'])->name('index');
+    Route::get('/{suggestion}', [App\Http\Controllers\SuggestionController::class, 'show'])->name('show');
+});
+
+Route::middleware(['web', 'auth', 'verified'])->prefix('suggestions')->name('suggestions.')->group(function () {
+    // Authenticated routes
+    Route::get('/my/list', [App\Http\Controllers\SuggestionController::class, 'mySuggestions'])->name('my');
+    Route::get('/create/new', [App\Http\Controllers\SuggestionController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\SuggestionController::class, 'store'])->name('store');
+    Route::get('/{suggestion}/edit', [App\Http\Controllers\SuggestionController::class, 'edit'])->name('edit');
+    Route::put('/{suggestion}', [App\Http\Controllers\SuggestionController::class, 'update'])->name('update');
+    Route::delete('/{suggestion}', [App\Http\Controllers\SuggestionController::class, 'destroy'])->name('destroy');
+    Route::post('/{suggestion}/vote', [App\Http\Controllers\SuggestionController::class, 'vote'])->name('vote');
+    Route::delete('/{suggestion}/vote', [App\Http\Controllers\SuggestionController::class, 'removeVote'])->name('vote.remove');
 });
 
 // ============================================================================
@@ -861,6 +1038,61 @@ Route::middleware(['auth'])->group(function () {
         // ========================================
         Route::post('/profile', [App\Http\Controllers\Business\ProfileController::class, 'updateProfile'])->name('profile.update');
         Route::post('/profile/logo', [App\Http\Controllers\Business\ProfileController::class, 'uploadLogo'])->name('profile.logo');
+
+        // ========================================
+        // BIZ-005: ROSTER MANAGEMENT ROUTES
+        // ========================================
+        Route::prefix('rosters')->name('rosters.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Business\RosterController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Business\RosterController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Business\RosterController::class, 'store'])->name('store');
+            Route::get('/{roster}', [App\Http\Controllers\Business\RosterController::class, 'show'])->name('show');
+            Route::get('/{roster}/edit', [App\Http\Controllers\Business\RosterController::class, 'edit'])->name('edit');
+            Route::put('/{roster}', [App\Http\Controllers\Business\RosterController::class, 'update'])->name('update');
+            Route::delete('/{roster}', [App\Http\Controllers\Business\RosterController::class, 'destroy'])->name('destroy');
+
+            // Member management
+            Route::get('/{roster}/add-member', [App\Http\Controllers\Business\RosterController::class, 'addMemberForm'])->name('add-member');
+            Route::get('/{roster}/search-workers', [App\Http\Controllers\Business\RosterController::class, 'searchWorkers'])->name('search-workers');
+            Route::post('/{roster}/members', [App\Http\Controllers\Business\RosterController::class, 'addMember'])->name('members.add');
+            Route::put('/{roster}/members/{member}', [App\Http\Controllers\Business\RosterController::class, 'updateMember'])->name('members.update');
+            Route::delete('/{roster}/members/{member}', [App\Http\Controllers\Business\RosterController::class, 'removeMember'])->name('members.remove');
+            Route::post('/{roster}/members/{member}/move', [App\Http\Controllers\Business\RosterController::class, 'moveMember'])->name('members.move');
+
+            // Invitations
+            Route::post('/{roster}/invite', [App\Http\Controllers\Business\RosterController::class, 'inviteWorker'])->name('invite');
+            Route::post('/{roster}/bulk-invite', [App\Http\Controllers\Business\RosterController::class, 'bulkInvite'])->name('bulk-invite');
+            Route::post('/{roster}/bulk-add', [App\Http\Controllers\Business\RosterController::class, 'bulkAdd'])->name('bulk-add');
+
+            // Shift integration
+            Route::get('/for-shift', [App\Http\Controllers\Business\RosterController::class, 'forShift'])->name('for-shift');
+        });
+
+        // Blacklist management (quick actions)
+        Route::post('/workers/blacklist', [App\Http\Controllers\Business\RosterController::class, 'blacklistWorker'])->name('workers.blacklist');
+        Route::post('/workers/unblacklist', [App\Http\Controllers\Business\RosterController::class, 'unblacklistWorker'])->name('workers.unblacklist');
+
+        // ========================================
+        // BIZ-010: COMMUNICATION TEMPLATES ROUTES
+        // ========================================
+        Route::prefix('communication-templates')->name('communication-templates.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Business\TemplateController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Business\TemplateController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Business\TemplateController::class, 'store'])->name('store');
+            Route::get('/history', [App\Http\Controllers\Business\TemplateController::class, 'history'])->name('history');
+            Route::get('/variables', [App\Http\Controllers\Business\TemplateController::class, 'getVariables'])->name('variables');
+            Route::post('/render-preview', [App\Http\Controllers\Business\TemplateController::class, 'renderPreview'])->name('render-preview');
+            Route::get('/{template}', [App\Http\Controllers\Business\TemplateController::class, 'show'])->name('show');
+            Route::get('/{template}/edit', [App\Http\Controllers\Business\TemplateController::class, 'edit'])->name('edit');
+            Route::put('/{template}', [App\Http\Controllers\Business\TemplateController::class, 'update'])->name('update');
+            Route::delete('/{template}', [App\Http\Controllers\Business\TemplateController::class, 'destroy'])->name('destroy');
+            Route::get('/{template}/preview', [App\Http\Controllers\Business\TemplateController::class, 'preview'])->name('preview');
+            Route::post('/{template}/duplicate', [App\Http\Controllers\Business\TemplateController::class, 'duplicate'])->name('duplicate');
+            Route::post('/{template}/set-default', [App\Http\Controllers\Business\TemplateController::class, 'setDefault'])->name('set-default');
+            Route::post('/{template}/toggle-active', [App\Http\Controllers\Business\TemplateController::class, 'toggleActive'])->name('toggle-active');
+            Route::get('/{template}/send', [App\Http\Controllers\Business\TemplateController::class, 'showSendForm'])->name('send.form');
+            Route::post('/{template}/send', [App\Http\Controllers\Business\TemplateController::class, 'send'])->name('send');
+        });
     });
 
     // Worker Routes (accessible without activation for onboarding)
@@ -877,14 +1109,33 @@ Route::middleware(['auth'])->group(function () {
         // New navigation routes
         Route::get('/calendar', [App\Http\Controllers\Worker\DashboardController::class, 'calendar'])->name('calendar');
         Route::get('/documents', [App\Http\Controllers\Worker\DashboardController::class, 'documents'])->name('documents');
-        Route::get('/earnings', [App\Http\Controllers\Worker\DashboardController::class, 'earnings'])->name('earnings');
-        Route::get('/earnings/history', [App\Http\Controllers\Worker\DashboardController::class, 'earningsHistory'])->name('earnings.history');
-        Route::get('/earnings/pending', [App\Http\Controllers\Worker\DashboardController::class, 'earningsPending'])->name('earnings.pending');
         Route::get('/preferences', [App\Http\Controllers\Worker\DashboardController::class, 'preferences'])->name('preferences');
+
+        // ========================================
+        // WKR-006: EARNINGS DASHBOARD ROUTES
+        // ========================================
+        Route::prefix('earnings')->name('earnings.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\EarningsController::class, 'dashboard'])->name('index');
+            Route::get('/history', [App\Http\Controllers\Worker\EarningsController::class, 'history'])->name('history');
+            Route::get('/tax-summary', [App\Http\Controllers\Worker\EarningsController::class, 'taxSummary'])->name('tax-summary');
+            Route::get('/export', [App\Http\Controllers\Worker\EarningsController::class, 'export'])->name('export');
+
+            // API endpoints for async data loading
+            Route::get('/api/compare', [App\Http\Controllers\Worker\EarningsController::class, 'comparePeriodsApi'])->name('api.compare');
+            Route::get('/api/chart', [App\Http\Controllers\Worker\EarningsController::class, 'chartDataApi'])->name('api.chart');
+            Route::post('/api/refresh', [App\Http\Controllers\Worker\EarningsController::class, 'refreshSummary'])->name('api.refresh');
+        });
         Route::post('/preferences', [App\Http\Controllers\Worker\DashboardController::class, 'updatePreferences'])->name('preferences.update');
         Route::get('/shift-history', [App\Http\Controllers\Worker\DashboardController::class, 'shiftHistory'])->name('shift-history');
         Route::get('/tax-documents', [App\Http\Controllers\Worker\DashboardController::class, 'taxDocuments'])->name('tax-documents');
         Route::get('/withdraw', [App\Http\Controllers\Worker\DashboardController::class, 'withdraw'])->name('withdraw');
+
+        // ========================================
+        // FIN-004: INSTAPAY (SAME-DAY PAYOUT) ROUTES
+        // ========================================
+        Route::prefix('instapay')->name('instapay.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\InstaPayController::class, 'index'])->name('index');
+        });
 
         // Activation routes
         Route::prefix('activation')->name('activation.')->group(function () {
@@ -954,6 +1205,20 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // ========================================
+        // WKR-001: KYC VERIFICATION ROUTES
+        // ========================================
+        Route::prefix('kyc')->name('kyc.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\KycController::class, 'index'])->name('index');
+            Route::get('/status', [App\Http\Controllers\Worker\KycController::class, 'status'])->name('status');
+            Route::get('/create', [App\Http\Controllers\Worker\KycController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Worker\KycController::class, 'store'])->name('store');
+            Route::get('/requirements', [App\Http\Controllers\Worker\KycController::class, 'requirements'])->name('requirements');
+            Route::get('/history', [App\Http\Controllers\Worker\KycController::class, 'history'])->name('history');
+            Route::get('/{id}', [App\Http\Controllers\Worker\KycController::class, 'show'])->name('show');
+            Route::get('/resubmit/{id}', [App\Http\Controllers\Worker\KycController::class, 'resubmit'])->name('resubmit');
+        });
+
+        // ========================================
         // SL-005: FACE ENROLLMENT ROUTES
         // ========================================
         Route::prefix('face-enrollment')->name('face-enrollment.')->group(function () {
@@ -1003,6 +1268,23 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // ========================================
+        // BIZ-005: ROSTER INVITATIONS & MEMBERSHIPS
+        // ========================================
+        Route::prefix('roster-invitations')->name('roster-invitations.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\RosterInvitationController::class, 'index'])->name('index');
+            Route::get('/{invitation}', [App\Http\Controllers\Worker\RosterInvitationController::class, 'show'])->name('show');
+            Route::post('/{invitation}/accept', [App\Http\Controllers\Worker\RosterInvitationController::class, 'accept'])->name('accept');
+            Route::post('/{invitation}/decline', [App\Http\Controllers\Worker\RosterInvitationController::class, 'decline'])->name('decline');
+            Route::get('/pending/count', [App\Http\Controllers\Worker\RosterInvitationController::class, 'pendingCount'])->name('pending-count');
+        });
+
+        Route::prefix('roster-memberships')->name('roster-memberships.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\RosterInvitationController::class, 'memberships'])->name('index');
+            Route::get('/{member}', [App\Http\Controllers\Worker\RosterInvitationController::class, 'showMembership'])->name('show');
+            Route::delete('/{member}/leave', [App\Http\Controllers\Worker\RosterInvitationController::class, 'leave'])->name('leave');
+        });
+
+        // ========================================
         // SAF-002: INCIDENT REPORTING ROUTES
         // ========================================
         Route::prefix('incidents')->name('incidents.')->group(function () {
@@ -1023,6 +1305,31 @@ Route::middleware(['auth'])->group(function () {
         // ========================================
         Route::prefix('emergency-contacts')->name('emergency-contacts.')->group(function () {
             Route::get('/', [App\Http\Controllers\Worker\EmergencyContactController::class, 'index'])->name('index');
+        });
+
+        // ========================================
+        // GLO-003: LABOR LAW COMPLIANCE ROUTES
+        // ========================================
+        Route::prefix('compliance')->name('compliance.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\ComplianceController::class, 'index'])->name('index');
+            Route::get('/weekly-hours', [App\Http\Controllers\Worker\ComplianceController::class, 'weeklyHours'])->name('weekly-hours');
+            Route::get('/violations', [App\Http\Controllers\Worker\ComplianceController::class, 'violations'])->name('violations');
+            Route::post('/violations/{violation}/acknowledge', [App\Http\Controllers\Worker\ComplianceController::class, 'acknowledgeViolation'])->name('acknowledge-violation');
+            Route::get('/opt-out/{rule}', [App\Http\Controllers\Worker\ComplianceController::class, 'showOptOutForm'])->name('opt-out-form');
+            Route::post('/opt-out/{rule}', [App\Http\Controllers\Worker\ComplianceController::class, 'submitOptOut'])->name('submit-opt-out');
+            Route::delete('/opt-out/{exemption}/withdraw', [App\Http\Controllers\Worker\ComplianceController::class, 'withdrawOptOut'])->name('withdraw-opt-out');
+        });
+
+        // ========================================
+        // WKR-009: WORKER SUSPENSION ROUTES
+        // ========================================
+        Route::prefix('suspensions')->name('suspensions.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\SuspensionController::class, 'index'])->name('index');
+            Route::get('/status', [App\Http\Controllers\Worker\SuspensionController::class, 'status'])->name('status');
+            Route::get('/{suspension}', [App\Http\Controllers\Worker\SuspensionController::class, 'show'])->name('show');
+            Route::get('/{suspension}/appeal', [App\Http\Controllers\Worker\SuspensionController::class, 'appealForm'])->name('appeal');
+            Route::post('/{suspension}/appeal', [App\Http\Controllers\Worker\SuspensionController::class, 'submitAppeal'])->name('appeal.submit');
+            Route::get('/{suspension}/appeal-status', [App\Http\Controllers\Worker\SuspensionController::class, 'appealStatus'])->name('appeal-status');
         });
 
         // ========================================
@@ -1058,6 +1365,19 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{taxForm}', [App\Http\Controllers\Worker\TaxFormController::class, 'update'])->name('update');
             Route::delete('/{taxForm}', [App\Http\Controllers\Worker\TaxFormController::class, 'destroy'])->name('destroy');
             Route::get('/{taxForm}/download', [App\Http\Controllers\Worker\TaxFormController::class, 'download'])->name('download');
+        });
+
+        // ========================================
+        // FIN-007: TAX REPORTS ROUTES (1099-NEC, P60, etc.)
+        // ========================================
+        Route::prefix('tax-reports')->name('tax-reports.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Worker\TaxReportController::class, 'index'])->name('index');
+            Route::post('/request', [App\Http\Controllers\Worker\TaxReportController::class, 'request'])->name('request');
+            Route::get('/earnings', [App\Http\Controllers\Worker\TaxReportController::class, 'earningsSummary'])->name('earnings');
+            Route::get('/{taxReport}', [App\Http\Controllers\Worker\TaxReportController::class, 'show'])->name('show');
+            Route::get('/{taxReport}/download', [App\Http\Controllers\Worker\TaxReportController::class, 'download'])->name('download');
+            Route::get('/{taxReport}/preview', [App\Http\Controllers\Worker\TaxReportController::class, 'preview'])->name('preview');
+            Route::post('/{taxReport}/acknowledge', [App\Http\Controllers\Worker\TaxReportController::class, 'acknowledge'])->name('acknowledge');
         });
     });
 
@@ -1174,4 +1494,212 @@ Route::prefix('admin/holidays')->name('admin.holidays.')->middleware(['auth', 'r
 
     // Statistics API
     Route::get('/statistics', [App\Http\Controllers\Admin\HolidayController::class, 'statistics'])->name('statistics');
+});
+
+// ============================================================================
+// COM-003: EMAIL COMMUNICATION SYSTEM ROUTES
+// ============================================================================
+
+// Public email routes (no auth required)
+Route::prefix('email')->name('email.')->group(function () {
+    // Email unsubscribe (public - accessible via token in email)
+    Route::get('/unsubscribe/{token}', [App\Http\Controllers\EmailPreferencesController::class, 'unsubscribe'])->name('unsubscribe');
+    Route::post('/unsubscribe/{token}', [App\Http\Controllers\EmailPreferencesController::class, 'processUnsubscribe'])->name('unsubscribe.process');
+    Route::post('/resubscribe/{token}', [App\Http\Controllers\EmailPreferencesController::class, 'resubscribe'])->name('resubscribe');
+
+    // Email tracking (open/click)
+    Route::get('/track/open/{id}', [App\Http\Controllers\EmailWebhookController::class, 'trackOpen'])->name('track.open');
+    Route::get('/track/click/{id}', [App\Http\Controllers\EmailWebhookController::class, 'trackClick'])->name('track.click');
+});
+
+// Email webhooks (no auth - verified by signature)
+Route::prefix('webhooks/email')->name('webhooks.email.')->group(function () {
+    Route::post('/sendgrid', [App\Http\Controllers\EmailWebhookController::class, 'sendgrid'])->name('sendgrid');
+    Route::post('/mailgun', [App\Http\Controllers\EmailWebhookController::class, 'mailgun'])->name('mailgun');
+});
+
+// User email preferences (authenticated)
+Route::prefix('settings')->middleware(['auth'])->name('settings.')->group(function () {
+    Route::get('/email-preferences', [App\Http\Controllers\EmailPreferencesController::class, 'index'])->name('email-preferences');
+    Route::post('/email-preferences', [App\Http\Controllers\EmailPreferencesController::class, 'update'])->name('email-preferences.update');
+});
+
+// Admin email management routes
+Route::prefix('admin/email')->name('admin.email.')->middleware(['auth', 'role:admin'])->group(function () {
+    // Dashboard
+    Route::get('/', [App\Http\Controllers\Admin\EmailController::class, 'index'])->name('index');
+
+    // Templates
+    Route::get('/templates', [App\Http\Controllers\Admin\EmailController::class, 'templates'])->name('templates');
+    Route::get('/templates/create', [App\Http\Controllers\Admin\EmailController::class, 'createTemplate'])->name('templates.create');
+    Route::post('/templates', [App\Http\Controllers\Admin\EmailController::class, 'storeTemplate'])->name('templates.store');
+    Route::get('/templates/{template}/edit', [App\Http\Controllers\Admin\EmailController::class, 'editTemplate'])->name('templates.edit');
+    Route::put('/templates/{template}', [App\Http\Controllers\Admin\EmailController::class, 'updateTemplate'])->name('templates.update');
+    Route::delete('/templates/{template}', [App\Http\Controllers\Admin\EmailController::class, 'destroyTemplate'])->name('templates.destroy');
+    Route::get('/templates/{template}/preview', [App\Http\Controllers\Admin\EmailController::class, 'previewTemplate'])->name('templates.preview');
+    Route::post('/templates/{template}/test', [App\Http\Controllers\Admin\EmailController::class, 'sendTestEmail'])->name('templates.test');
+
+    // Logs
+    Route::get('/logs', [App\Http\Controllers\Admin\EmailController::class, 'logs'])->name('logs');
+    Route::get('/logs/export', [App\Http\Controllers\Admin\EmailController::class, 'exportLogs'])->name('logs.export');
+    Route::get('/logs/{log}', [App\Http\Controllers\Admin\EmailController::class, 'showLog'])->name('logs.show');
+
+    // Stats
+    Route::get('/stats', [App\Http\Controllers\Admin\EmailController::class, 'stats'])->name('stats');
+
+    // Bounce management
+    Route::get('/bounces', [App\Http\Controllers\Admin\EmailController::class, 'bounces'])->name('bounces');
+    Route::post('/retry/{log}', [App\Http\Controllers\Admin\EmailController::class, 'retryEmail'])->name('retry');
+
+    // Bulk send
+    Route::post('/bulk-send', [App\Http\Controllers\Admin\EmailController::class, 'bulkSend'])->name('bulk-send');
+});
+
+// ============================================================================
+// FIN-011: SUBSCRIPTION ROUTES
+// ============================================================================
+
+// User subscription routes (authenticated)
+Route::prefix('subscription')->middleware(['auth', 'verified'])->name('subscription.')->group(function () {
+    // View plans
+    Route::get('/plans', [App\Http\Controllers\SubscriptionController::class, 'plans'])->name('plans');
+
+    // Checkout
+    Route::get('/checkout/{plan}', [App\Http\Controllers\SubscriptionController::class, 'checkout'])->name('checkout');
+    Route::post('/subscribe/{plan}', [App\Http\Controllers\SubscriptionController::class, 'subscribe'])->name('subscribe');
+
+    // Manage subscription
+    Route::get('/manage', [App\Http\Controllers\SubscriptionController::class, 'manage'])->name('manage');
+    Route::post('/cancel', [App\Http\Controllers\SubscriptionController::class, 'cancel'])->name('cancel');
+    Route::post('/resume', [App\Http\Controllers\SubscriptionController::class, 'resume'])->name('resume');
+    Route::post('/change-plan/{plan}', [App\Http\Controllers\SubscriptionController::class, 'changePlan'])->name('change-plan');
+
+    // Invoices
+    Route::get('/invoices', [App\Http\Controllers\SubscriptionController::class, 'invoices'])->name('invoices');
+    Route::get('/invoices/{invoice}/download', [App\Http\Controllers\SubscriptionController::class, 'downloadInvoice'])->name('download-invoice');
+
+    // Payment method
+    Route::get('/payment-method', [App\Http\Controllers\SubscriptionController::class, 'paymentMethod'])->name('payment-method');
+    Route::post('/payment-method', [App\Http\Controllers\SubscriptionController::class, 'updatePaymentMethod'])->name('update-payment-method');
+
+    // Feature check (API)
+    Route::get('/feature/{feature}', [App\Http\Controllers\SubscriptionController::class, 'checkFeature'])->name('check-feature');
+});
+
+// Admin subscription management routes
+Route::prefix('admin/subscriptions')->name('admin.subscriptions.')->middleware(['auth', 'role:admin'])->group(function () {
+    // Dashboard
+    Route::get('/', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'index'])->name('index');
+
+    // Plans management
+    Route::get('/plans', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'plans'])->name('plans');
+    Route::get('/plans/create', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'createPlan'])->name('plans.create');
+    Route::post('/plans', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'storePlan'])->name('plans.store');
+    Route::get('/plans/{plan}/edit', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'editPlan'])->name('plans.edit');
+    Route::put('/plans/{plan}', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'updatePlan'])->name('plans.update');
+    Route::delete('/plans/{plan}', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'deletePlan'])->name('plans.delete');
+
+    // Subscriptions list
+    Route::get('/list', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'subscriptions'])->name('list');
+    Route::get('/subscriptions/{subscription}', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'viewSubscription'])->name('view');
+    Route::post('/subscriptions/{subscription}/cancel', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'cancelSubscription'])->name('cancel');
+
+    // Grant complimentary subscription
+    Route::get('/grant', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'grantForm'])->name('grant');
+    Route::post('/grant', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'grant'])->name('grant.store');
+
+    // Revenue reporting
+    Route::get('/revenue', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'revenue'])->name('revenue');
+
+    // Export
+    Route::get('/export', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'export'])->name('export');
+});
+
+// Stripe subscription webhook (no auth, csrf exempt)
+Route::post('/webhook/stripe/subscription', [App\Http\Controllers\Webhook\StripeSubscriptionWebhookController::class, 'handle'])
+    ->name('webhook.stripe.subscription')
+    ->middleware('web')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// ============================================================================
+// GLO-010: DATA RESIDENCY ROUTES
+// ============================================================================
+
+// User Data Residency Settings (authenticated)
+Route::prefix('settings')->middleware(['auth'])->name('settings.')->group(function () {
+    Route::get('/data-residency', [App\Http\Controllers\User\DataResidencyController::class, 'index'])->name('data-residency');
+    Route::post('/data-residency', [App\Http\Controllers\User\DataResidencyController::class, 'update'])->name('data-residency.update');
+    Route::post('/data-residency/consent', [App\Http\Controllers\User\DataResidencyController::class, 'consent'])->name('data-residency.consent');
+    Route::get('/data-residency/report', [App\Http\Controllers\User\DataResidencyController::class, 'report'])->name('data-residency.report');
+});
+
+// Admin Data Residency Management
+Route::prefix('admin/data-residency')->name('admin.data-residency.')->middleware(['auth', 'role:admin'])->group(function () {
+    // Dashboard
+    Route::get('/', [App\Http\Controllers\Admin\DataResidencyController::class, 'index'])->name('index');
+
+    // Regions
+    Route::get('/regions', [App\Http\Controllers\Admin\DataResidencyController::class, 'regions'])->name('regions');
+    Route::get('/regions/create', [App\Http\Controllers\Admin\DataResidencyController::class, 'createRegion'])->name('create-region');
+    Route::post('/regions', [App\Http\Controllers\Admin\DataResidencyController::class, 'storeRegion'])->name('store-region');
+    Route::get('/regions/{region}', [App\Http\Controllers\Admin\DataResidencyController::class, 'showRegion'])->name('show-region');
+    Route::get('/regions/{region}/edit', [App\Http\Controllers\Admin\DataResidencyController::class, 'editRegion'])->name('edit-region');
+    Route::put('/regions/{region}', [App\Http\Controllers\Admin\DataResidencyController::class, 'updateRegion'])->name('update-region');
+    Route::post('/regions/{region}/toggle', [App\Http\Controllers\Admin\DataResidencyController::class, 'toggleRegion'])->name('toggle-region');
+
+    // User Distribution
+    Route::get('/user-distribution', [App\Http\Controllers\Admin\DataResidencyController::class, 'userDistribution'])->name('user-distribution');
+    Route::get('/user/{targetUser}/report', [App\Http\Controllers\Admin\DataResidencyController::class, 'userReport'])->name('user-report');
+
+    // Transfer Logs
+    Route::get('/transfer-logs', [App\Http\Controllers\Admin\DataResidencyController::class, 'transferLogs'])->name('transfer-logs');
+    Route::get('/transfer-logs/export', [App\Http\Controllers\Admin\DataResidencyController::class, 'exportTransferLogs'])->name('export-transfer-logs');
+    Route::get('/transfer-logs/{transfer}', [App\Http\Controllers\Admin\DataResidencyController::class, 'showTransfer'])->name('show-transfer');
+
+    // Actions
+    Route::post('/migrate', [App\Http\Controllers\Admin\DataResidencyController::class, 'initiateMigration'])->name('migrate');
+    Route::post('/batch-assign', [App\Http\Controllers\Admin\DataResidencyController::class, 'batchAssign'])->name('batch-assign');
+});
+
+// ============================================================================
+// FIN-005: PAYROLL PROCESSING SYSTEM ROUTES
+// ============================================================================
+
+// Admin Payroll Management Routes
+Route::prefix('admin/payroll')->name('admin.payroll.')->middleware(['auth', 'role:admin'])->group(function () {
+    // Payroll Run CRUD
+    Route::get('/', [App\Http\Controllers\Admin\PayrollController::class, 'index'])->name('index');
+    Route::get('/create', [App\Http\Controllers\Admin\PayrollController::class, 'create'])->name('create');
+    Route::post('/', [App\Http\Controllers\Admin\PayrollController::class, 'store'])->name('store');
+    Route::get('/{payrollRun}', [App\Http\Controllers\Admin\PayrollController::class, 'show'])->name('show');
+    Route::delete('/{payrollRun}', [App\Http\Controllers\Admin\PayrollController::class, 'destroy'])->name('destroy');
+
+    // Payroll Item Management
+    Route::post('/{payrollRun}/regenerate-items', [App\Http\Controllers\Admin\PayrollController::class, 'regenerateItems'])->name('regenerate-items');
+    Route::post('/{payrollRun}/items', [App\Http\Controllers\Admin\PayrollController::class, 'addItem'])->name('add-item');
+    Route::delete('/{payrollRun}/items/{payrollItem}', [App\Http\Controllers\Admin\PayrollController::class, 'removeItem'])->name('remove-item');
+
+    // Workflow Actions
+    Route::post('/{payrollRun}/submit-for-approval', [App\Http\Controllers\Admin\PayrollController::class, 'submitForApproval'])->name('submit-for-approval');
+    Route::post('/{payrollRun}/approve', [App\Http\Controllers\Admin\PayrollController::class, 'approve'])->name('approve');
+    Route::post('/{payrollRun}/reject', [App\Http\Controllers\Admin\PayrollController::class, 'reject'])->name('reject');
+
+    // Processing
+    Route::get('/{payrollRun}/process', [App\Http\Controllers\Admin\PayrollController::class, 'process'])->name('process');
+    Route::post('/{payrollRun}/execute-process', [App\Http\Controllers\Admin\PayrollController::class, 'executeProcess'])->name('execute-process');
+    Route::get('/{payrollRun}/progress', [App\Http\Controllers\Admin\PayrollController::class, 'getProgress'])->name('get-progress');
+    Route::post('/{payrollRun}/retry-failed', [App\Http\Controllers\Admin\PayrollController::class, 'retryFailed'])->name('retry-failed');
+
+    // Export & Reports
+    Route::get('/{payrollRun}/export', [App\Http\Controllers\Admin\PayrollController::class, 'export'])->name('export');
+    Route::get('/{payrollRun}/paystub/{user}', [App\Http\Controllers\Admin\PayrollController::class, 'paystub'])->name('paystub');
+});
+
+// Worker Paystub Routes
+Route::prefix('worker/paystubs')->name('worker.paystubs.')->middleware(['auth'])->group(function () {
+    Route::get('/', [App\Http\Controllers\Worker\PaystubController::class, 'index'])->name('index');
+    Route::get('/summary', [App\Http\Controllers\Worker\PaystubController::class, 'summary'])->name('summary');
+    Route::get('/{payrollRun}', [App\Http\Controllers\Worker\PaystubController::class, 'show'])->name('show');
+    Route::get('/{payrollRun}/download', [App\Http\Controllers\Worker\PaystubController::class, 'download'])->name('download');
+    Route::get('/{payrollRun}/preview', [App\Http\Controllers\Worker\PaystubController::class, 'preview'])->name('preview');
 });

@@ -17,6 +17,7 @@ use App\Jobs\MonitorDisputeSLAs;
 use App\Jobs\MonitorVerificationSLAs;
 use App\Jobs\ProcessAutomaticCancellationRefunds;
 use App\Jobs\ProcessInstantPayouts;
+use App\Jobs\ProcessInstaPayRequests;
 use App\Jobs\ProcessPendingRefunds;
 use App\Jobs\RebillWallet;
 use App\Jobs\RecalculateReliabilityScores;
@@ -312,6 +313,67 @@ class Kernel extends ConsoleKernel
         // - Creates surge events for major concerts, sports, festivals
         $schedule->command('surge:calculate-demand --import-events')
             ->weeklyOn(1, '05:00')
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // ============================================================================
+        // FIN-004: INSTAPAY (SAME-DAY PAYOUT) PROCESSING
+        // ============================================================================
+
+        // FIN-004: Process pending InstaPay requests every 5 minutes
+        // - Batch processes pending payout requests
+        // - Only runs on processing days (Mon-Fri)
+        // - Handles Stripe Connect instant payouts
+        $schedule->job(new ProcessInstaPayRequests)
+            ->everyFiveMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // ============================================================================
+        // AGY-001: AGENCY TIER SYSTEM
+        // ============================================================================
+
+        // AGY-001: Process monthly agency tier reviews (1st of each month at 2 AM)
+        // - Evaluates agency metrics against tier requirements
+        // - Processes upgrades for high-performing agencies
+        // - Processes downgrades after grace period for underperforming agencies
+        // - Updates commission rates based on tier
+        $schedule->command('agency:review-tiers')
+            ->monthlyOn(1, '02:00')
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // ============================================================================
+        // SL-004: BOOKING CONFIRMATION SYSTEM
+        // ============================================================================
+
+        // SL-004: Expire stale confirmations (every 15 minutes)
+        // - Marks unconfirmed bookings as expired when past their expiry time
+        // - Releases shift slots back to the market
+        // - Triggers next worker in waitlist
+        $schedule->command('confirmations:expire')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // SL-004: Send confirmation reminders (hourly)
+        // - Sends reminders to workers/businesses with pending confirmations
+        // - Triggered at 12 hours and 4 hours before expiry (configurable)
+        $schedule->command('confirmations:remind')
+            ->hourly()
+            ->withoutOverlapping()
+            ->onOneServer();
+
+        // ============================================================================
+        // WKR-006: EARNINGS DASHBOARD - SUMMARY REFRESH
+        // ============================================================================
+
+        // WKR-006: Refresh earnings summaries for all active workers (daily at 5 AM)
+        // - Recalculates cached earnings summaries for workers with recent activity
+        // - Updates daily, weekly, monthly, and yearly aggregates
+        // - Only processes workers with earnings in the last 90 days
+        $schedule->command('earnings:refresh-summaries --active-only')
+            ->dailyAt('05:00')
             ->withoutOverlapping()
             ->onOneServer();
 

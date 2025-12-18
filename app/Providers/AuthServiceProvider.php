@@ -11,6 +11,7 @@ use App\Models\AvailabilityBroadcast;
 use App\Models\BankAccount;
 use App\Models\Blogs;
 use App\Models\BusinessProfile;
+use App\Models\BusinessRoster;
 use App\Models\Certification;
 use App\Models\Conversation;
 use App\Models\Countries;
@@ -46,6 +47,7 @@ use App\Policies\AvailabilityBroadcastPolicy;
 use App\Policies\BankAccountPolicy;
 use App\Policies\BlogsPolicy;
 use App\Policies\BusinessProfilePolicy;
+use App\Policies\BusinessRosterPolicy;
 use App\Policies\CertificationPolicy;
 use App\Policies\ConversationPolicy;
 use App\Policies\CountriesPolicy;
@@ -120,6 +122,7 @@ class AuthServiceProvider extends ServiceProvider
         Pages::class => PagesPolicy::class,
         Blogs::class => BlogsPolicy::class,
         BankAccount::class => BankAccountPolicy::class,
+        BusinessRoster::class => BusinessRosterPolicy::class, // BIZ-005: Roster Management
     ];
 
     /**

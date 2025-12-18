@@ -86,6 +86,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read int|null $shift_assignments_count
  * @property-read int|null $skills_count
  * @property-read \App\Models\User $user
+ *
  * @method static \Database\Factories\WorkerProfileFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile newQuery()
@@ -157,6 +158,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereWithdrawnEarnings($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereYearsExperience($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkerProfile whereZipCode($value)
+ *
  * @mixin \Eloquent
  */
 class WorkerProfile extends Model
@@ -195,10 +197,17 @@ class WorkerProfile extends Model
         'identity_verified_at',
         'identity_verification_method',
 
-        // WKR-004: Tier system
+        // WKR-004: Tier system (legacy subscription tier)
         'subscription_tier',
         'tier_expires_at',
         'tier_upgraded_at',
+
+        // WKR-007: Career Tiers System
+        'worker_tier_id',
+        'tier_achieved_at',
+        'tier_progress',
+        'lifetime_shifts',
+        'lifetime_hours',
 
         // WKR-005: Enhanced reliability metrics
         'total_late_arrivals',
@@ -320,6 +329,12 @@ class WorkerProfile extends Model
         'identity_verified_at' => 'datetime',
         'tier_expires_at' => 'datetime',
         'tier_upgraded_at' => 'datetime',
+        // WKR-007: Career Tiers System
+        'worker_tier_id' => 'integer',
+        'tier_achieved_at' => 'datetime',
+        'tier_progress' => 'array',
+        'lifetime_shifts' => 'integer',
+        'lifetime_hours' => 'decimal:2',
         'total_earnings' => 'decimal:2',
         'pending_earnings' => 'decimal:2',
         'withdrawn_earnings' => 'decimal:2',
@@ -369,6 +384,23 @@ class WorkerProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * WKR-007: Get the worker's career tier.
+     */
+    public function workerTier()
+    {
+        return $this->belongsTo(WorkerTier::class, 'worker_tier_id');
+    }
+
+    /**
+     * WKR-007: Get the worker's tier history.
+     */
+    public function tierHistory()
+    {
+        return $this->hasMany(WorkerTierHistory::class, 'user_id', 'user_id')
+            ->orderBy('created_at', 'desc');
     }
 
     /**
@@ -453,16 +485,17 @@ class WorkerProfile extends Model
      */
     public function isAvailable($dayOfWeek, $time)
     {
-        if (!$this->availability_schedule) {
+        if (! $this->availability_schedule) {
             return false;
         }
 
         $schedule = $this->availability_schedule;
-        if (!isset($schedule[$dayOfWeek])) {
+        if (! isset($schedule[$dayOfWeek])) {
             return false;
         }
 
         $daySchedule = $schedule[$dayOfWeek];
+
         return $time >= $daySchedule['start'] && $time <= $daySchedule['end'];
     }
 
@@ -560,7 +593,7 @@ class WorkerProfile extends Model
     public function hasPremiumTier()
     {
         return in_array($this->getCurrentTier(), ['gold', 'platinum']) &&
-               (!$this->tier_expires_at || $this->tier_expires_at->isFuture());
+               (! $this->tier_expires_at || $this->tier_expires_at->isFuture());
     }
 
     /**
@@ -666,8 +699,8 @@ class WorkerProfile extends Model
      */
     public function generateReferralCode()
     {
-        if (!$this->referral_code) {
-            $this->referral_code = strtoupper(substr(md5($this->user_id . time()), 0, 8));
+        if (! $this->referral_code) {
+            $this->referral_code = strtoupper(substr(md5($this->user_id.time()), 0, 8));
             $this->save();
         }
 
@@ -707,7 +740,7 @@ class WorkerProfile extends Model
      */
     public function hasAvailabilitySet()
     {
-        return !empty($this->availability_schedule);
+        return ! empty($this->availability_schedule);
     }
 
     /**
@@ -715,11 +748,11 @@ class WorkerProfile extends Model
      */
     public function getAvailableDays()
     {
-        if (!$this->availability_schedule) {
+        if (! $this->availability_schedule) {
             return [];
         }
 
-        return array_keys(array_filter($this->availability_schedule, function($day) {
+        return array_keys(array_filter($this->availability_schedule, function ($day) {
             return isset($day['available']) && $day['available'];
         }));
     }
@@ -774,7 +807,7 @@ class WorkerProfile extends Model
      */
     public function getPublicProfileUrlAttribute(): ?string
     {
-        if (!$this->hasPublicProfile()) {
+        if (! $this->hasPublicProfile()) {
             return null;
         }
 
@@ -796,7 +829,7 @@ class WorkerProfile extends Model
     {
         $status = $this->activeFeaturedStatus;
 
-        if (!$status) {
+        if (! $status) {
             return 1.0;
         }
 
@@ -837,7 +870,7 @@ class WorkerProfile extends Model
      */
     public function hasCompletedKyc(): bool
     {
-        return $this->kyc_status === 'approved' && !$this->isKycExpired();
+        return $this->kyc_status === 'approved' && ! $this->isKycExpired();
     }
 
     /**
@@ -853,7 +886,7 @@ class WorkerProfile extends Model
      */
     public function isKycExpiringSoon(int $days = 30): bool
     {
-        if (!$this->kyc_expires_at) {
+        if (! $this->kyc_expires_at) {
             return false;
         }
 
@@ -910,9 +943,9 @@ class WorkerProfile extends Model
     /**
      * Verify worker meets minimum age requirement.
      */
-    public function verifyMinimumAge(string $countryCode = null): bool
+    public function verifyMinimumAge(?string $countryCode = null): bool
     {
-        if (!$this->date_of_birth) {
+        if (! $this->date_of_birth) {
             return false;
         }
 
@@ -936,7 +969,7 @@ class WorkerProfile extends Model
      */
     public function getAge(): ?int
     {
-        if (!$this->date_of_birth) {
+        if (! $this->date_of_birth) {
             return null;
         }
 
@@ -958,7 +991,7 @@ class WorkerProfile extends Model
     /**
      * Update profile photo verification status.
      */
-    public function updatePhotoVerification(bool $faceDetected, float $confidence = null): self
+    public function updatePhotoVerification(bool $faceDetected, ?float $confidence = null): self
     {
         $this->update([
             'profile_photo_face_detected' => $faceDetected,
@@ -1068,13 +1101,13 @@ class WorkerProfile extends Model
         $optionalCompleted = 0;
 
         foreach ($requiredFields as $field) {
-            if (!empty($this->{$field})) {
+            if (! empty($this->{$field})) {
                 $requiredCompleted++;
             }
         }
 
         foreach ($optionalFields as $field) {
-            if (!empty($this->{$field})) {
+            if (! empty($this->{$field})) {
                 $optionalCompleted++;
             }
         }
@@ -1116,7 +1149,7 @@ class WorkerProfile extends Model
      */
     public function isRTWExpiring(int $days = 30): bool
     {
-        if (!$this->rtw_expiry_date) {
+        if (! $this->rtw_expiry_date) {
             return false;
         }
 
@@ -1172,7 +1205,7 @@ class WorkerProfile extends Model
             && $this->phone_verified
             && $this->payment_setup_complete
             && $this->profile_completion_percentage >= 80
-            && !$this->is_activated;
+            && ! $this->is_activated;
     }
 
     /**

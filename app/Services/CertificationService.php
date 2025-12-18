@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\CertificationDocument;
+use App\Models\CertificationType;
 use App\Models\User;
 use App\Models\WorkerCertification;
-use App\Models\CertificationType;
-use App\Models\CertificationDocument;
+use App\Notifications\CertificationExpiredNotification;
+use App\Notifications\CertificationExpiryReminderNotification;
 use App\Notifications\CertificationSubmittedNotification;
 use App\Notifications\CertificationVerifiedNotification;
-use App\Notifications\CertificationExpiryReminderNotification;
-use App\Notifications\CertificationExpiredNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -37,11 +37,6 @@ class CertificationService
 
     /**
      * Get all available certification types.
-     *
-     * @param string|null $industry
-     * @param string|null $country
-     * @param string|null $state
-     * @return Collection
      */
     public function getAvailableCertificationTypes(
         ?string $industry = null,
@@ -69,12 +64,6 @@ class CertificationService
 
     /**
      * Submit a new certification for a worker.
-     *
-     * @param User $worker
-     * @param int $certificationTypeId
-     * @param array $data
-     * @param UploadedFile|null $document
-     * @return array
      */
     public function submitCertification(
         User $worker,
@@ -85,7 +74,7 @@ class CertificationService
         try {
             // Verify certification type exists
             $certType = CertificationType::active()->find($certificationTypeId);
-            if (!$certType) {
+            if (! $certType) {
                 return [
                     'success' => false,
                     'error' => 'Invalid certification type.',
@@ -105,7 +94,7 @@ class CertificationService
                 })
                 ->first();
 
-            if ($existing && !($data['is_renewal'] ?? false)) {
+            if ($existing && ! ($data['is_renewal'] ?? false)) {
                 return [
                     'success' => false,
                     'error' => 'You already have this certification on file.',
@@ -114,7 +103,7 @@ class CertificationService
             }
 
             // Validate required document
-            if ($certType->requires_document_upload && !$document) {
+            if ($certType->requires_document_upload && ! $document) {
                 return [
                     'success' => false,
                     'error' => 'Document upload is required for this certification.',
@@ -142,8 +131,9 @@ class CertificationService
             // Store document if provided
             if ($document) {
                 $docResult = $this->storeCertificationDocument($workerCert, $document, $worker);
-                if (!$docResult['success']) {
+                if (! $docResult['success']) {
                     DB::rollBack();
+
                     return $docResult;
                 }
             }
@@ -155,7 +145,7 @@ class CertificationService
                     $workerCert->markAsVerified(
                         $worker->id,
                         WorkerCertification::METHOD_API,
-                        'Automatically verified via ' . $certType->verification_api_provider
+                        'Automatically verified via '.$certType->verification_api_provider
                     );
                 }
             }
@@ -186,7 +176,7 @@ class CertificationService
             return [
                 'success' => true,
                 'certification' => $workerCert->load('certificationType'),
-                'requires_manual_review' => !$workerCert->verified,
+                'requires_manual_review' => ! $workerCert->verified,
             ];
         } catch (\Exception $e) {
             DB::rollBack();
@@ -205,12 +195,6 @@ class CertificationService
 
     /**
      * Store certification document with encryption.
-     *
-     * @param WorkerCertification $certification
-     * @param UploadedFile $file
-     * @param User $worker
-     * @param string $documentType
-     * @return array
      */
     public function storeCertificationDocument(
         WorkerCertification $certification,
@@ -221,10 +205,10 @@ class CertificationService
         try {
             // Validate file type
             $allowedMimes = CertificationDocument::getAllowedMimeTypes();
-            if (!in_array($file->getMimeType(), $allowedMimes)) {
+            if (! in_array($file->getMimeType(), $allowedMimes)) {
                 return [
                     'success' => false,
-                    'error' => 'Invalid file type. Allowed types: ' . implode(', ', $allowedMimes),
+                    'error' => 'Invalid file type. Allowed types: '.implode(', ', $allowedMimes),
                 ];
             }
 
@@ -257,7 +241,7 @@ class CertificationService
             // Store file (encryption handled by storage layer or Laravel's encryption)
             $fullPath = $file->storeAs($storagePath, $storedFilename, $disk);
 
-            if (!$fullPath) {
+            if (! $fullPath) {
                 return [
                     'success' => false,
                     'error' => 'Failed to store document.',
@@ -322,15 +306,12 @@ class CertificationService
 
     /**
      * Attempt automated verification via API.
-     *
-     * @param WorkerCertification $certification
-     * @return array
      */
     public function attemptAutomatedVerification(WorkerCertification $certification): array
     {
         $certType = $certification->certificationType;
 
-        if (!$certType || !$certType->auto_verifiable) {
+        if (! $certType || ! $certType->auto_verifiable) {
             return [
                 'verified' => false,
                 'method' => 'none',
@@ -427,11 +408,6 @@ class CertificationService
 
     /**
      * Manually verify a certification (admin action).
-     *
-     * @param WorkerCertification $certification
-     * @param int $verifiedBy
-     * @param string|null $notes
-     * @return array
      */
     public function verifyCertification(
         WorkerCertification $certification,
@@ -483,11 +459,6 @@ class CertificationService
 
     /**
      * Reject a certification (admin action).
-     *
-     * @param WorkerCertification $certification
-     * @param int $verifiedBy
-     * @param string $reason
-     * @return array
      */
     public function rejectCertification(
         WorkerCertification $certification,
@@ -518,10 +489,6 @@ class CertificationService
 
     /**
      * Get worker's certifications.
-     *
-     * @param User $worker
-     * @param bool $validOnly
-     * @return Collection
      */
     public function getWorkerCertifications(User $worker, bool $validOnly = false): Collection
     {
@@ -537,9 +504,6 @@ class CertificationService
 
     /**
      * Get certifications expiring soon.
-     *
-     * @param int $days
-     * @return Collection
      */
     public function getExpiringCertifications(int $days = 60): Collection
     {
@@ -551,8 +515,6 @@ class CertificationService
 
     /**
      * Schedule expiry reminders.
-     *
-     * @return array
      */
     public function scheduleExpiryReminders(): array
     {
@@ -588,8 +550,6 @@ class CertificationService
 
     /**
      * Process expired certifications.
-     *
-     * @return array
      */
     public function processExpiredCertifications(): array
     {
@@ -636,10 +596,6 @@ class CertificationService
 
     /**
      * Update a certification.
-     *
-     * @param WorkerCertification $certification
-     * @param array $data
-     * @return array
      */
     public function updateCertification(WorkerCertification $certification, array $data): array
     {
@@ -651,7 +607,7 @@ class CertificationService
                 'issuing_authority' => $data['issuing_authority'] ?? null,
                 'issuing_state' => $data['issuing_state'] ?? null,
                 'issuing_country' => $data['issuing_country'] ?? null,
-            ], fn($v) => $v !== null);
+            ], fn ($v) => $v !== null);
 
             // If updating dates, reset verification status
             if (isset($data['issue_date']) || isset($data['expiry_date'])) {
@@ -681,9 +637,6 @@ class CertificationService
 
     /**
      * Delete a certification.
-     *
-     * @param WorkerCertification $certification
-     * @return array
      */
     public function deleteCertification(WorkerCertification $certification): array
     {
@@ -708,6 +661,391 @@ class CertificationService
             return [
                 'success' => false,
                 'error' => 'Failed to delete certification.',
+            ];
+        }
+    }
+
+    // =========================================
+    // SAF-003: Safety Certification Methods
+    // =========================================
+
+    /**
+     * Add a worker certification for a safety certification.
+     */
+    public function addWorkerCertification(User $worker, array $data): array
+    {
+        try {
+            $safetyCertId = $data['safety_certification_id'] ?? null;
+
+            // Verify safety certification exists
+            $safetyCert = \App\Models\SafetyCertification::active()->find($safetyCertId);
+            if (! $safetyCert) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid safety certification.',
+                ];
+            }
+
+            // Check if worker already has this certification (and it's not expired)
+            $existing = WorkerCertification::where('worker_id', $worker->id)
+                ->where('safety_certification_id', $safetyCertId)
+                ->whereIn('verification_status', [
+                    WorkerCertification::STATUS_PENDING,
+                    WorkerCertification::STATUS_VERIFIED,
+                ])
+                ->where(function ($q) {
+                    $q->whereNull('expiry_date')
+                        ->orWhere('expiry_date', '>', now());
+                })
+                ->first();
+
+            if ($existing && ! ($data['is_renewal'] ?? false)) {
+                return [
+                    'success' => false,
+                    'error' => 'You already have this certification on file.',
+                    'existing_certification_id' => $existing->id,
+                ];
+            }
+
+            DB::beginTransaction();
+
+            // Calculate expiry date if not provided
+            $expiryDate = $data['expiry_date'] ?? null;
+            if (! $expiryDate && $safetyCert->validity_months && isset($data['issue_date'])) {
+                $expiryDate = $safetyCert->calculateExpiryDate($data['issue_date']);
+            }
+
+            // Create the worker certification
+            $workerCert = WorkerCertification::create([
+                'worker_id' => $worker->id,
+                'safety_certification_id' => $safetyCertId,
+                'certification_number' => $data['certificate_number'] ?? null,
+                'issue_date' => $data['issue_date'] ?? null,
+                'expiry_date' => $expiryDate,
+                'issuing_authority' => $data['issuing_authority'] ?? $safetyCert->issuing_authority,
+                'verification_status' => WorkerCertification::STATUS_PENDING,
+                'verified' => false,
+                'document_url' => $data['document_path'] ?? null,
+                'is_primary' => true,
+                'metadata' => $data['metadata'] ?? null,
+            ]);
+
+            // Handle document upload if provided
+            if (isset($data['document']) && $data['document'] instanceof \Illuminate\Http\UploadedFile) {
+                $docResult = $this->storeCertificationDocument($workerCert, $data['document'], $worker);
+                if (! $docResult['success']) {
+                    DB::rollBack();
+
+                    return $docResult;
+                }
+            }
+
+            // If renewal, mark old as not primary
+            if ($existing && ($data['is_renewal'] ?? false)) {
+                $existing->update(['is_primary' => false]);
+            }
+
+            DB::commit();
+
+            // Send notification
+            try {
+                $worker->notify(new CertificationSubmittedNotification($workerCert));
+            } catch (\Exception $e) {
+                Log::warning('Failed to send certification submitted notification', [
+                    'worker_id' => $worker->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            Log::info('Safety certification added', [
+                'worker_id' => $worker->id,
+                'safety_certification_id' => $safetyCertId,
+                'worker_certification_id' => $workerCert->id,
+            ]);
+
+            return [
+                'success' => true,
+                'certification' => $workerCert->load('safetyCertification'),
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add worker certification', [
+                'worker_id' => $worker->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Failed to add certification. Please try again.',
+            ];
+        }
+    }
+
+    /**
+     * Check if a worker meets all shift certification requirements.
+     */
+    public function workerMeetsShiftRequirements(User $worker, \App\Models\Shift $shift): bool
+    {
+        $requirements = $shift->certificationRequirements()
+            ->where('is_mandatory', true)
+            ->get();
+
+        if ($requirements->isEmpty()) {
+            return true;
+        }
+
+        foreach ($requirements as $requirement) {
+            if (! $this->workerHasValidCertification($worker, $requirement->safety_certification_id)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if a worker has a valid certification for a safety certification.
+     */
+    public function workerHasValidCertification(User $worker, int $safetyCertificationId): bool
+    {
+        return WorkerCertification::where('worker_id', $worker->id)
+            ->where('safety_certification_id', $safetyCertificationId)
+            ->where('verification_status', WorkerCertification::STATUS_VERIFIED)
+            ->where('verified', true)
+            ->where(function ($q) {
+                $q->whereNull('expiry_date')
+                    ->orWhere('expiry_date', '>', now());
+            })
+            ->exists();
+    }
+
+    /**
+     * Get certifications that a worker is missing for a shift.
+     */
+    public function getMissingCertifications(User $worker, \App\Models\Shift $shift): Collection
+    {
+        $requirements = $shift->certificationRequirements()
+            ->with('safetyCertification')
+            ->get();
+
+        $missing = collect();
+
+        foreach ($requirements as $requirement) {
+            if (! $this->workerHasValidCertification($worker, $requirement->safety_certification_id)) {
+                $missing->push([
+                    'certification' => $requirement->safetyCertification,
+                    'is_mandatory' => $requirement->is_mandatory,
+                ]);
+            }
+        }
+
+        return $missing;
+    }
+
+    /**
+     * Check certification expiry status across all workers.
+     */
+    public function checkCertificationExpiry(): array
+    {
+        $expiringIn30 = WorkerCertification::verified()
+            ->expiringSoon(30)
+            ->count();
+
+        $expiringIn14 = WorkerCertification::verified()
+            ->expiringSoon(14)
+            ->count();
+
+        $expiringIn7 = WorkerCertification::verified()
+            ->expiringSoon(7)
+            ->count();
+
+        $expired = WorkerCertification::expired()
+            ->where('verification_status', '!=', WorkerCertification::STATUS_EXPIRED)
+            ->count();
+
+        return [
+            'expiring_in_30_days' => $expiringIn30,
+            'expiring_in_14_days' => $expiringIn14,
+            'expiring_in_7_days' => $expiringIn7,
+            'newly_expired' => $expired,
+            'checked_at' => now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Get certifications expiring within a specific number of days.
+     */
+    public function getCertificationsExpiringIn(int $daysAhead): Collection
+    {
+        return WorkerCertification::verified()
+            ->expiringSoon($daysAhead)
+            ->with(['worker', 'safetyCertification', 'certificationType'])
+            ->orderBy('expiry_date')
+            ->get();
+    }
+
+    /**
+     * Generate a compliance report for certifications.
+     */
+    public function getComplianceReport(): array
+    {
+        $now = now();
+
+        // Get total active workers (simplified assumption - workers who have any certification)
+        $workersWithCerts = WorkerCertification::select('worker_id')
+            ->distinct()
+            ->count();
+
+        // Verified certifications
+        $verified = WorkerCertification::where('verification_status', WorkerCertification::STATUS_VERIFIED)
+            ->where('verified', true)
+            ->where(function ($q) use ($now) {
+                $q->whereNull('expiry_date')
+                    ->orWhere('expiry_date', '>', $now);
+            })
+            ->count();
+
+        // Pending verifications
+        $pending = WorkerCertification::where('verification_status', WorkerCertification::STATUS_PENDING)
+            ->count();
+
+        // Rejected certifications
+        $rejected = WorkerCertification::where('verification_status', WorkerCertification::STATUS_REJECTED)
+            ->count();
+
+        // Expired certifications
+        $expired = WorkerCertification::whereNotNull('expiry_date')
+            ->where('expiry_date', '<', $now)
+            ->count();
+
+        // Expiring soon (30 days)
+        $expiringSoon = WorkerCertification::verified()
+            ->expiringSoon(30)
+            ->count();
+
+        // By category (for safety certifications)
+        $byCategory = \App\Models\SafetyCertification::active()
+            ->withCount(['workerCertifications as valid_count' => function ($q) use ($now) {
+                $q->where('verification_status', WorkerCertification::STATUS_VERIFIED)
+                    ->where('verified', true)
+                    ->where(function ($query) use ($now) {
+                        $query->whereNull('expiry_date')
+                            ->orWhere('expiry_date', '>', $now);
+                    });
+            }])
+            ->get()
+            ->groupBy('category')
+            ->map(function ($certs) {
+                return [
+                    'certifications' => $certs->count(),
+                    'valid_worker_certifications' => $certs->sum('valid_count'),
+                ];
+            });
+
+        return [
+            'summary' => [
+                'workers_with_certifications' => $workersWithCerts,
+                'total_verified' => $verified,
+                'total_pending' => $pending,
+                'total_rejected' => $rejected,
+                'total_expired' => $expired,
+                'expiring_in_30_days' => $expiringSoon,
+            ],
+            'by_category' => $byCategory->toArray(),
+            'compliance_rate' => $workersWithCerts > 0
+                ? round(($verified / max(1, $verified + $expired + $pending)) * 100, 2)
+                : 0,
+            'generated_at' => $now->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Filter workers by required certifications.
+     */
+    public function filterWorkersByCertifications(array $certificationIds, bool $requireAll = true): Collection
+    {
+        $query = User::query()
+            ->where('role', 'worker')
+            ->where('status', 'active');
+
+        if ($requireAll) {
+            // Workers must have ALL specified certifications
+            foreach ($certificationIds as $certId) {
+                $query->whereHas('workerCertifications', function ($q) use ($certId) {
+                    $q->where('safety_certification_id', $certId)
+                        ->where('verification_status', WorkerCertification::STATUS_VERIFIED)
+                        ->where('verified', true)
+                        ->where(function ($query) {
+                            $query->whereNull('expiry_date')
+                                ->orWhere('expiry_date', '>', now());
+                        });
+                });
+            }
+        } else {
+            // Workers must have ANY of the specified certifications
+            $query->whereHas('workerCertifications', function ($q) use ($certificationIds) {
+                $q->whereIn('safety_certification_id', $certificationIds)
+                    ->where('verification_status', WorkerCertification::STATUS_VERIFIED)
+                    ->where('verified', true)
+                    ->where(function ($query) {
+                        $query->whereNull('expiry_date')
+                            ->orWhere('expiry_date', '>', now());
+                    });
+            });
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Request re-verification for a certification.
+     */
+    public function requestReverification(WorkerCertification $certification, array $data = []): array
+    {
+        try {
+            // Only allow reverification for rejected or expired
+            if (! in_array($certification->verification_status, [
+                WorkerCertification::STATUS_REJECTED,
+                WorkerCertification::STATUS_EXPIRED,
+            ])) {
+                return [
+                    'success' => false,
+                    'error' => 'Certification is not eligible for re-verification.',
+                ];
+            }
+
+            $certification->update([
+                'verification_status' => WorkerCertification::STATUS_PENDING,
+                'verified' => false,
+                'verified_at' => null,
+                'verified_by' => null,
+                'verification_notes' => null,
+                'rejection_reason' => null,
+            ]);
+
+            // Send notification
+            try {
+                $certification->worker->notify(new CertificationSubmittedNotification($certification));
+            } catch (\Exception $e) {
+                Log::warning('Failed to send re-verification notification', [
+                    'certification_id' => $certification->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            return [
+                'success' => true,
+                'certification' => $certification->fresh(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to request re-verification', [
+                'certification_id' => $certification->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [
+                'success' => false,
+                'error' => 'Failed to request re-verification.',
             ];
         }
     }

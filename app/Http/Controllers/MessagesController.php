@@ -19,104 +19,33 @@ class MessagesController extends Controller
 
     /**
      * Display inbox/conversations list.
+     * COM-001: Updated to use Livewire components for real-time messaging.
      */
     public function index(Request $request)
     {
-        $filter = $request->get('filter', 'all');
+        // The view now uses Livewire components, so we just pass optional conversation ID
+        $selectedConversationId = $request->get('conversation');
 
-        $query = Conversation::with(['worker', 'business', 'shift', 'lastMessage'])
-            ->forUser(Auth::id())
-            ->orderBy('last_message_at', 'desc');
-
-        if ($filter === 'unread') {
-            $query->withUnreadFor(Auth::id());
-        } elseif ($filter === 'archived') {
-            $query->where('status', 'archived');
-        } else {
-            $query->active();
-        }
-
-        $conversations = $query->get();
-
-        // Eager load unread message counts to avoid N+1 queries
-        $conversationIds = $conversations->pluck('id');
-        $unreadCounts = \App\Models\Message::whereIn('conversation_id', $conversationIds)
-            ->where('to_user_id', Auth::id())
-            ->whereNull('read_at')
-            ->selectRaw('conversation_id, COUNT(*) as count')
-            ->groupBy('conversation_id')
-            ->pluck('count', 'conversation_id');
-
-        // Add other_party_name to each conversation
-        foreach ($conversations as $conv) {
-            if (Auth::user()->isWorker()) {
-                $conv->other_party_name = $conv->business->name ?? 'Business';
-                $conv->last_message = $conv->lastMessage->message ?? 'No messages yet';
-            } else {
-                $conv->other_party_name = $conv->worker->name ?? 'Worker';
-                $conv->last_message = $conv->lastMessage->message ?? 'No messages yet';
-            }
-
-            // Add unread count from pre-loaded data
-            $conv->unread_count = $unreadCounts->get($conv->id, 0);
-        }
-
-        // Get unread count
-        $unreadCount = Conversation::forUser(Auth::id())
-            ->active()
-            ->withUnreadFor(Auth::id())
-            ->count();
-
-        return view('messages.index', compact('conversations', 'unreadCount', 'filter'));
+        return view('messages.index', compact('selectedConversationId'));
     }
 
     /**
      * Show a specific conversation.
+     * COM-001: Redirects to index with conversation ID for Livewire handling.
      */
     public function show($conversationId)
     {
-        $conversation = Conversation::with([
-            'worker.workerProfile',
-            'business.businessProfile',
-            'shift',
-            'messages.sender'
-        ])->findOrFail($conversationId);
+        $conversation = Conversation::findOrFail($conversationId);
 
         // Check authorization
-        if (!$conversation->hasParticipant(Auth::id())) {
+        if (! $conversation->hasParticipant(Auth::id())) {
             abort(403, 'You do not have permission to view this conversation.');
         }
 
-        // Mark messages as read
-        $conversation->markAsReadFor(Auth::id());
+        // Redirect to index with conversation selected for Livewire handling
+        $selectedConversationId = (int) $conversationId;
 
-        // Get messages
-        $messages = $conversation->messages()->orderBy('created_at', 'asc')->get();
-
-        // Get all conversations for sidebar
-        $conversations = Conversation::with(['worker', 'business', 'lastMessage'])
-            ->forUser(Auth::id())
-            ->active()
-            ->orderBy('last_message_at', 'desc')
-            ->get();
-
-        // Add other_party_name to each conversation
-        foreach ($conversations as $conv) {
-            if (Auth::user()->isWorker()) {
-                $conv->other_party_name = $conv->business->name ?? 'Business';
-            } else {
-                $conv->other_party_name = $conv->worker->name ?? 'Worker';
-            }
-        }
-
-        // Add other_party_name to current conversation
-        if (Auth::user()->isWorker()) {
-            $conversation->other_party_name = $conversation->business->name ?? 'Business';
-        } else {
-            $conversation->other_party_name = $conversation->worker->name ?? 'Worker';
-        }
-
-        return view('messages.show', compact('conversation', 'messages', 'conversations'));
+        return view('messages.index', compact('selectedConversationId'));
     }
 
     /**
@@ -125,7 +54,7 @@ class MessagesController extends Controller
     public function createWithBusiness($businessId, Request $request)
     {
         // Check authorization (workers only)
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can initiate conversations with businesses.');
         }
 
@@ -159,7 +88,7 @@ class MessagesController extends Controller
     public function createWithWorker($workerId, Request $request)
     {
         // Check authorization (businesses only)
-        if (!Auth::user()->isBusiness()) {
+        if (! Auth::user()->isBusiness()) {
             abort(403, 'Only businesses can initiate conversations with workers.');
         }
 
@@ -208,11 +137,11 @@ class MessagesController extends Controller
         $toUser = User::findOrFail($request->to_user_id);
 
         // Validate user types
-        if (Auth::user()->isWorker() && !$toUser->isBusiness()) {
+        if (Auth::user()->isWorker() && ! $toUser->isBusiness()) {
             return redirect()->back()->with('error', 'Workers can only message businesses.');
         }
 
-        if (Auth::user()->isBusiness() && !$toUser->isWorker()) {
+        if (Auth::user()->isBusiness() && ! $toUser->isWorker()) {
             return redirect()->back()->with('error', 'Businesses can only message workers.');
         }
 
@@ -225,7 +154,7 @@ class MessagesController extends Controller
             'business_id' => $businessId,
             'shift_id' => $request->shift_id,
         ], [
-            'subject' => $request->shift_id ? 'Shift #' . $request->shift_id : 'General Inquiry',
+            'subject' => $request->shift_id ? 'Shift #'.$request->shift_id : 'General Inquiry',
             'status' => 'active',
         ]);
 
@@ -268,7 +197,7 @@ class MessagesController extends Controller
         $conversation = Conversation::findOrFail($conversationId);
 
         // Check authorization
-        if (!$conversation->hasParticipant(Auth::id())) {
+        if (! $conversation->hasParticipant(Auth::id())) {
             abort(403, 'You do not have permission to archive this conversation.');
         }
 
@@ -286,7 +215,7 @@ class MessagesController extends Controller
         $conversation = Conversation::findOrFail($conversationId);
 
         // Check authorization
-        if (!$conversation->hasParticipant(Auth::id())) {
+        if (! $conversation->hasParticipant(Auth::id())) {
             abort(403, 'You do not have permission to restore this conversation.');
         }
 

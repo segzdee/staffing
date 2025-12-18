@@ -502,6 +502,32 @@ class Shift extends Model
     }
 
     /**
+     * SAF-003: Get certification requirements for this shift.
+     */
+    public function certificationRequirements()
+    {
+        return $this->hasMany(ShiftCertificationRequirement::class);
+    }
+
+    /**
+     * SAF-003: Get required safety certifications for this shift.
+     */
+    public function requiredSafetyCertifications()
+    {
+        return $this->belongsToMany(SafetyCertification::class, 'shift_certification_requirements')
+            ->withPivot('is_mandatory')
+            ->withTimestamps();
+    }
+
+    /**
+     * SAF-003: Get mandatory certification requirements.
+     */
+    public function mandatoryCertificationRequirements()
+    {
+        return $this->certificationRequirements()->where('is_mandatory', true);
+    }
+
+    /**
      * Get pending applications.
      */
     public function pendingApplications()
@@ -1148,6 +1174,14 @@ class Shift extends Model
             'id',                 // Local key on shifts
             'id'                  // Local key on shift_assignments
         );
+    }
+
+    /**
+     * QUA-002: Get all audits for this shift.
+     */
+    public function audits()
+    {
+        return $this->hasMany(ShiftAudit::class);
     }
 
     /**

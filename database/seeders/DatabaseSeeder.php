@@ -41,6 +41,12 @@ class DatabaseSeeder extends Seeder
         // Content moderation (COM-005)
         $this->call(BlockedPhrasesSeeder::class);
 
+        // Quality Audits (QUA-002)
+        $this->call(AuditChecklistSeeder::class);
+
+        // Continuous Improvement (QUA-005)
+        $this->call(ImprovementMetricSeeder::class);
+
         // Development accounts - only seed in non-production environments
         if (app()->environment('local', 'development', 'testing')) {
             $this->call([

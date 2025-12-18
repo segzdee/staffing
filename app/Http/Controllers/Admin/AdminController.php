@@ -39,10 +39,15 @@ use Yabacon\Paystack;
 
 class AdminController extends Controller
 {
-    public function __construct(AdminSettings $settings)
-    {
-        $this->settings = $settings::first();
+    protected $settings;
 
+    public function __construct()
+    {
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -394,7 +399,7 @@ class AdminController extends Controller
 
     public function settings()
     {
-        $genders = explode(',', $this->settings->genders);
+        $genders = $this->settings?->genders ? explode(',', $this->settings->genders) : [];
 
         return view('admin.settings', ['genders' => $genders]);
     }// <--- END METHOD
@@ -402,7 +407,7 @@ class AdminController extends Controller
     public function saveSettings(Request $request)
     {
         // The referral system cannot be activated if your commission fee equals 0
-        if ($this->settings->fee_commission == 0 && $request->referral_system == 'on') {
+        if ($this->settings?->fee_commission == 0 && $request->referral_system == 'on') {
             return back()->withErrors([
                 'errors' => trans('general.error_active_system_referrals'),
             ]);
@@ -670,7 +675,7 @@ class AdminController extends Controller
 
     public function payments()
     {
-        $stripeConnectCountries = explode(',', $this->settings->stripe_connect_countries);
+        $stripeConnectCountries = $this->settings?->stripe_connect_countries ? explode(',', $this->settings->stripe_connect_countries) : [];
 
         return view('admin.payments-settings')->withStripeConnectCountries($stripeConnectCountries);
     }// <--- End Method
@@ -680,7 +685,7 @@ class AdminController extends Controller
         $sql = AdminSettings::first();
 
         // The referral system cannot be activated if your commission fee equals 0
-        if ($request->fee_commission == 0 && $this->settings->referral_system == 'on') {
+        if ($request->fee_commission == 0 && $this->settings?->referral_system == 'on') {
             return back()->withErrors([
                 'errors' => trans('general.error_fee_commission_zero'),
             ]);
@@ -762,10 +767,10 @@ class AdminController extends Controller
         $data->save();
 
         // <------ Send Email to User ---------->>>
-        $amount = Helper::amountWithoutFormat($data->amount).' '.$this->settings->currency_code;
+        $amount = Helper::amountWithoutFormat($data->amount).' '.($this->settings?->currency_code ?? 'USD');
 
-        $sender = $this->settings->email_no_reply;
-        $titleSite = $this->settings->title;
+        $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+        $titleSite = $this->settings?->title ?? config('app.name');
         $fullNameUser = $user->name;
         $_emailUser = $user->email;
 
@@ -1406,8 +1411,8 @@ class AdminController extends Controller
         }
 
         // Data Email Send
-        $sender = $this->settings->email_no_reply;
-        $titleSite = $this->settings->title;
+        $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+        $titleSite = $this->settings?->title ?? config('app.name');
         $fullNameUser = $member->name;
         $emailUser = $member->email;
 
@@ -1599,13 +1604,13 @@ class AdminController extends Controller
             $path = config('path.admin');
 
             $validator = Validator::make($request->all(), [
-                'upload' => 'required|mimes:jpg,gif,png,jpe,jpeg|max:'.$this->settings->file_size_allowed.'',
+                'upload' => 'required|mimes:jpg,gif,png,jpe,jpeg|max:'.($this->settings?->file_size_allowed ?? 5120).'',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'uploaded' => 0,
-                    'error' => ['message' => trans('general.upload_image_error_editor').' '.Helper::formatBytes($this->settings->file_size_allowed * 1024)],
+                    'error' => ['message' => trans('general.upload_image_error_editor').' '.Helper::formatBytes(($this->settings?->file_size_allowed ?? 5120) * 1024)],
                 ]);
             } // <-- Validator
 
@@ -1755,8 +1760,8 @@ class AdminController extends Controller
         // send verification mail to user
         $_username = $user->username;
         $_email_user = $user->email;
-        $_title_site = $this->settings->title;
-        $_email_noreply = $this->settings->email_no_reply;
+        $_title_site = $this->settings?->title ?? config('app.name');
+        $_email_noreply = $this->settings?->email_no_reply ?? config('mail.from.address');
 
         Mail::send('emails.verify', ['confirmation_code' => $confirmation_code, 'isProfile' => null],
             function ($message) use (
@@ -1797,8 +1802,8 @@ class AdminController extends Controller
         $sql = Deposits::findOrFail($request->id);
 
         // <------ Send Email to User ---------->>>
-        $sender = $this->settings->email_no_reply;
-        $titleSite = $this->settings->title;
+        $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+        $titleSite = $this->settings?->title ?? config('app.name');
         $fullNameUser = $sql->user()->name;
         $emailUser = $sql->user()->email;
         $language = $sql->user()->language;
@@ -1833,8 +1838,8 @@ class AdminController extends Controller
 
         if (isset($sql->user()->name)) {
             // <------ Send Email to User ---------->>>
-            $sender = $this->settings->email_no_reply;
-            $titleSite = $this->settings->title;
+            $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+            $titleSite = $this->settings?->title ?? config('app.name');
             $fullNameUser = $sql->user()->name;
             $emailUser = $sql->user()->email;
 
@@ -1890,7 +1895,8 @@ class AdminController extends Controller
                 $filename = md5(uniqid()).'.'.$file->getClientOriginalExtension();
                 $file->move(public_path('images/icons'), $filename);
 
-                \File::delete(env($key));
+                // Use getEnvValue() instead of env() to work with cached config
+                \File::delete(Helper::getEnvValue($key));
 
                 $envIcon = 'images/icons/'.$filename;
                 Helper::envUpdate($key, $envIcon);

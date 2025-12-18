@@ -9,11 +9,17 @@ use App\Models\ChatSetting;
 
 class ContentSettingsController extends Controller
 {
-  public function __construct(
-    public Request $request,
-    public AdminSettings $settings
-  ) {
-    $this->settings = $settings::first();
+  public Request $request;
+  protected $settings;
+
+  public function __construct(Request $request)
+  {
+    $this->request = $request;
+    try {
+      $this->settings = \App\Models\AdminSettings::first();
+    } catch (\Exception $e) {
+      $this->settings = null;
+    }
   }
 
   /**

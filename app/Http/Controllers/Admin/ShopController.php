@@ -19,9 +19,13 @@ class ShopController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -43,13 +47,15 @@ class ShopController extends Controller
 
         $this->validate($request, $rules, $messages);
 
-        $this->settings->shop = $request->shop;
-        $this->settings->min_price_product = $request->min_price_product;
-        $this->settings->max_price_product = $request->max_price_product;
-        $this->settings->digital_product_sale = $request->digital_product_sale;
-        $this->settings->physical_product_sale = $request->physical_product_sale;
-        $this->settings->custom_content = $request->custom_content;
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->shop = $request->shop;
+            $this->settings->min_price_product = $request->min_price_product;
+            $this->settings->max_price_product = $request->max_price_product;
+            $this->settings->digital_product_sale = $request->digital_product_sale;
+            $this->settings->physical_product_sale = $request->physical_product_sale;
+            $this->settings->custom_content = $request->custom_content;
+            $this->settings->save();
+        }
 
         return back()->withSuccessMessage(trans('admin.success_update'));
     }

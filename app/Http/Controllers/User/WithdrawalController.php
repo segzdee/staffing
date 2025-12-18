@@ -15,10 +15,14 @@ class WithdrawalController extends Controller
     protected $request;
     protected $settings;
 
-    public function __construct(Request $request, AdminSettings $settings)
+    public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -28,7 +32,7 @@ class WithdrawalController extends Controller
      */
     public function payoutMethod()
     {
-        $stripeConnectCountries = explode(',', $this->settings->stripe_connect_countries);
+        $stripeConnectCountries = $this->settings?->stripe_connect_countries ? explode(',', $this->settings->stripe_connect_countries) : [];
 
         return view('users.payout_method')->withStripeConnectCountries($stripeConnectCountries);
     }
@@ -153,21 +157,21 @@ class WithdrawalController extends Controller
             }
 
             // If custom amount withdrawal
-            if ($this->settings->type_withdrawals == 'custom') {
+            if ($this->settings?->type_withdrawals == 'custom') {
 
-                if ($this->settings->currency_position == 'right') {
+                if ($this->settings?->currency_position == 'right') {
                     $currencyPosition =  2;
                 } else {
                     $currencyPosition =  null;
                 }
 
                 $messages = [
-                    'amount.min' => trans('general.amount_minimum'.$currencyPosition, ['symbol' => $this->settings->currency_symbol, 'code' => $this->settings->currency_code]),
-                    'amount.max' => trans('general.max_amount_minimum'.$currencyPosition, ['symbol' => $this->settings->currency_symbol, 'code' => $this->settings->currency_code]),
+                    'amount.min' => trans('general.amount_minimum'.$currencyPosition, ['symbol' => $this->settings?->currency_symbol ?? '$', 'code' => $this->settings?->currency_code ?? 'USD']),
+                    'amount.max' => trans('general.max_amount_minimum'.$currencyPosition, ['symbol' => $this->settings?->currency_symbol ?? '$', 'code' => $this->settings?->currency_code ?? 'USD']),
                 ];
 
                 $this->request->validate([
-                    'amount' => 'required|numeric|min:'.$this->settings->amount_min_withdrawal.'|max:'.auth()->user()->balance,
+                    'amount' => 'required|numeric|min:'.($this->settings?->amount_min_withdrawal ?? 20).'|max:'.auth()->user()->balance,
                 ], $messages);
 
                 $amount = $this->request->amount;
@@ -186,8 +190,10 @@ class WithdrawalController extends Controller
 
             // Notify Admin via Email
             try {
-                Notification::route('mail' , $this->settings->email_admin)
-                    ->notify(new AdminWithdrawalPending($sql));
+                if ($this->settings?->email_admin) {
+                    Notification::route('mail' , $this->settings->email_admin)
+                        ->notify(new AdminWithdrawalPending($sql));
+                }
             } catch (\Exception $e) {
                 \Log::info($e->getMessage());
             }

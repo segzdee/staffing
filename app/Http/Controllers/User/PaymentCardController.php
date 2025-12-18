@@ -12,10 +12,14 @@ class PaymentCardController extends Controller
     protected $request;
     protected $settings;
 
-    public function __construct(Request $request, AdminSettings $settings)
+    public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -99,8 +103,9 @@ class PaymentCardController extends Controller
 
      $chargeAmountPaystack = ['NGN' => '50.00', 'GHS' => '0.10', 'ZAR' => '1', 'USD' => 0.20];
 
-     if (array_key_exists($this->settings->currency_code, $chargeAmountPaystack)) {
-         $chargeAmountPaystack = $chargeAmountPaystack[$this->settings->currency_code];
+     $currencyCode = $this->settings?->currency_code ?? 'USD';
+     if (array_key_exists($currencyCode, $chargeAmountPaystack)) {
+         $chargeAmountPaystack = $chargeAmountPaystack[$currencyCode];
      } else {
          $chargeAmountPaystack = 0;
      }

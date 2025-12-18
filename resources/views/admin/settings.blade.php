@@ -139,7 +139,7 @@
                       <div class="col-sm-10">
                       	<select name="default_language" class="form-control">
                           @foreach (Languages::orderBy('name')->get() as $language)
-                            <option @if ($language->abbreviation == env('DEFAULT_LOCALE')) selected="selected" @endif value="{{$language->abbreviation}}">{{ $language->name }}</option>
+                            <option @if ($language->abbreviation == env_value('DEFAULT_LOCALE', 'en')) selected="selected" @endif value="{{$language->abbreviation}}">{{ $language->name }}</option>
                           @endforeach
                           </select>
                           <p class="help-block">{{ trans('general.default_language_info') }}</p>
@@ -154,13 +154,13 @@
                      <div class="col-sm-10">
                        <div class="radio">
                        <label class="padding-zero">
-                         <input type="radio" value="true" name="app_debug" @if (env('APP_DEBUG') == true) checked="checked" @endif checked>
+                         <input type="radio" value="true" name="app_debug" @if (env_value('APP_DEBUG', false) == true) checked="checked" @endif checked>
                          On <em>({{ trans('general.info_show_errors') }})</em>
                        </label>
                      </div>
                      <div class="radio">
                        <label class="padding-zero">
-                         <input type="radio" value="false" name="app_debug" @if (env('APP_DEBUG') == false) checked="checked" @endif>
+                         <input type="radio" value="false" name="app_debug" @if (env_value('APP_DEBUG', false) == false) checked="checked" @endif>
                          Off
                        </label>
                      </div>

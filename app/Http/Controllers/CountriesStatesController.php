@@ -11,9 +11,15 @@ use App\Helper;
 
 class CountriesStatesController extends Controller
 {
-  public function __construct(AdminSettings $settings)
+  protected $settings;
+
+  public function __construct()
   {
-    $this->settings = $settings::first();
+    try {
+      $this->settings = \App\Models\AdminSettings::first();
+    } catch (\Exception $e) {
+      $this->settings = null;
+    }
   }
 
   public function countries()

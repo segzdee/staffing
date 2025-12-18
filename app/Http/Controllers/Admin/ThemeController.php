@@ -14,9 +14,13 @@ class ThemeController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -289,7 +293,8 @@ class ThemeController extends Controller
                 $filename = md5(uniqid()).'.'.$file->getClientOriginalExtension();
                 $file->move(public_path('images/icons'), $filename);
 
-                \File::delete(env($key));
+                // Use getEnvValue() instead of env() to work with cached config
+                \File::delete(Helper::getEnvValue($key));
 
                 $envIcon = 'images/icons/'.$filename;
                 Helper::envUpdate($key, $envIcon);

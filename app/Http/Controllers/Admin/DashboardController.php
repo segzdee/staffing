@@ -12,9 +12,13 @@ class DashboardController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**

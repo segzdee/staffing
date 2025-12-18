@@ -51,7 +51,7 @@
                     <div class="form-group">
                       <label class="col-sm-2 control-label">Facebook Client ID</label>
                       <div class="col-sm-10">
-                        <input type="text" value="{{ env('FACEBOOK_CLIENT_ID') }}" name="FACEBOOK_CLIENT_ID" class="form-control" placeholder="">
+                        <input type="text" value="{{ env_value('FACEBOOK_CLIENT_ID', '') }}" name="FACEBOOK_CLIENT_ID" class="form-control" placeholder="">
                       </div>
                     </div>
                   </div><!-- /.box-body -->
@@ -61,7 +61,7 @@
                        <div class="form-group">
                          <label class="col-sm-2 control-label">Facebook Client Secret</label>
                          <div class="col-sm-10">
-                           <input type="password" value="{{ env('FACEBOOK_CLIENT_SECRET') }}" name="FACEBOOK_CLIENT_SECRET" class="form-control" placeholder="">
+                           <input type="password" value="{{ env_value('FACEBOOK_CLIENT_SECRET', '') }}" name="FACEBOOK_CLIENT_SECRET" class="form-control" placeholder="">
                            <p class="help-block margin-bottom-zero">URL Callback: <strong>{{url('oauth/facebook/callback')}}</strong></p>
                          </div>
                        </div>
@@ -98,7 +98,7 @@
                         <div class="form-group">
                           <label class="col-sm-2 control-label">Twitter Client ID</label>
                           <div class="col-sm-10">
-                            <input type="text" value="{{ env('TWITTER_CLIENT_ID') }}" name="TWITTER_CLIENT_ID" class="form-control" placeholder="">
+                            <input type="text" value="{{ env_value('TWITTER_CLIENT_ID', '') }}" name="TWITTER_CLIENT_ID" class="form-control" placeholder="">
                           </div>
                         </div>
                       </div><!-- /.box-body -->
@@ -108,7 +108,7 @@
                            <div class="form-group">
                              <label class="col-sm-2 control-label">Twitter Client Secret</label>
                              <div class="col-sm-10">
-                               <input type="password" value="{{ env('TWITTER_CLIENT_SECRET') }}" name="TWITTER_CLIENT_SECRET" class="form-control" placeholder="">
+                               <input type="password" value="{{ env_value('TWITTER_CLIENT_SECRET', '') }}" name="TWITTER_CLIENT_SECRET" class="form-control" placeholder="">
                                <p class="help-block margin-bottom-zero">URL Callback: <strong>{{url('oauth/twitter/callback')}}</strong></p>
                              </div>
                            </div>
@@ -145,7 +145,7 @@
                         <div class="form-group">
                           <label class="col-sm-2 control-label">Google Client ID</label>
                           <div class="col-sm-10">
-                            <input type="text" value="{{ env('GOOGLE_CLIENT_ID') }}" name="GOOGLE_CLIENT_ID" class="form-control" placeholder="">
+                            <input type="text" value="{{ env_value('GOOGLE_CLIENT_ID', '') }}" name="GOOGLE_CLIENT_ID" class="form-control" placeholder="">
                           </div>
                         </div>
                       </div><!-- /.box-body -->
@@ -155,7 +155,7 @@
                            <div class="form-group">
                              <label class="col-sm-2 control-label">Google Client Secret</label>
                              <div class="col-sm-10">
-                               <input type="password" value="{{ env('GOOGLE_CLIENT_SECRET') }}" name="GOOGLE_CLIENT_SECRET" class="form-control" placeholder="">
+                               <input type="password" value="{{ env_value('GOOGLE_CLIENT_SECRET', '') }}" name="GOOGLE_CLIENT_SECRET" class="form-control" placeholder="">
                                <p class="help-block margin-bottom-zero">URL Callback: <strong>{{url('oauth/google/callback')}}</strong></p>
                              </div>
                            </div>

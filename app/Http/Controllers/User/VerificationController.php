@@ -17,10 +17,14 @@ class VerificationController extends Controller
     protected $request;
     protected $settings;
 
-    public function __construct(Request $request, AdminSettings $settings)
+    public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -68,7 +72,7 @@ class VerificationController extends Controller
        'address'  => 'required',
        'city' => 'required',
        'zip' => 'required',
-       'image' => 'required|mimes:jpg,gif,png,jpe,jpeg,zip|max:'.$this->settings->file_size_allowed_verify_account.'',
+       'image' => 'required|mimes:jpg,gif,png,jpe,jpeg,zip|max:'.($this->settings?->file_size_allowed_verify_account ?? 5120).'',
        // 'form_w9'  => 'required_if:isUSCitizen,==,1|mimes:pdf|max:'.$this->settings->file_size_allowed_verify_account.'',
 
     ], $messages);
@@ -118,8 +122,10 @@ class VerificationController extends Controller
 
      // Notify Admin via Email
      try {
-       Notification::route('mail' , $this->settings->email_admin)
-           ->notify(new AdminVerificationPending($sql));
+       if ($this->settings?->email_admin) {
+         Notification::route('mail' , $this->settings->email_admin)
+             ->notify(new AdminVerificationPending($sql));
+       }
      } catch (\Exception $e) {
        \Log::info($e->getMessage());
      }

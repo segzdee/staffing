@@ -91,7 +91,7 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">Stripe Webhook Secret</label>
                 <div class="col-sm-10">
-                  <input type="password" value="{{ env('STRIPE_WEBHOOK_SECRET') }}" name="webhook_secret" class="form-control">
+                  <input type="password" value="{{ env_value('STRIPE_WEBHOOK_SECRET', '') }}" name="webhook_secret" class="form-control">
                  <p class="help-block"><a href="https://dashboard.stripe.com/webhooks" target="_blank">https://dashboard.stripe.com/webhooks</a></p>
                 </div>
               </div>

@@ -12,9 +12,13 @@ class SettingsController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -24,7 +28,7 @@ class SettingsController extends Controller
      */
     public function index()
     {
-        $genders = explode(',', $this->settings->genders);
+        $genders = $this->settings?->genders ? explode(',', $this->settings->genders) : [];
 
         return view('admin.settings', ['genders' => $genders]);
     }
@@ -37,7 +41,7 @@ class SettingsController extends Controller
     public function save(Request $request)
     {
         // The referral system cannot be activated if your commission fee equals 0
-        if ($this->settings->fee_commission == 0 && $request->referral_system == 'on') {
+        if ($this->settings?->fee_commission == 0 && $request->referral_system == 'on') {
             return back()->withErrors([
                 'errors' => trans('general.error_active_system_referrals'),
             ]);
@@ -169,8 +173,10 @@ class SettingsController extends Controller
             \Artisan::call('up');
         }
 
-        $this->settings->maintenance_mode = $request->maintenance_mode;
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->maintenance_mode = $request->maintenance_mode;
+            $this->settings->save();
+        }
 
         if ($request->maintenance_mode == 'on') {
             return redirect($strRandom)
@@ -268,8 +274,10 @@ class SettingsController extends Controller
 
         $request->MAIL_ENCRYPTION = strtolower($request->MAIL_ENCRYPTION);
 
-        $this->settings->email_no_reply = $request->MAIL_FROM_ADDRESS;
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->email_no_reply = $request->MAIL_FROM_ADDRESS;
+            $this->settings->save();
+        }
 
         foreach ($request->except(['_token']) as $key => $value) {
             Helper::envUpdate($key, $value);
@@ -287,10 +295,12 @@ class SettingsController extends Controller
      */
     public function updateSocialLogin(Request $request)
     {
-        $this->settings->facebook_login = $request->facebook_login;
-        $this->settings->google_login = $request->google_login;
-        $this->settings->twitter_login = $request->twitter_login;
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->facebook_login = $request->facebook_login;
+            $this->settings->google_login = $request->google_login;
+            $this->settings->twitter_login = $request->twitter_login;
+            $this->settings->save();
+        }
 
         foreach ($request->except(['_token']) as $key => $value) {
             Helper::envUpdate($key, $value);
@@ -368,13 +378,15 @@ class SettingsController extends Controller
      */
     public function billingStore(Request $request)
     {
-        $this->settings->company = $request->company;
-        $this->settings->country = $request->country;
-        $this->settings->address = $request->address;
-        $this->settings->city = $request->city;
-        $this->settings->zip = $request->zip;
-        $this->settings->vat = $request->vat;
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->company = $request->company;
+            $this->settings->country = $request->country;
+            $this->settings->address = $request->address;
+            $this->settings->city = $request->city;
+            $this->settings->zip = $request->zip;
+            $this->settings->vat = $request->vat;
+            $this->settings->save();
+        }
 
         \Session::flash('success', trans('admin.success_update'));
 
@@ -388,10 +400,11 @@ class SettingsController extends Controller
      */
     public function customCssJs(Request $request)
     {
-        $sql = $this->settings;
-        $sql->custom_css = $request->custom_css;
-        $sql->custom_js = $request->custom_js;
-        $sql->save();
+        if ($this->settings) {
+            $this->settings->custom_css = $request->custom_css;
+            $this->settings->custom_js = $request->custom_js;
+            $this->settings->save();
+        }
 
         return back()->withSuccessMessage(trans('admin.success_update'));
     }
@@ -403,11 +416,13 @@ class SettingsController extends Controller
      */
     public function storeAnnouncements(Request $request)
     {
-        $this->settings->announcement = $request->announcement_content;
-        $this->settings->announcement_show = $request->announcement_show;
-        $this->settings->type_announcement = $request->type_announcement;
-        $this->settings->announcement_cookie = Str::random(20);
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->announcement = $request->announcement_content;
+            $this->settings->announcement_show = $request->announcement_show;
+            $this->settings->type_announcement = $request->type_announcement;
+            $this->settings->announcement_cookie = Str::random(20);
+            $this->settings->save();
+        }
 
         return back()->withSuccessMessage(trans('admin.success_update'));
     }
@@ -419,14 +434,16 @@ class SettingsController extends Controller
      */
     public function saveLiveStreaming(Request $request)
     {
-        $this->settings->live_streaming_status = $request->live_streaming_status;
-        $this->settings->agora_app_id = $request->agora_app_id;
-        $this->settings->live_streaming_minimum_price = $request->live_streaming_minimum_price;
-        $this->settings->live_streaming_max_price = $request->live_streaming_max_price;
-        $this->settings->live_streaming_free = $request->live_streaming_free;
-        $this->settings->limit_live_streaming_paid = $request->limit_live_streaming_paid;
-        $this->settings->limit_live_streaming_free = $request->limit_live_streaming_free;
-        $this->settings->save();
+        if ($this->settings) {
+            $this->settings->live_streaming_status = $request->live_streaming_status;
+            $this->settings->agora_app_id = $request->agora_app_id;
+            $this->settings->live_streaming_minimum_price = $request->live_streaming_minimum_price;
+            $this->settings->live_streaming_max_price = $request->live_streaming_max_price;
+            $this->settings->live_streaming_free = $request->live_streaming_free;
+            $this->settings->limit_live_streaming_paid = $request->limit_live_streaming_paid;
+            $this->settings->limit_live_streaming_free = $request->limit_live_streaming_free;
+            $this->settings->save();
+        }
 
         return back()->withSuccessMessage(trans('admin.success_update'));
     }

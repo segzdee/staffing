@@ -22,9 +22,13 @@ class ContentController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -190,13 +194,13 @@ class ContentController extends Controller
             $path = config('path.admin');
 
             $validator = Validator::make($request->all(), [
-                'upload' => 'required|mimes:jpg,gif,png,jpe,jpeg|max:'.$this->settings->file_size_allowed.'',
+                'upload' => 'required|mimes:jpg,gif,png,jpe,jpeg|max:'.($this->settings?->file_size_allowed ?? 5120).'',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'uploaded' => 0,
-                    'error' => ['message' => trans('general.upload_image_error_editor').' '.Helper::formatBytes($this->settings->file_size_allowed * 1024)],
+                    'error' => ['message' => trans('general.upload_image_error_editor').' '.Helper::formatBytes(($this->settings?->file_size_allowed ?? 5120) * 1024)],
                 ]);
             }
 

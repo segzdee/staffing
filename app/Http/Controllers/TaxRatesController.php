@@ -10,10 +10,16 @@ use App\Models\AdminSettings;
 
 class TaxRatesController extends Controller
 {
-  public function __construct(AdminSettings $settings)
-	{
-		$this->settings = $settings::first();
-	}
+  protected $settings;
+
+  public function __construct()
+  {
+    try {
+      $this->settings = \App\Models\AdminSettings::first();
+    } catch (\Exception $e) {
+      $this->settings = null;
+    }
+  }
 
   public function show()
   {

@@ -15,9 +15,13 @@ class UserManagementController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -235,8 +239,8 @@ class UserManagementController extends Controller
 
         $_username = $user->username;
         $_email_user = $user->email;
-        $_title_site = $this->settings->title;
-        $_email_noreply = $this->settings->email_no_reply;
+        $_title_site = $this->settings?->title ?? config('app.name');
+        $_email_noreply = $this->settings?->email_no_reply ?? config('mail.from.address');
 
         Mail::send('emails.verify', ['confirmation_code' => $confirmation_code, 'isProfile' => null],
             function ($message) use (

@@ -18,10 +18,14 @@ class SettingsController extends Controller
     protected $request;
     protected $settings;
 
-    public function __construct(Request $request, AdminSettings $settings)
+    public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -316,7 +320,7 @@ class SettingsController extends Controller
      */
     public function editPage()
     {
-        $genders = explode(',', $this->settings->genders);
+        $genders = $this->settings?->genders ? explode(',', $this->settings->genders) : [];
         $categories = explode(',', auth()->user()->categories_id);
 
         return view('users.edit_my_page', [
@@ -372,7 +376,7 @@ class SettingsController extends Controller
             'twitch' => 'url',
             'discord' => 'url',
             'vk' => 'url',
-            'story' => 'required_if:is_creator,==,0|max:'.$this->settings->story_length.'',
+            'story' => 'required_if:is_creator,==,0|max:'.($this->settings?->story_length ?? 500).'',
             'countries_id' => 'required',
             'city' => 'max:100',
             'address' => 'max:100',

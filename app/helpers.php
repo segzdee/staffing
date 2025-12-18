@@ -76,3 +76,30 @@ if (! function_exists('feature_flags')) {
         return app(FeatureFlagService::class);
     }
 }
+
+if (! function_exists('env_value')) {
+    /**
+     * Get a value directly from the .env file, bypassing config cache.
+     *
+     * This is useful for admin settings forms that need to display current .env values
+     * even when config is cached in production. Unlike env(), this function always
+     * reads from the actual .env file.
+     *
+     * WARNING: This function reads from the filesystem on every call. It should only
+     * be used in admin settings pages where you need to display raw .env values.
+     * For regular application usage, always use config() instead.
+     *
+     * Usage:
+     *   // In Blade templates (admin settings forms)
+     *   <input value="{{ env_value('APP_URL') }}">
+     *   <input value="{{ env_value('STRIPE_KEY', '') }}">
+     *
+     * @param  string  $key  The environment variable key
+     * @param  mixed  $default  Default value if key not found
+     * @return mixed The value from .env file or default
+     */
+    function env_value(string $key, $default = null): mixed
+    {
+        return \App\Helper::getEnvValue($key, $default);
+    }
+}

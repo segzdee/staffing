@@ -49,7 +49,7 @@
                     <div class="form-group">
                       <label class="col-sm-2 control-label">{{trans('admin.email_no_reply')}}</label>
                       <div class="col-sm-10">
-                        <input type="text" value="{{ env('MAIL_FROM_ADDRESS') }}" name="MAIL_FROM_ADDRESS" class="form-control" placeholder="no-reply@example.com">
+                        <input type="text" value="{{ env_value('MAIL_FROM_ADDRESS', '') }}" name="MAIL_FROM_ADDRESS" class="form-control" placeholder="no-reply@example.com">
                       </div>
                     </div>
                   </div><!-- /.box-body -->
@@ -60,13 +60,13 @@
                         <label class="col-sm-2 control-label">{{trans('admin.email_driver')}}</label>
                         <div class="col-sm-10">
                           <select name="MAIL_MAILER" id="emailDriver" class="form-control custom-select">
-                            <option @if (env('MAIL_MAILER') == 'sendmail') selected @endif value="sendmail">Sendmail</option>
-                            <option @if (env('MAIL_MAILER') == 'smtp') selected @endif value="smtp">SMTP</option>
-                            <option @if (env('MAIL_MAILER') == 'mailgun') selected @endif value="mailgun">Mailgun</option>
-                            <option @if (env('MAIL_MAILER') == 'ses') selected @endif value="ses">Amazon Simple Email Service (SES)</option>
-                            <option @if (env('MAIL_MAILER') == 'log') selected @endif value="log">Log</option>
+                            <option @if (env_value('MAIL_MAILER', 'smtp') == 'sendmail') selected @endif value="sendmail">Sendmail</option>
+                            <option @if (env_value('MAIL_MAILER', 'smtp') == 'smtp') selected @endif value="smtp">SMTP</option>
+                            <option @if (env_value('MAIL_MAILER', 'smtp') == 'mailgun') selected @endif value="mailgun">Mailgun</option>
+                            <option @if (env_value('MAIL_MAILER', 'smtp') == 'ses') selected @endif value="ses">Amazon Simple Email Service (SES)</option>
+                            <option @if (env_value('MAIL_MAILER', 'smtp') == 'log') selected @endif value="log">Log</option>
                           </select>
-                          <p class="help-block margin-bottom-zero @if (env('MAIL_MAILER') != 'ses') display-none @endif" id="ses">
+                          <p class="help-block margin-bottom-zero @if (env_value('MAIL_MAILER', 'smtp') != 'ses') display-none @endif" id="ses">
                             {{ trans('admin.info_ses_email') }}
                             <a href="{{ url('panel/admin/storage') }}" target="_blank">{{ trans('admin.storage') }}</a>
                           </p>
@@ -74,13 +74,13 @@
                       </div>
                     </div><!-- /.box-body -->
 
-                    <div id="mailgun" class="@if (env('MAILGUN_DOMAIN') == '') display-none @endif">
+                    <div id="mailgun" class="@if (env_value('MAILGUN_DOMAIN', '') == '') display-none @endif">
                     <!-- Start Box Body -->
                      <div class="box-body">
                        <div class="form-group">
                          <label class="col-sm-2 control-label">Mailgun Domain</label>
                          <div class="col-sm-10">
-                           <input type="text" value="{{ env('MAILGUN_DOMAIN') }}" name="MAILGUN_DOMAIN" class="form-control" placeholder="mg.example.com">
+                           <input type="text" value="{{ env_value('MAILGUN_DOMAIN', '') }}" name="MAILGUN_DOMAIN" class="form-control" placeholder="mg.example.com">
                          </div>
                        </div>
                      </div><!-- /.box-body -->
@@ -89,19 +89,19 @@
                         <div class="form-group">
                           <label class="col-sm-2 control-label">Mailgun Secret</label>
                           <div class="col-sm-10">
-                            <input type="password" value="{{ env('MAILGUN_SECRET') }}" name="MAILGUN_SECRET" class="form-control" placeholder="*********************">
+                            <input type="password" value="{{ env_value('MAILGUN_SECRET', '') }}" name="MAILGUN_SECRET" class="form-control" placeholder="*********************">
                           </div>
                         </div>
                       </div><!-- /.box-body -->
                     </div><!-- mailgun -->
 
-                    <div id="postmark" class="@if (env('POSTMARK_TOKEN') == '') display-none @endif">
+                    <div id="postmark" class="@if (env_value('POSTMARK_TOKEN', '') == '') display-none @endif">
                     <!-- Start Box Body -->
                      <div class="box-body">
                        <div class="form-group">
                          <label class="col-sm-2 control-label">Postmark Token</label>
                          <div class="col-sm-10">
-                           <input type="text" value="{{ env('POSTMARK_TOKEN') }}" name="POSTMARK_TOKEN" class="form-control" placeholder="****************">
+                           <input type="text" value="{{ env_value('POSTMARK_TOKEN', '') }}" name="POSTMARK_TOKEN" class="form-control" placeholder="****************">
                          </div>
                        </div>
                      </div><!-- /.box-body -->
@@ -112,7 +112,7 @@
                        <div class="form-group">
                          <label class="col-sm-2 control-label">{{trans('admin.mail_host')}}</label>
                          <div class="col-sm-10">
-                           <input type="text" value="{{ env('MAIL_HOST') }}" name="MAIL_HOST" class="form-control" placeholder="smtp.mailtrap.io">
+                           <input type="text" value="{{ env_value('MAIL_HOST', '') }}" name="MAIL_HOST" class="form-control" placeholder="smtp.mailtrap.io">
                          </div>
                        </div>
                      </div><!-- /.box-body -->
@@ -122,7 +122,7 @@
                         <div class="form-group">
                           <label class="col-sm-2 control-label">{{trans('admin.mail_port')}}</label>
                           <div class="col-sm-10">
-                            <input type="text" value="{{ env('MAIL_PORT') }}" name="MAIL_PORT" class="form-control" placeholder="2525">
+                            <input type="text" value="{{ env_value('MAIL_PORT', '') }}" name="MAIL_PORT" class="form-control" placeholder="2525">
                           </div>
                         </div>
                       </div><!-- /.box-body -->
@@ -132,7 +132,7 @@
                          <div class="form-group">
                            <label class="col-sm-2 control-label">{{trans('admin.mail_username')}}</label>
                            <div class="col-sm-10">
-                             <input type="text" value="{{ env('MAIL_USERNAME') }}" name="MAIL_USERNAME" class="form-control" placeholder="{{trans('admin.mail_username')}}">
+                             <input type="text" value="{{ env_value('MAIL_USERNAME', '') }}" name="MAIL_USERNAME" class="form-control" placeholder="{{trans('admin.mail_username')}}">
                            </div>
                          </div>
                        </div><!-- /.box-body -->
@@ -142,7 +142,7 @@
                           <div class="form-group">
                             <label class="col-sm-2 control-label">{{trans('admin.mail_password')}}</label>
                             <div class="col-sm-10">
-                              <input type="password" value="{{ env('MAIL_PASSWORD') }}" name="MAIL_PASSWORD" class="form-control" placeholder="{{trans('admin.mail_password')}}">
+                              <input type="password" value="{{ env_value('MAIL_PASSWORD', '') }}" name="MAIL_PASSWORD" class="form-control" placeholder="{{trans('admin.mail_password')}}">
                             </div>
                           </div>
                         </div><!-- /.box-body -->
@@ -153,9 +153,9 @@
                              <label class="col-sm-2 control-label">{{trans('admin.mail_encryption')}}</label>
                              <div class="col-sm-10">
                                <select name="MAIL_ENCRYPTION" class="form-control custom-select">
-                                 <option @if (env('MAIL_ENCRYPTION') == '') selected @endif value="">{{trans('general.none')}}</option>
-                                 <option @if (env('MAIL_ENCRYPTION') == 'tls') selected @endif value="tls">TLS</option>
-                                 <option @if (env('MAIL_ENCRYPTION') == 'ssl') selected @endif value="ssl">SSL</option>
+                                 <option @if (env_value('MAIL_ENCRYPTION', '') == '') selected @endif value="">{{trans('general.none')}}</option>
+                                 <option @if (env_value('MAIL_ENCRYPTION', '') == 'tls') selected @endif value="tls">TLS</option>
+                                 <option @if (env_value('MAIL_ENCRYPTION', '') == 'ssl') selected @endif value="ssl">SSL</option>
                                </select>
                              </div>
                            </div>

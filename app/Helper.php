@@ -567,11 +567,49 @@ class Helper
         return number_format(($value * $percentage / 100), 2);
     }
 
+    /**
+     * Get a value directly from the .env file (not from cached config).
+     * This is needed when modifying the .env file since env() won't work with cached config.
+     *
+     * @param string $key The environment variable key
+     * @param mixed $default Default value if key not found
+     * @return mixed
+     */
+    public static function getEnvValue(string $key, $default = null)
+    {
+        $path = base_path('.env');
+
+        if (! file_exists($path)) {
+            return $default;
+        }
+
+        $content = file_get_contents($path);
+
+        // Match the key with optional quotes around the value
+        // Pattern handles: KEY=value, KEY="value", KEY='value', KEY= (empty)
+        if (preg_match('/^' . preg_quote($key, '/') . '=(.*)$/m', $content, $matches)) {
+            $value = trim($matches[1]);
+
+            // Remove surrounding quotes if present
+            if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
+                (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+                $value = substr($value, 1, -1);
+            }
+
+            return $value;
+        }
+
+        return $default;
+    }
+
     public static function envUpdate($key, $value, $comma = false)
     {
         $path = base_path('.env');
         $value = trim($value);
-        $env = $comma ? '"'.env($key).'"' : env($key);
+
+        // Read the current value directly from .env file, not from env() which fails when config is cached
+        $currentValue = self::getEnvValue($key, '');
+        $env = $comma ? '"' . $currentValue . '"' : $currentValue;
 
         if (file_exists($path)) {
 

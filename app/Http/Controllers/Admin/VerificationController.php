@@ -13,9 +13,13 @@ class VerificationController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -60,8 +64,8 @@ class VerificationController extends Controller
         }
 
         // Data Email Send
-        $sender = $this->settings->email_no_reply;
-        $titleSite = $this->settings->title;
+        $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+        $titleSite = $this->settings?->title ?? config('app.name');
         $fullNameUser = $member->name;
         $emailUser = $member->email;
 

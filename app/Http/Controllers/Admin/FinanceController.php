@@ -22,9 +22,13 @@ class FinanceController extends Controller
 {
     protected $settings;
 
-    public function __construct(AdminSettings $settings)
+    public function __construct()
     {
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**
@@ -148,7 +152,7 @@ class FinanceController extends Controller
      */
     public function payments()
     {
-        $stripeConnectCountries = explode(',', $this->settings->stripe_connect_countries);
+        $stripeConnectCountries = $this->settings?->stripe_connect_countries ? explode(',', $this->settings->stripe_connect_countries) : [];
 
         return view('admin.payments-settings')->withStripeConnectCountries($stripeConnectCountries);
     }
@@ -163,7 +167,7 @@ class FinanceController extends Controller
         $sql = AdminSettings::first();
 
         // The referral system cannot be activated if your commission fee equals 0
-        if ($request->fee_commission == 0 && $this->settings->referral_system == 'on') {
+        if ($request->fee_commission == 0 && $this->settings?->referral_system == 'on') {
             return back()->withErrors([
                 'errors' => trans('general.error_fee_commission_zero'),
             ]);
@@ -260,10 +264,10 @@ class FinanceController extends Controller
         $data->save();
 
         // Send Email to User
-        $amount = Helper::amountWithoutFormat($data->amount).' '.$this->settings->currency_code;
+        $amount = Helper::amountWithoutFormat($data->amount).' '.($this->settings?->currency_code ?? 'USD');
 
-        $sender = $this->settings->email_no_reply;
-        $titleSite = $this->settings->title;
+        $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+        $titleSite = $this->settings?->title ?? config('app.name');
         $fullNameUser = $user->name;
         $_emailUser = $user->email;
 
@@ -359,8 +363,8 @@ class FinanceController extends Controller
         $sql = Deposits::findOrFail($request->id);
 
         // Send Email to User
-        $sender = $this->settings->email_no_reply;
-        $titleSite = $this->settings->title;
+        $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+        $titleSite = $this->settings?->title ?? config('app.name');
         $fullNameUser = $sql->user()->name;
         $emailUser = $sql->user()->email;
 
@@ -397,8 +401,8 @@ class FinanceController extends Controller
 
         if (isset($sql->user()->name)) {
             // Send Email to User
-            $sender = $this->settings->email_no_reply;
-            $titleSite = $this->settings->title;
+            $sender = $this->settings?->email_no_reply ?? config('mail.from.address');
+            $titleSite = $this->settings?->title ?? config('app.name');
             $fullNameUser = $sql->user()->name;
             $emailUser = $sql->user()->email;
 

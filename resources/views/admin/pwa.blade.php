@@ -47,7 +47,7 @@
                      <div class="form-group">
                        <label class="col-sm-2 control-label">{{ __('general.pwa_short_name') }}</label>
                        <div class="col-sm-10">
-                         <input type="text" value="{{ env('PWA_SHORT_NAME') }}" name="PWA_SHORT_NAME" class="form-control" placeholder="">
+                         <input type="text" value="{{ env_value('PWA_SHORT_NAME', '') }}" name="PWA_SHORT_NAME" class="form-control" placeholder="">
                        </div>
                      </div>
                    </div><!-- /.box-body -->

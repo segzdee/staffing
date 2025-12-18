@@ -22,10 +22,14 @@ class DashboardController extends Controller
     protected $request;
     protected $settings;
 
-    public function __construct(Request $request, AdminSettings $settings)
+    public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->settings = $settings::first();
+        try {
+            $this->settings = \App\Models\AdminSettings::first();
+        } catch (\Exception $e) {
+            $this->settings = null;
+        }
     }
 
     /**

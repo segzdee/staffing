@@ -7,7 +7,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ route('dashboard.index') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('worker.assignments') }}">Assignments</a></li>
+            <li class="breadcrumb-item"><a href="{{ route('worker.assignments.index') }}">Assignments</a></li>
             <li class="breadcrumb-item active" aria-current="page">Assignment #{{ $assignment->id }}</li>
         </ol>
     </nav>
@@ -133,7 +133,7 @@
                             </a>
                         @endif
 
-                        <a href="{{ route('worker.assignments') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('worker.assignments.index') }}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Assignments
                         </a>
                     </div>

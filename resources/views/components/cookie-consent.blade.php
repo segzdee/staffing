@@ -199,7 +199,7 @@
                     <div class="mt-6 text-sm text-gray-500">
                         <p>
                             For more information, see our
-                            <a href="{{ route('privacy') }}" class="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>.
+                            <a href="{{ route('privacy.settings') }}" class="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>.
                         </p>
                     </div>
                 </div>

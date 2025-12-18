@@ -24,7 +24,8 @@ Route::middleware(['web'])->group(function () {
 
     // Public Marketing Pages
     Route::get('/terms', [App\Http\Controllers\HomeController::class, 'terms'])->name('terms');
-    Route::get('/privacy', [App\Http\Controllers\HomeController::class, 'privacy'])->name('privacy');
+    // Note: /privacy URL is used by PrivacyController (privacy.settings), so use /privacy-policy for static page
+    Route::get('/privacy-policy', [App\Http\Controllers\HomeController::class, 'privacy'])->name('privacy-policy');
     Route::get('/contact', [App\Http\Controllers\HomeController::class, 'contact'])->name('contact');
     Route::get('/about', [App\Http\Controllers\HomeController::class, 'about'])->name('about');
 
@@ -1098,7 +1099,8 @@ Route::middleware(['auth'])->group(function () {
     // Worker Routes (accessible without activation for onboarding)
     Route::prefix('worker')->name('worker.')->middleware(['auth', 'role:worker'])->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'workerDashboard'])->name('dashboard');
-        Route::get('/assignments', [App\Http\Controllers\DashboardController::class, 'workerAssignments'])->name('assignments');
+        // Note: worker.assignments.index is defined in the assignments prefix group below
+        // Route::get('/assignments', ...)->name('assignments'); - removed, conflicts with assignments prefix group
         Route::get('/profile', [App\Http\Controllers\DashboardController::class, 'profile'])->name('profile');
         Route::get('/payment-setup', [App\Http\Controllers\Worker\PaymentSetupController::class, 'index'])->name('payment-setup');
         Route::get('/skills', [App\Http\Controllers\Worker\SkillsController::class, 'index'])->name('skills');

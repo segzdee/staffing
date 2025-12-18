@@ -85,7 +85,7 @@
                             class="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors">
                             Terms
                         </a>
-                        <a href="{{ route('privacy') }}"
+                        <a href="{{ route('privacy.settings') }}"
                             class="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-primary hover:underline transition-colors">
                             Privacy
                         </a>

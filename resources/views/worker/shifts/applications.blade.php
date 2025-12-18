@@ -156,7 +156,7 @@
                                 @if($application->status == 'accepted')
                                     <div class="alert alert-success mt-2 mb-0 py-2">
                                         <i class="fa fa-check-circle"></i> You've been assigned to this shift!
-                                        <a href="{{ route('worker.assignments') }}" class="alert-link">View in My Assignments</a>
+                                        <a href="{{ route('worker.assignments.index') }}" class="alert-link">View in My Assignments</a>
                                     </div>
                                 @endif
                             </div>
@@ -186,7 +186,7 @@
                         @endif
 
                         @if($application->status == 'accepted')
-                            <a href="{{ route('worker.assignments') }}" class="btn btn-success btn-block">
+                            <a href="{{ route('worker.assignments.index') }}" class="btn btn-success btn-block">
                                 <i class="fa fa-check-circle"></i> View Assignment
                             </a>
                         @endif

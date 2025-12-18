@@ -191,7 +191,7 @@
             <div class="text-xs text-gray-600">
                 By registering, you agree to our
                 <a href="{{ route('terms') }}" class="text-brand-orange hover:underline">Terms of Service</a> and
-                <a href="{{ route('privacy') }}" class="text-brand-orange hover:underline">Privacy Policy</a>
+                <a href="{{ route('privacy.settings') }}" class="text-brand-orange hover:underline">Privacy Policy</a>
             </div>
 
             <button type="submit"

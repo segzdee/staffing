@@ -30,13 +30,19 @@ class DashboardAuditTest extends TestCase
         $routes = Config::get('dashboard.navigation.worker');
         $this->assertNotEmpty($routes, 'Worker routes should be defined in config');
 
-        foreach ($routes as $item) {
+        // Flatten nested navigation structure
+        $flatRoutes = $this->flattenNavigation($routes);
+
+        foreach ($flatRoutes as $item) {
+            if (! isset($item['route'])) {
+                continue;
+            }
             $routeName = $item['route'];
             if (Route::has($routeName)) {
                 $response = $this->actingAs($user)->get(route($routeName));
 
                 if ($response->status() !== 200) {
-                    echo "\nFailed Route (Worker): " . $routeName . " Status: " . $response->status();
+                    echo "\nFailed Route (Worker): ".$routeName.' Status: '.$response->status();
                 }
 
                 $response->assertStatus(200);
@@ -44,7 +50,28 @@ class DashboardAuditTest extends TestCase
         }
     }
 
+    /**
+     * Flatten nested navigation structure into a single array of items
+     */
+    private function flattenNavigation(array $routes): array
+    {
+        $flat = [];
+        foreach ($routes as $key => $item) {
+            if (is_string($key) && is_array($item)) {
+                // This is a section with nested items
+                foreach ($item as $subItem) {
+                    if (is_array($subItem)) {
+                        $flat[] = $subItem;
+                    }
+                }
+            } elseif (is_array($item)) {
+                // This is a flat item
+                $flat[] = $item;
+            }
+        }
 
+        return $flat;
+    }
 
     /** @test */
     public function business_can_access_all_dashboard_routes()
@@ -66,13 +93,18 @@ class DashboardAuditTest extends TestCase
         $routes = Config::get('dashboard.navigation.business');
         $this->assertNotEmpty($routes, 'Business routes should be defined in config');
 
-        foreach ($routes as $item) {
+        $flatRoutes = $this->flattenNavigation($routes);
+
+        foreach ($flatRoutes as $item) {
+            if (! isset($item['route'])) {
+                continue;
+            }
             $routeName = $item['route'];
             if (Route::has($routeName)) {
                 $response = $this->actingAs($user)->get(route($routeName));
 
                 if ($response->status() !== 200) {
-                    echo "\nFailed Route (Business): " . $routeName . " Status: " . $response->status();
+                    echo "\nFailed Route (Business): ".$routeName.' Status: '.$response->status();
                 }
                 $response->assertStatus(200);
             }
@@ -98,12 +130,17 @@ class DashboardAuditTest extends TestCase
         $routes = Config::get('dashboard.navigation.agency');
         $this->assertNotEmpty($routes, 'Agency routes should be defined in config');
 
-        foreach ($routes as $item) {
+        $flatRoutes = $this->flattenNavigation($routes);
+
+        foreach ($flatRoutes as $item) {
+            if (! isset($item['route'])) {
+                continue;
+            }
             $routeName = $item['route'];
             if (Route::has($routeName)) {
                 $response = $this->actingAs($user)->get(route($routeName));
                 if ($response->status() !== 200) {
-                    echo "\nFailed Route (Agency): " . $routeName . " Status: " . $response->status();
+                    echo "\nFailed Route (Agency): ".$routeName.' Status: '.$response->status();
                 }
                 $response->assertStatus(200);
             }
@@ -125,20 +162,27 @@ class DashboardAuditTest extends TestCase
         // Skip if no routes defined or config missing
         if (empty($routes)) {
             $this->markTestSkipped('Admin routes config not found');
+
             return;
         }
 
-        foreach ($routes as $item) {
+        $flatRoutes = $this->flattenNavigation($routes);
+
+        foreach ($flatRoutes as $item) {
+            if (! isset($item['route'])) {
+                continue;
+            }
             $routeName = $item['route'];
             // Skip logout or other special routes
-            if ($routeName === 'logout')
+            if ($routeName === 'logout') {
                 continue;
+            }
 
             if (Route::has($routeName)) {
                 $response = $this->actingAs($user)->get(route($routeName));
 
                 if ($response->status() !== 200) {
-                    echo "\nFailed Route (Admin): " . $routeName . " Status: " . $response->status();
+                    echo "\nFailed Route (Admin): ".$routeName.' Status: '.$response->status();
                 }
                 $response->assertStatus(200);
             }

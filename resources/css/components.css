@@ -81,6 +81,216 @@
 }
 
 /* ============================================
+   BOOTSTRAP COMPATIBILITY - Legacy button classes
+   ============================================ */
+
+/* Base .btn class for Bootstrap compatibility */
+.btn {
+  @apply inline-flex items-center justify-center rounded-md text-sm font-medium
+         ring-offset-background transition-colors
+         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+         disabled:pointer-events-none disabled:opacity-50
+         h-10 px-4 py-2;
+}
+
+/* Bootstrap btn-outline-* variants */
+.btn-outline-primary {
+  @apply border border-primary bg-transparent text-primary hover:bg-primary hover:text-primary-foreground;
+}
+
+.btn-outline-secondary {
+  @apply border border-input bg-transparent text-foreground hover:bg-accent hover:text-accent-foreground;
+}
+
+.btn-outline-danger, .btn-outline-destructive {
+  @apply border border-destructive bg-transparent text-destructive hover:bg-destructive hover:text-destructive-foreground;
+}
+
+.btn-outline-success {
+  @apply border border-success bg-transparent text-success hover:bg-success hover:text-white;
+}
+
+.btn-outline-warning {
+  @apply border border-warning bg-transparent text-warning hover:bg-warning hover:text-white;
+}
+
+.btn-outline-info {
+  @apply border border-info bg-transparent text-info hover:bg-info hover:text-white;
+}
+
+/* Bootstrap btn-danger alias */
+.btn-danger {
+  @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+}
+
+/* Bootstrap btn-warning */
+.btn-warning {
+  @apply bg-warning text-white hover:bg-warning/90;
+}
+
+/* Bootstrap btn-info */
+.btn-info {
+  @apply bg-info text-white hover:bg-info/90;
+}
+
+/* Rounded pill variant */
+.rounded-pill {
+  @apply rounded-full;
+}
+
+/* Width utilities for Bootstrap compatibility */
+.w-100 {
+  @apply w-full;
+}
+
+/* Display utilities for Bootstrap compatibility */
+.d-inline {
+  @apply inline;
+}
+
+.d-inline-block {
+  @apply inline-block;
+}
+
+.d-flex {
+  @apply flex;
+}
+
+.d-none, .display-none {
+  @apply hidden;
+}
+
+/* Bootstrap Grid Compatibility */
+.container {
+  @apply mx-auto px-4 max-w-7xl;
+}
+
+.row {
+  @apply flex flex-wrap -mx-3;
+}
+
+.col-md-3 {
+  @apply w-full md:w-1/4 px-3;
+}
+
+.col-md-4 {
+  @apply w-full md:w-1/3 px-3;
+}
+
+.col-md-6 {
+  @apply w-full md:w-1/2 px-3;
+}
+
+.col-md-12 {
+  @apply w-full px-3;
+}
+
+/* Bootstrap List Utilities */
+.list-unstyled {
+  @apply list-none p-0 m-0;
+}
+
+.list-inline {
+  @apply list-none p-0 flex flex-wrap gap-2;
+}
+
+.list-inline-item {
+  @apply inline-block;
+}
+
+/* Bootstrap Text Utilities */
+.text-uppercase {
+  text-transform: uppercase;
+}
+
+/* Note: .text-muted uses design-system's muted-foreground color */
+.text-muted {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Bootstrap Padding Utilities */
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.py-5 { padding-top: 3rem; padding-bottom: 3rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+
+/* Bootstrap text decoration */
+.text-decoration-none {
+  text-decoration: none;
+}
+
+/* Bootstrap active states for dropdowns */
+.dropdown-item.active,
+.dropdown-lang.active {
+  @apply bg-primary text-primary-foreground;
+}
+
+/* Legacy Footer Styles */
+.footer_background_color {
+  @apply bg-muted/30;
+}
+
+.footer_text_color {
+  @apply text-muted-foreground;
+}
+
+.link-footer {
+  @apply text-muted-foreground hover:text-foreground transition-colors text-sm;
+}
+
+.link-footer.footer-tiny {
+  @apply text-xs;
+}
+
+.ico-social {
+  @apply text-muted-foreground hover:text-foreground transition-colors;
+}
+
+.border-top {
+  @apply border-t border-border;
+}
+
+.copyright {
+  @apply text-sm text-muted-foreground;
+}
+
+/* Bootstrap Dropdown Compatibility */
+.dropdown-toggle {
+  @apply cursor-pointer;
+}
+
+.dropdown-toggle::after {
+  content: "";
+  display: inline-block;
+  margin-left: 0.255em;
+  vertical-align: 0.255em;
+  border-top: 0.3em solid;
+  border-right: 0.3em solid transparent;
+  border-bottom: 0;
+  border-left: 0.3em solid transparent;
+}
+
+.dropup .dropdown-toggle::after {
+  border-top: 0;
+  border-bottom: 0.3em solid;
+}
+
+.btn-group {
+  @apply relative inline-flex;
+}
+
+/* Legacy card styles (Bootstrap compatibility) */
+.card.border-0 {
+  border-width: 0;
+}
+
+.card.bg-transparent {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+/* Note: .card-body is defined in the CARDS section below */
+
+/* ============================================
    CARDS - shadcn style
    ============================================ */
 

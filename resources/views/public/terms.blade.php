@@ -238,7 +238,7 @@
         <div class="mt-12 pt-8 border-t border-border">
             <h3 class="text-lg font-semibold text-foreground mb-4">Related Documents</h3>
             <div class="grid md:grid-cols-3 gap-4">
-                <a href="{{ route('privacy') }}"
+                <a href="{{ route('privacy.settings') }}"
                     class="block p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors border border-transparent hover:border-border">
                     <h4 class="font-medium text-foreground mb-1">Privacy Policy</h4>
                     <p class="text-sm text-muted-foreground">How we collect and use your data</p>

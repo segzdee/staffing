@@ -133,7 +133,7 @@
             <div class="flex items-start space-x-2">
                 <input type="checkbox" id="agree_terms" name="agree_terms" class="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary" required {{ old('agree_terms') ? 'checked' : '' }}>
                 <label for="agree_terms" class="text-sm text-muted-foreground">
-                    I agree to the <a href="{{ route('terms') }}" class="text-primary hover:underline">Terms</a> and <a href="{{ route('privacy') }}" class="text-primary hover:underline">Privacy Policy</a>
+                    I agree to the <a href="{{ route('terms') }}" class="text-primary hover:underline">Terms</a> and <a href="{{ route('privacy.settings') }}" class="text-primary hover:underline">Privacy Policy</a>
                 </label>
             </div>
             
@@ -337,7 +337,7 @@
                     {{ old('agree_terms') ? 'checked' : '' }}
                 >
                 <label for="agree_terms" class="text-sm font-medium leading-none text-muted-foreground">
-                    I agree to the <a href="{{ route('terms') }}" target="_blank" class="text-primary hover:underline">Terms of Service</a> and <a href="{{ route('privacy') }}" target="_blank" class="text-primary hover:underline">Privacy Policy</a>
+                    I agree to the <a href="{{ route('terms') }}" target="_blank" class="text-primary hover:underline">Terms of Service</a> and <a href="{{ route('privacy.settings') }}" target="_blank" class="text-primary hover:underline">Privacy Policy</a>
                 </label>
             </div>
             @error('agree_terms')

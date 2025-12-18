@@ -242,7 +242,7 @@
                 </ul>
                 <p class="mt-4">
                     For more information about how we handle your data, please review our
-                    <a href="{{ route('privacy') }}" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>.
+                    <a href="{{ route('privacy.settings') }}" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>.
                 </p>
             </div>
         </div>

@@ -130,7 +130,7 @@
         <div class="mt-8 text-center text-sm text-gray-500">
             <p>
                 Under GDPR, we are required to respond to your request within 30 days.
-                For more information, see our <a href="{{ route('privacy') }}" class="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>.
+                For more information, see our <a href="{{ route('privacy.settings') }}" class="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>.
             </p>
         </div>
     </div>

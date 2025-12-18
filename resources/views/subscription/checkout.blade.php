@@ -72,7 +72,7 @@
                     By subscribing, you agree to our
                     <a href="{{ route('terms') }}" class="underline">Terms of Service</a>
                     and
-                    <a href="{{ route('privacy') }}" class="underline">Privacy Policy</a>.
+                    <a href="{{ route('privacy.settings') }}" class="underline">Privacy Policy</a>.
                     @if($plan->trial_days > 0)
                         Your card will be charged {{ $plan->formatted_price }} after the {{ $plan->trial_days }}-day trial ends unless you cancel.
                     @endif

@@ -114,7 +114,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <!-- Upcoming Shifts -->
         <div class="lg:col-span-2">
-            <x-dashboard.widget-card title="Upcoming Shifts" :action="route('worker.assignments')" actionLabel="View all">
+            <x-dashboard.widget-card title="Upcoming Shifts" :action="route('worker.assignments.index')" actionLabel="View all">
                 <div class="space-y-4">
                     @forelse($upcomingShifts ?? [] as $assignment)
                         <x-dashboard.shift-list-item :title="$assignment->shift->title ?? 'Untitled Shift'"

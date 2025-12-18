@@ -66,7 +66,7 @@
                 <ul class="space-y-2">
                     @if(Route::has('privacy'))
                         <li>
-                            <a href="{{ route('privacy') }}" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
+                            <a href="{{ route('privacy.settings') }}" class="text-gray-400 hover:text-white transition-colors">Privacy Policy</a>
                         </li>
                     @endif
                     @if(Route::has('terms'))

@@ -10,8 +10,16 @@
 
             {{-- Links --}}
             <div class="flex gap-6 text-sm text-muted-foreground">
-                <a href="{{ route('terms') }}" class="hover:text-foreground transition-colors">Terms of Service</a>
-                <a href="{{ route('privacy') }}" class="hover:text-foreground transition-colors">Privacy Policy</a>
+                @if(Route::has('terms'))
+                    <a href="{{ route('terms') }}" class="hover:text-foreground transition-colors">Terms of Service</a>
+                @else
+                    <a href="{{ url('/p/terms') }}" class="hover:text-foreground transition-colors">Terms of Service</a>
+                @endif
+                @if(Route::has('privacy.settings'))
+                    <a href="{{ route('privacy.settings') }}" class="hover:text-foreground transition-colors">Privacy Policy</a>
+                @else
+                    <a href="{{ url('/p/privacy') }}" class="hover:text-foreground transition-colors">Privacy Policy</a>
+                @endif
             </div>
 
             {{-- Copyright --}}

@@ -19,7 +19,7 @@ use Carbon\Carbon;
  * Monitors active shifts and sends reminders to workers who need to take breaks.
  * Runs every 5 minutes during business hours to ensure compliance.
  *
- * Scheduled to run: */5 * * * * (every 5 minutes)
+ * Scheduled to run: every 5 minutes (cron: asterisk/5 * * * *)
  */
 class EnforceBreakCompliance implements ShouldQueue
 {

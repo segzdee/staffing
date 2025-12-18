@@ -38,13 +38,14 @@ class WorkerActivatedNotification extends Notification implements ShouldQueue
     {
         $profile = $notifiable->workerProfile;
         $tier = ucfirst($profile?->subscription_tier ?? 'bronze');
+        $reliabilityScore = $profile?->reliability_score ?? 80;
 
         return (new MailMessage)
             ->subject('Your Account is Now Active!')
             ->greeting("Congratulations, {$notifiable->first_name}!")
             ->line('Your OvertimeStaff account has been activated. You can now start applying for shifts!')
             ->line("**Your Starting Tier:** {$tier}")
-            ->line("**Reliability Score:** {$profile?->reliability_score ?? 80}%")
+            ->line("**Reliability Score:** {$reliabilityScore}%")
             ->line('Here are some tips to get started:')
             ->line('- Browse available shifts in your area')
             ->line('- Set up your availability schedule')

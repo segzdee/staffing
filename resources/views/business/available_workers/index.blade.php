@@ -314,7 +314,7 @@
                     No workers are currently broadcasting their availability.<br>
                     Check back later or post a shift to attract applications.
                 </p>
-                <a href="{{ route('shift.create') }}" class="btn btn-primary" style="margin-top: 20px;">
+                <a href="{{ route('business.shifts.create') }}" class="btn btn-primary" style="margin-top: 20px;">
                     <i class="bi bi-plus-circle"></i> Post a Shift
                 </a>
             </div>

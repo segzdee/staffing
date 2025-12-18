@@ -49,24 +49,6 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-
-        $data['_captcha'] = $this->settings->captcha;
-
-        $messages = [
-            'letters' => trans('validation.letters'),
-            'g-recaptcha-response.required_if' => trans('admin.captcha_error_required'),
-            'g-recaptcha-response.captcha' => trans('admin.captcha_error'),
-        ];
-
-        Validator::extend('ascii_only', function ($attribute, $value, $parameters) {
-            return ! preg_match('/[^x00-x7F\-]/i', $value);
-        });
-
-        // Validate if have one letter
-        Validator::extend('letters', function ($attribute, $value, $parameters) {
-            return preg_match('/[a-zA-Z0-9]/', $value);
-        });
-
         return Validator::make($data, [
             'name' => 'required|string|max:100',
             'email' => 'required|email|max:255|unique:users',
@@ -79,8 +61,7 @@ class RegisterController extends Controller
             ],
             'user_type' => 'required|in:worker,business,agency',
             'agree_terms' => 'required|accepted',
-            'g-recaptcha-response' => 'required_if:_captcha,==,on|captcha',
-        ], $messages);
+        ]);
     }
 
     /**

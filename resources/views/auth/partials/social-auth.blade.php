@@ -1,6 +1,17 @@
 @props(['action' => 'login', 'userType' => null])
 
-<div class="grid grid-cols-3 gap-3">
+@php
+    $googleEnabled = config('services.google.client_id') && config('services.google.client_secret');
+    $appleEnabled = config('services.apple.client_id') && config('services.apple.client_secret');
+    $facebookEnabled = config('services.facebook.client_id') && config('services.facebook.client_secret');
+    $anyEnabled = $googleEnabled || $appleEnabled || $facebookEnabled;
+    $enabledCount = ($googleEnabled ? 1 : 0) + ($appleEnabled ? 1 : 0) + ($facebookEnabled ? 1 : 0);
+    $gridCols = $enabledCount === 1 ? 'grid-cols-1' : ($enabledCount === 2 ? 'grid-cols-2' : 'grid-cols-3');
+@endphp
+
+@if($anyEnabled)
+<div class="grid {{ $gridCols }} gap-3">
+    @if($googleEnabled)
     <x-ui.button variant="outline" class="w-full" as="a" :href="route('social.redirect', ['provider' => 'google']) . '?action=' . $action . ($userType ? '&type=' . $userType : '')">
         <svg class="h-4 w-4 mr-2" viewBox="0 0 24 24">
             <path fill="#4285F4"
@@ -14,6 +25,8 @@
         </svg>
         Google
     </x-ui.button>
+    @endif
+    @if($appleEnabled)
     <x-ui.button variant="outline" class="w-full" as="a" :href="route('social.redirect', ['provider' => 'apple']) . '?action=' . $action . ($userType ? '&type=' . $userType : '')">
         <svg class="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path
@@ -21,6 +34,8 @@
         </svg>
         Apple
     </x-ui.button>
+    @endif
+    @if($facebookEnabled)
     <x-ui.button variant="outline" class="w-full" as="a" :href="route('social.redirect', ['provider' => 'facebook']) . '?action=' . $action . ($userType ? '&type=' . $userType : '')">
         <svg class="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path
@@ -28,4 +43,6 @@
         </svg>
         Facebook
     </x-ui.button>
+    @endif
 </div>
+@endif

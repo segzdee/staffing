@@ -17,148 +17,8 @@
 @section('brand-subtext', $brand['subtext'])
 
 @section('form')
-    <div class="space-y-6" 
-         x-data="{ 
-             userType: '{{ $type }}',
-             password: '',
-             password: '',
-             strength: 0,
-             checkStrength() {
-                 let score = 0;
-                 if (this.password.length >= 8) score++;
-                 if (/[a-z]/.test(this.password) && /[A-Z]/.test(this.password)) score++;
-                 if (/\d/.test(this.password)) score++;
-                 if (/[^a-zA-Z0-9]/.test(this.password)) score++;
-                 this.strength = score;
-             },
-             get strengthColor() {
-                 return ['bg-destructive', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500'][this.strength - 1] || 'bg-muted';
-             },
-             get strengthText() {
-                 return ['', 'Weak', 'Fair', 'Good', 'Strong'][this.strength] || '';
-             }
-         }"
-         x-init="$watch('userType', val => {
-             const h = {{ json_encode($headlines) }}[val] || {{ json_encode($default) }};
-             document.querySelector('[data-brand-headline]').textContent = h.headline;
-             document.querySelector('[data-brand-subtext]').textContent = h.subtext;
-         })">
-
-        <div>
-            <h2 class="text-2xl font-bold tracking-tight text-foreground">Create account</h2>
-            <p class="text-sm text-muted-foreground">
-                Already have an account? 
-                <a href="{{ route('login') }}" class="font-medium text-primary hover:underline">Sign in</a>
-            </p>
-        </div>
-
-        {{-- Role Content Switcher --}}
-        <div class="grid grid-cols-3 gap-3">
-            @foreach(['worker', 'business', 'agency'] as $role)
-                <label class="relative cursor-pointer group">
-                    <input type="radio" name="user_type" value="{{ $role }}" class="peer sr-only" x-model="userType">
-                    <div class="p-3 text-center border rounded-lg transition-all peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary hover:border-primary/50">
-                        <span class="text-sm font-medium capitalize">{{ $role }}</span>
-                    </div>
-                </label>
-            @endforeach
-        </div>
-
-        @if ($errors->any())
-            <div class="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <ul class="text-sm text-red-600 space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
-        {{-- Social Auth --}}
-        @include('auth.partials.social-auth', ['action' => 'register', 'userType' => $type])
-
-        <div class="relative">
-            <div class="absolute inset-0 flex items-center">
-                <span class="w-full border-t"></span>
-            </div>
-            <div class="relative flex justify-center text-xs uppercase">
-                <span class="bg-background px-2 text-muted-foreground">Or register with email</span>
-            </div>
-        </div>
-        
-        <form action="{{ route('register') }}" method="POST" class="space-y-4">
-            @csrf
-            <input type="hidden" name="user_type" x-model="userType">
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <x-ui.label for="name" value="Full name" />
-                    <x-ui.input type="text" id="name" name="name" value="{{ old('name') }}" placeholder="John Doe" required autocomplete="name" />
-                </div>
-                <div class="space-y-2">
-                    <x-ui.label for="phone" value="Phone" />
-                    <x-ui.phone-input id="phone" name="phone" value="{{ old('phone') }}" autocomplete="tel" />
-                </div>
-            </div>
-            
-            <div class="space-y-2">
-                <x-ui.label for="email" value="Email address" />
-                <x-ui.input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="name@example.com" required autocomplete="email" />
-            </div>
-            
-            <div class="space-y-2">
-                <x-ui.label for="password" value="Password" />
-                <x-ui.password-input 
-                    id="password" 
-                    name="password" 
-                    x-model="password"
-                    @input="checkStrength()"
-                    placeholder="Create a password" 
-                    required 
-                    autocomplete="new-password" 
-                />
-                <div class="flex gap-1 h-1 mt-2">
-                    <template x-for="i in 4">
-                        <div class="flex-1 rounded-full transition-colors duration-300" :class="i <= strength ? strengthColor : 'bg-muted'"></div>
-                    </template>
-                </div>
-                <p class="text-xs text-muted-foreground text-right" x-text="strengthText"></p>
-            </div>
-
-            <div class="space-y-2">
-                <x-ui.label for="password_confirmation" value="Confirm Password" />
-                <x-ui.password-input id="password_confirmation" name="password_confirmation" placeholder="Confirm your password" required autocomplete="new-password" />
-            </div>
-            
-            <div class="flex items-start space-x-2">
-                <input type="checkbox" id="agree_terms" name="agree_terms" class="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary" required {{ old('agree_terms') ? 'checked' : '' }}>
-                <label for="agree_terms" class="text-sm text-muted-foreground">
-                    I agree to the <a href="{{ route('terms') }}" class="text-primary hover:underline">Terms</a> and <a href="{{ route('privacy.settings') }}" class="text-primary hover:underline">Privacy Policy</a>
-                </label>
-            </div>
-            
-            <x-ui.button type="submit" class="w-full">Create account</x-ui.button>
-        </form>
-    </div>
-@endsection
-
-@php
-    $type = old('user_type', request('type', 'worker'));
-    $headlines = [
-        'worker' => ['headline' => 'Start earning today.', 'subtext' => 'Find shifts that fit your schedule.'],
-        'business' => ['headline' => 'Find workers instantly.', 'subtext' => 'Post a shift and get matched in 15 minutes.'],
-        'agency' => ['headline' => 'Scale your agency.', 'subtext' => 'Manage workers, clients, and placements in one place.'],
-    ];
-    $default = ['headline' => 'Join the shift marketplace.', 'subtext' => 'Connect with businesses and shifts worldwide.'];
-    $brand = $headlines[$type] ?? $default;
-@endphp
-
-@section('brand-headline', $brand['headline'])
-@section('brand-subtext', $brand['subtext'])
-
-@section('form')
-    <div class="space-y-6" 
-         x-data="{ 
+    <div class="space-y-6"
+         x-data="{
              userType: '{{ $type }}',
              headlines: {
                  worker: { headline: 'Start earning today.', subtext: 'Find shifts that fit your schedule.' },
@@ -201,16 +61,16 @@
             {{ session('status') }}
         </div>
         @endif
-        
+
         {{-- Form --}}
         <form action="{{ route('register') }}" method="POST" class="space-y-4">
             @csrf
-            
+
             {{-- User Type Selection --}}
             <div class="space-y-3">
                 <x-ui.label value="I am a:" />
                 <div class="grid grid-cols-3 gap-2">
-                    <label 
+                    <label
                         class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all hover:bg-accent"
                         :class="userType === 'worker' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-primary text-foreground'"
                     >
@@ -219,7 +79,7 @@
                             <div class="text-sm font-medium">Worker</div>
                         </div>
                     </label>
-                    <label 
+                    <label
                         class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all hover:bg-accent"
                         :class="userType === 'business' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-primary text-foreground'"
                     >
@@ -228,7 +88,7 @@
                             <div class="text-sm font-medium">Business</div>
                         </div>
                     </label>
-                    <label 
+                    <label
                         class="relative flex items-center justify-center p-3 border rounded-lg cursor-pointer transition-all hover:bg-accent"
                         :class="userType === 'agency' ? 'border-primary bg-primary/5 ring-2 ring-primary text-primary' : 'border-input hover:border-primary text-foreground'"
                     >
@@ -239,11 +99,11 @@
                     </label>
                 </div>
             </div>
-            
+
             {{-- Agency Notice --}}
             <div x-show="userType === 'agency'" x-cloak class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p class="text-sm text-blue-800">
-                    <strong>Agency Registration:</strong> Agency accounts require additional verification and documentation. 
+                    <strong>Agency Registration:</strong> Agency accounts require additional verification and documentation.
                     You'll be redirected to our multi-step registration process after submitting this form.
                 </p>
             </div>
@@ -251,10 +111,10 @@
             {{-- Name --}}
             <div class="space-y-2">
                 <x-ui.label for="name" value="Full name" />
-                <x-ui.input 
-                    type="text" 
-                    id="name" 
-                    name="name" 
+                <x-ui.input
+                    type="text"
+                    id="name"
+                    name="name"
                     value="{{ old('name') }}"
                     placeholder="John Doe"
                     required
@@ -265,14 +125,14 @@
                     <p class="text-sm text-destructive">{{ $message }}</p>
                 @enderror
             </div>
-            
+
             {{-- Email --}}
             <div class="space-y-2">
                 <x-ui.label for="email" value="Email address" />
-                <x-ui.input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
+                <x-ui.input
+                    type="email"
+                    id="email"
+                    name="email"
                     value="{{ old('email') }}"
                     placeholder="name@example.com"
                     required
@@ -282,15 +142,15 @@
                     <p class="text-sm text-destructive">{{ $message }}</p>
                 @enderror
             </div>
-            
+
             {{-- Phone --}}
             <div class="space-y-2">
                 <x-ui.label for="phone">
                     Phone number <span class="text-muted-foreground font-normal">(optional)</span>
                 </x-ui.label>
-                <x-ui.phone-input 
-                    id="phone" 
-                    name="phone" 
+                <x-ui.phone-input
+                    id="phone"
+                    name="phone"
                     value="{{ old('phone') }}"
                     autocomplete="tel"
                 />
@@ -298,13 +158,13 @@
                     <p class="text-sm text-destructive">{{ $message }}</p>
                 @enderror
             </div>
-            
+
             {{-- Password --}}
             <div class="space-y-2">
                 <x-ui.label for="password" value="Password" />
-                <x-ui.password-input 
-                    id="password" 
-                    name="password" 
+                <x-ui.password-input
+                    id="password"
+                    name="password"
                     placeholder="Create a password"
                     required
                     autocomplete="new-password"
@@ -313,25 +173,25 @@
                     <p class="text-sm text-destructive">{{ $message }}</p>
                 @enderror
             </div>
-            
+
             {{-- Confirm Password --}}
             <div class="space-y-2">
                 <x-ui.label for="password_confirmation" value="Confirm Password" />
-                <x-ui.password-input 
-                    id="password_confirmation" 
-                    name="password_confirmation" 
+                <x-ui.password-input
+                    id="password_confirmation"
+                    name="password_confirmation"
                     placeholder="Confirm your password"
                     required
                     autocomplete="new-password"
                 />
             </div>
-            
+
             {{-- Terms --}}
             <div class="flex items-start space-x-2">
-                <input 
-                    type="checkbox" 
-                    id="agree_terms" 
-                    name="agree_terms" 
+                <input
+                    type="checkbox"
+                    id="agree_terms"
+                    name="agree_terms"
                     class="h-4 w-4 mt-0.5 rounded border-input text-primary focus:ring-primary"
                     required
                     {{ old('agree_terms') ? 'checked' : '' }}
@@ -343,13 +203,13 @@
             @error('agree_terms')
                 <p class="text-sm text-destructive">{{ $message }}</p>
             @enderror
-            
+
             {{-- Submit --}}
             <x-ui.button type="submit" class="w-full">
                 Create account
             </x-ui.button>
         </form>
-        
+
         {{-- Divider --}}
         <div class="relative">
             <div class="absolute inset-0 flex items-center">
@@ -359,7 +219,7 @@
                 <span class="bg-background px-2 text-muted-foreground">Or continue with</span>
             </div>
         </div>
-        
+
         {{-- Social Register --}}
         <div class="grid grid-cols-3 gap-3">
             <x-ui.button variant="outline" class="w-full" as="a" ::href="socialUrls.google + '?action=register&type=' + userType">
@@ -384,10 +244,10 @@
                 Facebook
             </x-ui.button>
         </div>
-        
+
         {{-- Switch to Login --}}
         <p class="text-center text-sm text-muted-foreground">
-            Already have an account? 
+            Already have an account?
             <a href="{{ route('login') }}" class="font-medium text-primary hover:underline">Sign in</a>
         </p>
     </div>

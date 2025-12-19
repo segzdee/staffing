@@ -36,6 +36,7 @@
         "moneyphp/money": "^4.8",
         "pbmedia/laravel-ffmpeg": "^8.0",
         "pragmarx/google2fa-laravel": "^2.3",
+        "predis/predis": "^3.3",
         "razorpay/razorpay": "^2.8",
         "srmklive/paypal": "~3.0",
         "stevebauman/purify": "^6.0",

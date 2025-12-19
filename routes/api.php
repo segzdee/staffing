@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->prefix('market')->group(function () {
 // Public Market API
 Route::prefix('market')->group(function () {
     Route::get('/public', [App\Http\Controllers\LiveMarketController::class, 'apiIndex'])->name('api.market.public');
+    Route::get('/simulate', [App\Http\Controllers\LiveMarketController::class, 'simulate'])->name('api.market.simulate');
 });
 
 // ============================================================================

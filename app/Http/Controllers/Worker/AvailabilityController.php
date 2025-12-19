@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Worker;
 
 use App\Http\Controllers\Controller;
-use App\Services\AvailabilityService;
-use App\Http\Requests\Worker\SetWeeklyScheduleRequest;
-use App\Http\Requests\Worker\AddDateOverrideRequest;
-use App\Http\Requests\Worker\UpdatePreferencesRequest;
 use App\Http\Requests\Worker\AddBlackoutDateRequest;
-use Illuminate\Http\Request;
+use App\Http\Requests\Worker\AddDateOverrideRequest;
+use App\Http\Requests\Worker\SetWeeklyScheduleRequest;
+use App\Http\Requests\Worker\UpdatePreferencesRequest;
+use App\Services\AvailabilityService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -48,9 +48,64 @@ class AvailabilityController extends Controller
     }
 
     /**
-     * Get worker's complete availability (API route).
+     * Store worker availability (web route).
      *
-     * @return JsonResponse
+     * POST /worker/availability
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(Request $request)
+    {
+        $worker = Auth::user();
+
+        $validated = $request->validate([
+            'schedule' => 'required|array',
+            'schedule.*.day' => 'required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
+            'schedule.*.is_available' => 'required|boolean',
+            'schedule.*.start_time' => 'nullable|date_format:H:i',
+            'schedule.*.end_time' => 'nullable|date_format:H:i|after:schedule.*.start_time',
+        ]);
+
+        $result = $this->availabilityService->setWeeklySchedule($worker, $validated['schedule']);
+
+        if (! $result['success']) {
+            return redirect()->back()
+                ->withErrors(['availability' => $result['error']])
+                ->withInput();
+        }
+
+        return redirect()->back()->with('success', 'Availability updated successfully.');
+    }
+
+    /**
+     * Store blackout date (web route).
+     *
+     * POST /worker/blackouts
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function storeBlackout(Request $request)
+    {
+        $worker = Auth::user();
+
+        $validated = $request->validate([
+            'date' => 'required|date|after_or_equal:today',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        $result = $this->availabilityService->addBlackoutDate($worker, $validated);
+
+        if (! $result['success']) {
+            return redirect()->back()
+                ->withErrors(['blackout' => $result['error']])
+                ->withInput();
+        }
+
+        return redirect()->back()->with('success', 'Blackout date added successfully.');
+    }
+
+    /**
+     * Get worker's complete availability (API route).
      */
     public function getAvailability(): JsonResponse
     {
@@ -65,16 +120,13 @@ class AvailabilityController extends Controller
 
     /**
      * Set or update weekly schedule.
-     *
-     * @param SetWeeklyScheduleRequest $request
-     * @return JsonResponse
      */
     public function setWeeklySchedule(SetWeeklyScheduleRequest $request): JsonResponse
     {
         $worker = Auth::user();
         $result = $this->availabilityService->setWeeklySchedule($worker, $request->validated()['schedule']);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -90,16 +142,13 @@ class AvailabilityController extends Controller
 
     /**
      * Add a date override.
-     *
-     * @param AddDateOverrideRequest $request
-     * @return JsonResponse
      */
     public function addDateOverride(AddDateOverrideRequest $request): JsonResponse
     {
         $worker = Auth::user();
         $result = $this->availabilityService->addDateOverride($worker, $request->validated());
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -115,16 +164,13 @@ class AvailabilityController extends Controller
 
     /**
      * Update worker preferences.
-     *
-     * @param UpdatePreferencesRequest $request
-     * @return JsonResponse
      */
     public function setPreferences(UpdatePreferencesRequest $request): JsonResponse
     {
         $worker = Auth::user();
         $result = $this->availabilityService->updatePreferences($worker, $request->validated());
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -140,16 +186,13 @@ class AvailabilityController extends Controller
 
     /**
      * Add a blackout date.
-     *
-     * @param AddBlackoutDateRequest $request
-     * @return JsonResponse
      */
     public function addBlackoutDate(AddBlackoutDateRequest $request): JsonResponse
     {
         $worker = Auth::user();
         $result = $this->availabilityService->addBlackoutDate($worker, $request->validated());
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -165,16 +208,13 @@ class AvailabilityController extends Controller
 
     /**
      * Delete a blackout date.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function deleteBlackoutDate(int $id): JsonResponse
     {
         $worker = Auth::user();
         $result = $this->availabilityService->deleteBlackoutDate($worker, $id);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -189,16 +229,13 @@ class AvailabilityController extends Controller
 
     /**
      * Delete a date override.
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function deleteOverride(int $id): JsonResponse
     {
         $worker = Auth::user();
         $result = $this->availabilityService->deleteOverride($worker, $id);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['error'],
@@ -213,9 +250,6 @@ class AvailabilityController extends Controller
 
     /**
      * Get available time slots for a date range.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getAvailableSlots(Request $request): JsonResponse
     {
@@ -239,9 +273,6 @@ class AvailabilityController extends Controller
 
     /**
      * Check availability for a specific datetime.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function checkAvailability(Request $request): JsonResponse
     {
@@ -260,5 +291,4 @@ class AvailabilityController extends Controller
             'availability' => $result,
         ]);
     }
-
 }

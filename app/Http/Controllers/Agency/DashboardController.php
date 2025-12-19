@@ -322,32 +322,361 @@ class DashboardController extends Controller
     // Finance routes
     public function financeOverview(): \Illuminate\View\View
     {
-        return view('agency.finance.overview');
+        $agency = Auth::user();
+        $agencyProfile = $agency->agencyProfile;
+
+        // Get worker IDs for this agency
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Calculate financial totals
+        $totalEarnings = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->where('shift_payments.status', 'paid_out')
+            ->sum('shift_payments.agency_commission');
+
+        $pendingCommission = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereIn('shift_payments.status', ['in_escrow', 'released'])
+            ->sum('shift_payments.agency_commission');
+
+        $monthlyEarnings = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereMonth('shift_payments.payout_completed_at', now()->month)
+            ->whereYear('shift_payments.payout_completed_at', now()->year)
+            ->sum('shift_payments.agency_commission');
+
+        $totalPaidOut = $agencyProfile->total_payouts_amount ?? 0;
+
+        // Recent commissions
+        $recentCommissions = \App\Models\ShiftPayment::with(['worker', 'assignment.shift'])
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereNotNull('shift_payments.agency_commission')
+            ->select('shift_payments.*')
+            ->orderBy('shift_payments.created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Recent payouts (from profile)
+        $recentPayouts = collect();
+        if ($agencyProfile->last_payout_at) {
+            $recentPayouts = collect([[
+                'id' => $agencyProfile->total_payouts_count ?? 1,
+                'date' => $agencyProfile->last_payout_at,
+                'amount' => $agencyProfile->last_payout_amount ?? 0,
+                'status' => $agencyProfile->last_payout_status ?? 'paid',
+            ]]);
+        }
+
+        // Stats
+        $shiftsFilledThisMonth = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->where('shift_assignments.status', 'completed')
+            ->whereMonth('shift_assignments.updated_at', now()->month)
+            ->count();
+
+        $workersPlacedThisMonth = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->whereMonth('shift_assignments.created_at', now()->month)
+            ->distinct('shift_assignments.worker_id')
+            ->count('shift_assignments.worker_id');
+
+        $avgCommissionPerShift = $shiftsFilledThisMonth > 0 ? $monthlyEarnings / $shiftsFilledThisMonth : 0;
+
+        return view('agency.finance.overview', [
+            'stripeConnected' => $agencyProfile->hasCompletedStripeOnboarding(),
+            'totalEarnings' => $totalEarnings,
+            'pendingCommission' => $pendingCommission,
+            'monthlyEarnings' => $monthlyEarnings,
+            'totalPaidOut' => $totalPaidOut,
+            'recentCommissions' => $recentCommissions,
+            'recentPayouts' => $recentPayouts,
+            'payoutSchedule' => 'weekly',
+            'commissionRate' => $agencyProfile->commission_rate ?? 10,
+            'totalPayoutsCount' => $agencyProfile->total_payouts_count ?? 0,
+            'shiftsFilledThisMonth' => $shiftsFilledThisMonth,
+            'workersPlacedThisMonth' => $workersPlacedThisMonth,
+            'avgCommissionPerShift' => $avgCommissionPerShift,
+        ]);
     }
 
     public function financeCommissions(): \Illuminate\View\View
     {
-        return view('agency.finance.commissions');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Build query for commissions
+        $query = \App\Models\ShiftPayment::with(['worker', 'assignment.shift.business'])
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereNotNull('shift_payments.agency_commission')
+            ->select('shift_payments.*');
+
+        // Apply filters
+        if (request('status')) {
+            $query->where('shift_payments.status', request('status'));
+        }
+
+        if (request('period')) {
+            $query->where('shift_payments.created_at', '>=', match (request('period')) {
+                'today' => now()->startOfDay(),
+                'week' => now()->startOfWeek(),
+                'month' => now()->startOfMonth(),
+                'quarter' => now()->startOfQuarter(),
+                default => now()->subYears(10),
+            });
+        }
+
+        $commissions = $query->orderBy('shift_payments.created_at', 'desc')->paginate(15);
+
+        // Calculate summary totals
+        $paidCommissions = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->where('shift_payments.status', 'paid_out')
+            ->sum('shift_payments.agency_commission');
+
+        $pendingCommissions = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->where('shift_payments.status', 'released')
+            ->sum('shift_payments.agency_commission');
+
+        $escrowCommissions = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->where('shift_payments.status', 'in_escrow')
+            ->sum('shift_payments.agency_commission');
+
+        $thisMonthCommissions = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereMonth('shift_payments.created_at', now()->month)
+            ->sum('shift_payments.agency_commission');
+
+        return view('agency.finance.commissions', [
+            'commissions' => $commissions,
+            'paidCommissions' => $paidCommissions,
+            'pendingCommissions' => $pendingCommissions,
+            'escrowCommissions' => $escrowCommissions,
+            'thisMonthCommissions' => $thisMonthCommissions,
+        ]);
     }
 
     public function financePayroll(): \Illuminate\View\View
     {
-        return view('agency.finance.payroll');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Worker payments query
+        $query = \App\Models\ShiftPayment::with(['worker', 'assignment.shift'])
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->select('shift_payments.*');
+
+        $workerPayments = $query->orderBy('shift_payments.created_at', 'desc')->paginate(15);
+
+        // Calculate totals
+        $totalPaidToWorkers = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->where('shift_payments.status', 'paid_out')
+            ->sum('shift_payments.worker_amount');
+
+        $pendingWorkerPayments = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereIn('shift_payments.status', ['in_escrow', 'released'])
+            ->sum('shift_payments.worker_amount');
+
+        $thisMonthPayroll = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereMonth('shift_payments.payout_completed_at', now()->month)
+            ->sum('shift_payments.worker_amount');
+
+        $activeWorkersCount = AgencyWorker::where('agency_id', $agency->id)
+            ->where('status', 'active')
+            ->count();
+
+        // Worker summary
+        $workerSummary = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('users', 'shift_assignments.worker_id', '=', 'users.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->groupBy('users.id', 'users.name')
+            ->select('users.name', DB::raw('SUM(shift_payments.worker_amount) as total_earned'), DB::raw('COUNT(*) as shifts_count'))
+            ->orderBy('total_earned', 'desc')
+            ->limit(9)
+            ->get()
+            ->map(fn ($item) => [
+                'name' => $item->name,
+                'total_earned' => $item->total_earned ?? 0,
+                'shifts_count' => $item->shifts_count,
+            ]);
+
+        return view('agency.finance.payroll', [
+            'workerPayments' => $workerPayments,
+            'totalPaidToWorkers' => $totalPaidToWorkers,
+            'pendingWorkerPayments' => $pendingWorkerPayments,
+            'thisMonthPayroll' => $thisMonthPayroll,
+            'activeWorkersCount' => $activeWorkersCount,
+            'workerSummary' => $workerSummary,
+        ]);
     }
 
     public function financeInvoices(): \Illuminate\View\View
     {
-        return view('agency.finance.invoices');
+        $agency = Auth::user();
+        $agencyProfile = $agency->agencyProfile;
+
+        // For now, generate mock invoices based on payouts
+        $invoices = collect();
+        $totalInvoiced = $agencyProfile->total_payouts_amount ?? 0;
+        $totalInvoicesCount = $agencyProfile->total_payouts_count ?? 0;
+        $thisMonthInvoiced = 0;
+
+        if ($agencyProfile->last_payout_at && $agencyProfile->last_payout_at->isCurrentMonth()) {
+            $thisMonthInvoiced = $agencyProfile->last_payout_amount ?? 0;
+        }
+
+        return view('agency.finance.invoices', [
+            'invoices' => $invoices,
+            'totalInvoiced' => $totalInvoiced,
+            'totalInvoicesCount' => $totalInvoicesCount,
+            'thisMonthInvoiced' => $thisMonthInvoiced,
+        ]);
     }
 
     public function financeSettlements(): \Illuminate\View\View
     {
-        return view('agency.finance.settlements');
+        $agency = Auth::user();
+        $agencyProfile = $agency->agencyProfile;
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        $stripeConnected = $agencyProfile->hasCompletedStripeOnboarding();
+
+        $totalSettled = $agencyProfile->total_payouts_amount ?? 0;
+
+        $pendingPayout = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereIn('shift_payments.status', ['in_escrow', 'released'])
+            ->sum('shift_payments.agency_commission');
+
+        $nextPayoutDate = $stripeConnected ? now()->next('Friday')->format('M d') : null;
+        $totalPayoutsCount = $agencyProfile->total_payouts_count ?? 0;
+
+        // Generate settlement list from payout data
+        $settlements = collect();
+        if ($agencyProfile->last_payout_at) {
+            $settlements->push([
+                'id' => $totalPayoutsCount,
+                'date' => $agencyProfile->last_payout_at,
+                'amount' => $agencyProfile->last_payout_amount ?? 0,
+                'status' => $agencyProfile->last_payout_status === 'paid' ? 'completed' : $agencyProfile->last_payout_status,
+                'shifts_count' => 1,
+            ]);
+        }
+
+        $lastPayout = null;
+        if ($agencyProfile->last_payout_at) {
+            $lastPayout = [
+                'amount' => $agencyProfile->last_payout_amount ?? 0,
+                'date' => $agencyProfile->last_payout_at,
+            ];
+        }
+
+        return view('agency.finance.settlements', [
+            'stripeConnected' => $stripeConnected,
+            'totalSettled' => $totalSettled,
+            'pendingPayout' => $pendingPayout,
+            'nextPayoutDate' => $nextPayoutDate,
+            'totalPayoutsCount' => $totalPayoutsCount,
+            'settlements' => $settlements,
+            'payoutSchedule' => 'weekly',
+            'payoutDay' => 'Friday',
+            'payoutCurrency' => $agencyProfile->stripe_default_currency ?? 'USD',
+            'bankAccount' => null, // Would need Stripe API call to get this
+            'lastPayout' => $lastPayout,
+        ]);
     }
 
     public function financeReports(): \Illuminate\View\View
     {
-        return view('agency.finance.reports');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Monthly summary
+        $monthlyEarnings = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereMonth('shift_payments.created_at', now()->month)
+            ->sum('shift_payments.agency_commission');
+
+        $monthlyShifts = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->where('shift_assignments.status', 'completed')
+            ->whereMonth('shift_assignments.created_at', now()->month)
+            ->count();
+
+        $monthlyWorkers = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->whereMonth('shift_assignments.created_at', now()->month)
+            ->distinct('shift_assignments.worker_id')
+            ->count('shift_assignments.worker_id');
+
+        // Quarterly summary
+        $quarterlyEarnings = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->where('shift_payments.created_at', '>=', now()->startOfQuarter())
+            ->sum('shift_payments.agency_commission');
+
+        $quarterlyShifts = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->where('shift_assignments.status', 'completed')
+            ->where('shift_assignments.created_at', '>=', now()->startOfQuarter())
+            ->count();
+
+        // YTD summary
+        $ytdEarnings = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereYear('shift_payments.created_at', now()->year)
+            ->sum('shift_payments.agency_commission');
+
+        $ytdShifts = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->where('shift_assignments.status', 'completed')
+            ->whereYear('shift_assignments.created_at', now()->year)
+            ->count();
+
+        $monthsElapsed = now()->month;
+        $avgMonthly = $monthsElapsed > 0 ? $ytdEarnings / $monthsElapsed : 0;
+
+        return view('agency.finance.reports', [
+            'monthlySummary' => [
+                'earnings' => $monthlyEarnings,
+                'shifts' => $monthlyShifts,
+                'workers' => $monthlyWorkers,
+            ],
+            'quarterlySummary' => [
+                'earnings' => $quarterlyEarnings,
+                'shifts' => $quarterlyShifts,
+                'growth' => 0, // Would need previous quarter data to calculate
+            ],
+            'ytdSummary' => [
+                'earnings' => $ytdEarnings,
+                'shifts' => $ytdShifts,
+                'avgMonthly' => $avgMonthly,
+            ],
+            'taxDocuments' => collect(),
+            'recentReports' => collect(),
+        ]);
     }
 
     // Placements routes

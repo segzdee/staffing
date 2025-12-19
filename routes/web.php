@@ -987,6 +987,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{shift}/analytics', [App\Http\Controllers\Business\ShiftManagementController::class, 'analytics'])->name('analytics');
         });
 
+        // ========================================
+        // ANALYTICS ROUTES
+        // ========================================
+        Route::prefix('analytics')->name('analytics.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Business\AnalyticsController::class, 'index'])->name('index');
+            Route::get('/trend-data', [App\Http\Controllers\Business\AnalyticsController::class, 'getTrendData'])->name('trend-data');
+            Route::get('/spend-by-role', [App\Http\Controllers\Business\AnalyticsController::class, 'getSpendByRole'])->name('spend-by-role');
+            Route::get('/venue-comparison', [App\Http\Controllers\Business\AnalyticsController::class, 'getVenueComparison'])->name('venue-comparison');
+            Route::get('/budget-alerts', [App\Http\Controllers\Business\AnalyticsController::class, 'getBudgetAlerts'])->name('budget-alerts');
+            Route::get('/cancellation-history', [App\Http\Controllers\Business\AnalyticsController::class, 'getCancellationHistory'])->name('cancellation-history');
+            Route::get('/export-pdf', [App\Http\Controllers\Business\AnalyticsController::class, 'exportPDF'])->name('export-pdf');
+            Route::get('/export-csv', [App\Http\Controllers\Business\AnalyticsController::class, 'exportCSV'])->name('export-csv');
+            Route::get('/export-xlsx', [App\Http\Controllers\Business\AnalyticsController::class, 'exportExcel'])->name('export-xlsx');
+        });
+
         // Application Management
         Route::prefix('applications')->name('applications.')->group(function () {
             Route::post('/{application}/approve', [App\Http\Controllers\Business\ShiftManagementController::class, 'assignWorker'])->name('approve');
@@ -1108,6 +1123,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/skills', [App\Http\Controllers\Worker\SkillsController::class, 'index'])->name('skills');
         Route::get('/certifications', [App\Http\Controllers\Worker\CertificationController::class, 'index'])->name('certifications');
         Route::get('/availability', [App\Http\Controllers\Worker\AvailabilityController::class, 'index'])->name('availability');
+        Route::post('/availability', [App\Http\Controllers\Worker\AvailabilityController::class, 'store'])->name('availability.store');
+        Route::post('/blackouts', [App\Http\Controllers\Worker\AvailabilityController::class, 'storeBlackout'])->name('blackouts.store');
         Route::get('/applications', [App\Http\Controllers\Worker\ShiftApplicationController::class, 'myApplications'])->name('applications');
 
         // New navigation routes

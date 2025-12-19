@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Shift;
-use App\Services\LiveMarketService;
 use App\Services\DemoShiftService;
+use App\Services\LiveMarketService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 
 class LiveMarketController extends Controller
 {
     protected $liveMarketService;
+
     protected $demoShiftService;
 
     public function __construct(
@@ -75,7 +75,6 @@ class LiveMarketController extends Controller
     /**
      * API endpoint for live market updates.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function apiIndex(Request $request)
@@ -113,7 +112,7 @@ class LiveMarketController extends Controller
         }
 
         return response()->json([
-            'shifts' => $shifts->map(function ($shift) use ($user) {
+            'shifts' => $shifts->map(function ($shift) {
                 return [
                     'id' => $shift->id,
                     'title' => $shift->title,
@@ -162,7 +161,6 @@ class LiveMarketController extends Controller
     /**
      * Get market shifts (API endpoint - original method).
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request)
@@ -233,13 +231,11 @@ class LiveMarketController extends Controller
     /**
      * Apply to a shift.
      *
-     * @param Request $request
-     * @param Shift $shift
      * @return \Illuminate\Http\JsonResponse
      */
     public function apply(Request $request, Shift $shift)
     {
-        if (!Auth::check() || Auth::user()->user_type !== 'worker') {
+        if (! Auth::check() || Auth::user()->user_type !== 'worker') {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can apply to shifts',
@@ -273,12 +269,11 @@ class LiveMarketController extends Controller
     /**
      * Instant claim a shift.
      *
-     * @param Shift $shift
      * @return \Illuminate\Http\JsonResponse
      */
     public function instantClaim(Shift $shift)
     {
-        if (!Auth::check() || Auth::user()->user_type !== 'worker') {
+        if (! Auth::check() || Auth::user()->user_type !== 'worker') {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can claim shifts',
@@ -304,13 +299,11 @@ class LiveMarketController extends Controller
     /**
      * Agency assigns a worker to their client's shift.
      *
-     * @param Request $request
-     * @param Shift $shift
      * @return \Illuminate\Http\JsonResponse
      */
     public function agencyAssign(Request $request, Shift $shift)
     {
-        if (!Auth::check() || Auth::user()->user_type !== 'agency') {
+        if (! Auth::check() || Auth::user()->user_type !== 'agency') {
             return response()->json([
                 'success' => false,
                 'message' => 'Only agencies can assign workers',
@@ -359,5 +352,15 @@ class LiveMarketController extends Controller
                 'message' => 'Failed to generate activity',
             ], 500);
         }
+    }
+
+    /**
+     * Alias for simulateActivity for API route compatibility.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function simulate()
+    {
+        return $this->simulateActivity();
     }
 }

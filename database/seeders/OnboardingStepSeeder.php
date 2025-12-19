@@ -26,7 +26,11 @@ class OnboardingStepSeeder extends Seeder
         $now = Carbon::now();
 
         // Clear existing onboarding steps (for re-seeding)
+        // Disable foreign key checks to allow truncation
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('onboarding_progress')->truncate();
         DB::table('onboarding_steps')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // ============================================================
         // WORKER ONBOARDING STEPS (STAFF-REG-002 to 011)

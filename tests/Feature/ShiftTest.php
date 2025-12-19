@@ -89,6 +89,9 @@ test('upcoming scope returns shifts ordered by start time', function () {
 });
 
 test('nearby scope returns shifts within radius', function () {
+    // Delete any existing shifts to ensure clean test
+    Shift::query()->delete();
+
     // San Francisco coordinates
     $sfLat = 37.7749;
     $sfLng = -122.4194;
@@ -100,7 +103,7 @@ test('nearby scope returns shifts within radius', function () {
         'location_lng' => $sfLng,
     ]);
 
-    // Create shift in LA (far away)
+    // Create shift in LA (far away - ~380 miles from SF)
     $farShift = Shift::factory()->create([
         'business_id' => $this->business->id,
         'location_lat' => 34.0522, // Los Angeles

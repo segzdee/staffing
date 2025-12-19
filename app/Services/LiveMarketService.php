@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 class LiveMarketService
 {
     protected $shiftMatchingService;
+
     protected $demoShiftService;
 
     public function __construct(
@@ -26,9 +27,6 @@ class LiveMarketService
     /**
      * Get market shifts with filters and match scores.
      *
-     * @param User|null $worker
-     * @param array $filters
-     * @param int $limit
      * @return \Illuminate\Support\Collection
      */
     public function getMarketShifts(?User $worker = null, array $filters = [], int $limit = 20)
@@ -48,27 +46,27 @@ class LiveMarketService
             ->orderBy('shift_date', 'asc');
 
         // Apply filters
-        if (!empty($filters['industry'])) {
+        if (! empty($filters['industry'])) {
             $query->where('industry', $filters['industry']);
         }
 
-        if (!empty($filters['role_type'])) {
+        if (! empty($filters['role_type'])) {
             $query->where('role_type', $filters['role_type']);
         }
 
-        if (!empty($filters['city'])) {
+        if (! empty($filters['city'])) {
             $query->where('location_city', $filters['city']);
         }
 
-        if (!empty($filters['min_rate'])) {
+        if (! empty($filters['min_rate'])) {
             $query->where('final_rate', '>=', $filters['min_rate'] * 100);
         }
 
-        if (!empty($filters['instant_claim'])) {
+        if (! empty($filters['instant_claim'])) {
             $query->where('instant_claim_enabled', true);
         }
 
-        if (!empty($filters['surge_only'])) {
+        if (! empty($filters['surge_only'])) {
             $query->where('surge_multiplier', '>', 1.0);
         }
 
@@ -85,9 +83,10 @@ class LiveMarketService
         // Calculate match scores for worker
         if ($worker && $worker->user_type === 'worker') {
             $shifts = $shifts->map(function ($shift) use ($worker) {
-                $matchScore = $this->shiftMatchingService->calculateMatchScore($worker, $shift);
-                $shift->match_score = $matchScore['overall_score'];
-                $shift->match_reasons = $matchScore['reasons'];
+                $matchScore = $this->shiftMatchingService->calculateWorkerShiftMatch($worker, $shift);
+                $shift->match_score = $matchScore['final_score'];
+                $shift->match_reasons = $matchScore['breakdown'];
+
                 return $shift;
             });
 
@@ -100,9 +99,6 @@ class LiveMarketService
 
     /**
      * Get market statistics (cached).
-     *
-     * @param string $region
-     * @return array
      */
     public function getStatistics(string $region = 'global'): array
     {
@@ -155,7 +151,7 @@ class LiveMarketService
 
             // Count workers online (total active workers)
             // Note: last_activity_at may not exist, so count active workers instead
-            $stats['workers_online'] = User::where('role', 'worker')
+            $stats['workers_online'] = User::where('user_type', 'worker')
                 ->where('status', 'active')
                 ->count();
 
@@ -165,11 +161,6 @@ class LiveMarketService
 
     /**
      * Worker applies to a shift.
-     *
-     * @param Shift $shift
-     * @param User $worker
-     * @param string|null $message
-     * @return ShiftApplication
      */
     public function applyToShift(Shift $shift, User $worker, ?string $message = null): ShiftApplication
     {
@@ -178,7 +169,7 @@ class LiveMarketService
             throw new \Exception('Cannot apply to demo shifts');
         }
 
-        if (!$shift->isOpen()) {
+        if (! $shift->isOpen()) {
             throw new \Exception('This shift is no longer open');
         }
 
@@ -215,7 +206,7 @@ class LiveMarketService
         $shift->increment('application_count');
         $shift->increment('market_applications');
 
-        if (!$shift->first_application_at) {
+        if (! $shift->first_application_at) {
             $shift->update(['first_application_at' => now()]);
         }
         $shift->update(['last_application_at' => now()]);
@@ -225,10 +216,6 @@ class LiveMarketService
 
     /**
      * Instant claim for verified workers (4.5+ rating).
-     *
-     * @param Shift $shift
-     * @param User $worker
-     * @return ShiftAssignment
      */
     public function instantClaim(Shift $shift, User $worker): ShiftAssignment
     {
@@ -237,11 +224,11 @@ class LiveMarketService
             throw new \Exception('Cannot claim demo shifts');
         }
 
-        if (!$shift->instant_claim_enabled) {
+        if (! $shift->instant_claim_enabled) {
             throw new \Exception('Instant claim is not enabled for this shift');
         }
 
-        if (!$shift->isOpen()) {
+        if (! $shift->isOpen()) {
             throw new \Exception('This shift is no longer open');
         }
 
@@ -249,7 +236,7 @@ class LiveMarketService
         $minRating = config('market.instant_claim_min_rating', 4.5);
         $workerProfile = WorkerProfile::where('user_id', $worker->id)->first();
 
-        if (!$workerProfile || $workerProfile->rating_average < $minRating) {
+        if (! $workerProfile || $workerProfile->rating_average < $minRating) {
             throw new \Exception("Instant claim requires a rating of {$minRating} or higher");
         }
 
@@ -285,6 +272,7 @@ class LiveMarketService
             }
 
             DB::commit();
+
             return $assignment;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -294,11 +282,6 @@ class LiveMarketService
 
     /**
      * Agency assigns a worker to a shift for their client.
-     *
-     * @param Shift $shift
-     * @param User $agency
-     * @param User $worker
-     * @return ShiftAssignment
      */
     public function agencyAssign(Shift $shift, User $agency, User $worker): ShiftAssignment
     {
@@ -312,7 +295,7 @@ class LiveMarketService
             throw new \Exception('You can only assign workers to shifts you posted');
         }
 
-        if (!$shift->isOpen()) {
+        if (! $shift->isOpen()) {
             throw new \Exception('This shift is no longer open');
         }
 
@@ -349,6 +332,7 @@ class LiveMarketService
             }
 
             DB::commit();
+
             return $assignment;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -358,13 +342,10 @@ class LiveMarketService
 
     /**
      * Increment market view count.
-     *
-     * @param Shift $shift
-     * @return void
      */
     public function incrementView(Shift $shift): void
     {
-        if (!$shift->is_demo) {
+        if (! $shift->is_demo) {
             $shift->increment('market_views');
             $shift->increment('view_count');
         }

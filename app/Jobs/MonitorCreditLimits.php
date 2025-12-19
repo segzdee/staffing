@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\BusinessProfile;
 use App\Models\CreditInvoice;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -128,7 +127,7 @@ class MonitorCreditLimits implements ShouldQueue
             ->latest()
             ->first()?->created_at;
 
-        if (!$lastLateFeeDate || $lastLateFeeDate->isYesterday() || $lastLateFeeDate->lt(now()->subDay())) {
+        if (! $lastLateFeeDate || $lastLateFeeDate->isYesterday() || $lastLateFeeDate->lt(now()->subDay())) {
             $invoice->addLateFee(
                 $lateFee,
                 "Late fee for day {$daysOverdue} overdue (1.5% monthly rate)"
@@ -155,14 +154,14 @@ class MonitorCreditLimits implements ShouldQueue
         }
 
         // Auto-pause credit if more than 30 days overdue
-        if ($daysOverdue >= 30 && !$profile->credit_paused) {
+        if ($daysOverdue >= 30 && ! $profile->credit_paused) {
             $profile->update([
                 'credit_paused' => true,
                 'credit_paused_at' => now(),
                 'credit_pause_reason' => 'Invoice overdue by more than 30 days',
             ]);
 
-            Log::warning("Credit paused due to 30+ day overdue invoice", [
+            Log::warning('Credit paused due to 30+ day overdue invoice', [
                 'business_id' => $business->id,
                 'invoice_number' => $invoice->invoice_number,
                 'days_overdue' => $daysOverdue,
@@ -198,7 +197,7 @@ class MonitorCreditLimits implements ShouldQueue
                     ->where('created_at', '>', now()->subDay())
                     ->exists();
 
-                if (!$lastWarning) {
+                if (! $lastWarning) {
                     Log::info("Sending credit limit warning to business {$business->id}", [
                         'threshold' => $threshold,
                         'utilization' => $profile->credit_utilization,
@@ -232,8 +231,19 @@ class MonitorCreditLimits implements ShouldQueue
             $profile->save();
         }
 
-        Log::info("Recalculated credit utilization for all businesses", [
+        Log::info('Recalculated credit utilization for all businesses', [
             'count' => $profiles->count(),
+        ]);
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::critical('MonitorCreditLimits job failed', [
+            'exception' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
         ]);
     }
 }

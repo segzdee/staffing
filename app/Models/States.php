@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $code
  * @property string $name
  * @property int $is_active
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|States newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|States newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|States query()
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|States whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|States whereIsActive($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|States whereName($value)
+ *
  * @mixin \Eloquent
  */
 class States extends Model
@@ -26,10 +28,14 @@ class States extends Model
     use HasFactory;
 
     protected $guarded = ['id'];
+
     public $timestamps = false;
 
-    public function country()
-  	{
-  		return $this->belongsTo(Countries::class, 'countries_id')->first();
-  	}
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Countries, States>
+     */
+    public function country(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Countries::class, 'countries_id');
+    }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\BusinessProfile;
 use App\Models\CreditInvoice;
 use App\Models\CreditInvoiceItem;
 use App\Models\ShiftPayment;
@@ -21,13 +20,14 @@ class GenerateWeeklyCreditInvoices implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $weekStart;
+
     protected $weekEnd;
 
     /**
      * Create a new job instance.
      *
-     * @param Carbon|null $weekStart Start of the week (defaults to last Monday)
-     * @param Carbon|null $weekEnd End of the week (defaults to last Sunday)
+     * @param  Carbon|null  $weekStart  Start of the week (defaults to last Monday)
+     * @param  Carbon|null  $weekEnd  End of the week (defaults to last Sunday)
      */
     public function __construct($weekStart = null, $weekEnd = null)
     {
@@ -71,7 +71,7 @@ class GenerateWeeklyCreditInvoices implements ShouldQueue
             }
         }
 
-        Log::info("Weekly credit invoice generation complete", [
+        Log::info('Weekly credit invoice generation complete', [
             'invoices_generated' => $invoicesGenerated,
         ]);
     }
@@ -185,5 +185,18 @@ class GenerateWeeklyCreditInvoices implements ShouldQueue
             'Shift - %s',
             $worker->name
         );
+    }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::critical('GenerateWeeklyCreditInvoices job failed', [
+            'period_start' => $this->weekStart?->toDateString(),
+            'period_end' => $this->weekEnd?->toDateString(),
+            'exception' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
     }
 }

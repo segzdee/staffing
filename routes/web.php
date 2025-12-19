@@ -375,6 +375,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/settings/features', [App\Http\Controllers\Admin\DashboardController::class, 'settingsFeatures'])->name('settings.features');
         Route::get('/settings/notifications', [App\Http\Controllers\Admin\DashboardController::class, 'settingsNotifications'])->name('settings.notifications');
         Route::get('/settings/emails', [App\Http\Controllers\Admin\DashboardController::class, 'settingsEmails'])->name('settings.emails');
+        Route::get('/settings/market', [App\Http\Controllers\Admin\DashboardController::class, 'settingsMarket'])->name('settings.market');
 
         // Shifts
         Route::get('/shifts', [App\Http\Controllers\Admin\DashboardController::class, 'shiftsIndex'])->name('shifts.index');
@@ -595,6 +596,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/general', [App\Http\Controllers\Admin\SettingsController::class, 'save'])->name('general.save');
             Route::post('/limits', [App\Http\Controllers\Admin\SettingsController::class, 'saveLimits'])->name('limits.save');
             Route::post('/maintenance', [App\Http\Controllers\Admin\SettingsController::class, 'maintenanceMode'])->name('maintenance');
+            Route::post('/market', [App\Http\Controllers\Admin\SettingsController::class, 'saveMarket'])->name('market.save');
         });
 
         // ========================================

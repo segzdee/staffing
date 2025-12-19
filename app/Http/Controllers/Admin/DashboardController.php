@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdminSettings;
 use App\Models\User;
 use App\Models\VerificationQueue;
 use Carbon\Carbon;
@@ -324,6 +323,24 @@ class DashboardController extends Controller
     public function settingsEmails(): \Illuminate\View\View
     {
         return view('admin.settings.emails');
+    }
+
+    public function settingsMarket(): \Illuminate\View\View
+    {
+        return view('admin.settings.market', [
+            'settings' => [
+                'demo_enabled' => config('market.demo_enabled'),
+                'demo_disable_threshold' => config('market.demo_disable_threshold'),
+                'demo_shift_count' => config('market.demo_shift_count'),
+                'stats_cache_ttl' => config('market.stats_cache_ttl'),
+                'max_pending_applications' => config('market.max_pending_applications'),
+                'instant_claim_min_rating' => config('market.instant_claim_min_rating'),
+                'min_hourly_rate' => config('market.min_hourly_rate'),
+                'max_surge_multiplier' => config('market.max_surge_multiplier'),
+                'shifts_per_page' => config('market.shifts_per_page'),
+                'polling_interval' => config('market.polling_interval'),
+            ],
+        ]);
     }
 
     // Shifts routes

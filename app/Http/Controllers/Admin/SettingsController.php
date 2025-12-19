@@ -157,6 +157,52 @@ class SettingsController extends Controller
     }
 
     /**
+     * Save market settings.
+     *
+     * Note: These settings are stored in config/market.php and can be overridden
+     * via environment variables. For runtime updates, consider using a database-backed
+     * settings store or SystemSettings model.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function saveMarket(Request $request)
+    {
+        $validated = $request->validate([
+            'demo_enabled' => 'nullable|in:on,off',
+            'demo_disable_threshold' => 'nullable|integer|min:1|max:100',
+            'demo_shift_count' => 'nullable|integer|min:1|max:50',
+            'stats_cache_ttl' => 'nullable|integer|min:60|max:3600',
+            'max_pending_applications' => 'nullable|integer|min:1|max:20',
+            'instant_claim_min_rating' => 'nullable|numeric|min:3.0|max:5.0',
+            'min_hourly_rate' => 'nullable|numeric|min:10|max:100',
+            'max_surge_multiplier' => 'nullable|numeric|min:1.0|max:5.0',
+        ]);
+
+        // Store settings in SystemSettings table for runtime persistence
+        $settingsToSave = [
+            'market.demo_enabled' => $request->demo_enabled === 'on',
+            'market.demo_disable_threshold' => $validated['demo_disable_threshold'] ?? 15,
+            'market.demo_shift_count' => $validated['demo_shift_count'] ?? 20,
+            'market.stats_cache_ttl' => $validated['stats_cache_ttl'] ?? 300,
+            'market.max_pending_applications' => $validated['max_pending_applications'] ?? 5,
+            'market.instant_claim_min_rating' => $validated['instant_claim_min_rating'] ?? 4.5,
+            'market.min_hourly_rate' => $validated['min_hourly_rate'] ?? 15,
+            'market.max_surge_multiplier' => $validated['max_surge_multiplier'] ?? 2.5,
+        ];
+
+        foreach ($settingsToSave as $key => $value) {
+            \App\Models\SystemSettings::set($key, $value);
+        }
+
+        // Clear config cache
+        \Artisan::call('config:clear');
+
+        \Session::flash('success', 'Market settings updated successfully.');
+
+        return redirect()->route('admin.settings.market');
+    }
+
+    /**
      * Toggle maintenance mode
      *
      * @return \Illuminate\Http\RedirectResponse

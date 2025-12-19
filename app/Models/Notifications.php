@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 /**
  * @property int $id
@@ -14,6 +13,7 @@ use Carbon\Carbon;
  * @property bool $read
  * @property \Illuminate\Support\Carbon|null $read_at
  * @property \Illuminate\Support\Carbon $created_at
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications query()
@@ -25,62 +25,65 @@ use Carbon\Carbon;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereReadAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereTarget($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Notifications whereType($value)
+ *
  * @mixin \Eloquent
  */
 class Notifications extends Model
 {
-	protected $guarded = ['id'];
-  const UPDATED_AT = null;
+    protected $guarded = ['id'];
 
-	protected $casts = [
-		'read' => 'boolean',
-		'read_at' => 'datetime',
-	];
+    const UPDATED_AT = null;
 
-	public function user()
-	{
-		return $this->belongsTo(User::class)->first();
-	}
+    protected $casts = [
+        'read' => 'boolean',
+        'read_at' => 'datetime',
+    ];
 
-	/**
-	 * Override to sync read and read_at columns
-	 */
-	public function setReadAttribute($value)
-	{
-		$this->attributes['read'] = $value;
-		// Sync read_at with read boolean
-		$this->attributes['read_at'] = $value ? now() : null;
-	}
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<User, Notifications>
+     */
+    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
-	/**
-	 * Mark notification as read
-	 */
-	public function markAsRead()
-	{
-		$this->update([
-			'read' => true,
-			'read_at' => now(),
-		]);
-	}
+    /**
+     * Override to sync read and read_at columns
+     */
+    public function setReadAttribute($value)
+    {
+        $this->attributes['read'] = $value;
+        // Sync read_at with read boolean
+        $this->attributes['read_at'] = $value ? now() : null;
+    }
 
-	public static function send($destination, $session_id, $type, $target)
-	{
-		$user = User::find($destination);
+    /**
+     * Mark notification as read
+     */
+    public function markAsRead()
+    {
+        $this->update([
+            'read' => true,
+            'read_at' => now(),
+        ]);
+    }
 
-		if ($type == 5 && $user->notify_new_tip == 'no'
-				|| $type == 6 && $user->notify_new_ppv == 'no')
-				{
-					return false;
-				}
+    public static function send($destination, $session_id, $type, $target)
+    {
+        $user = User::find($destination);
 
-				self::create([
-				'destination' => $destination,
-				'author' => $session_id,
-				'type' => $type,
-				'target' => $target,
-				'read' => false,
-				'read_at' => null,
-			]);
-	}
+        if ($type == 5 && $user->notify_new_tip == 'no'
+                || $type == 6 && $user->notify_new_ppv == 'no') {
+            return false;
+        }
 
+        self::create([
+            'destination' => $destination,
+            'author' => $session_id,
+            'type' => $type,
+            'target' => $target,
+            'read' => false,
+            'read_at' => null,
+        ]);
+    }
 }

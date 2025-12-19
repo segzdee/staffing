@@ -74,4 +74,18 @@ class ProcessAutomaticCancellationRefunds implements ShouldQueue
             ProcessPendingRefunds::dispatch()->delay(now()->addMinutes(5));
         }
     }
+
+    /**
+     * Handle a job failure.
+     */
+    public function failed(\Throwable $exception): void
+    {
+        Log::critical('ProcessAutomaticCancellationRefunds job failed', [
+            'exception' => $exception->getMessage(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
+
+        // This job handles refund processing, so failures should be investigated
+        // Consider notifying administrators of failed refund processing
+    }
 }

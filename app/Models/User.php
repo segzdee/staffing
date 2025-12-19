@@ -308,12 +308,15 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         $this->notify(new ResetPasswordNotification($token));
     }
 
-    public function country()
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<Countries, User>|null
+     */
+    public function country(): ?\Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         // Return null if Countries model/table doesn't exist
         try {
             if (class_exists('App\Models\Countries') && Schema::hasTable('countries')) {
-                return $this->belongsTo(Countries::class, 'countries_id')->first();
+                return $this->belongsTo(Countries::class, 'countries_id');
             }
         } catch (\Exception $e) {
             // Table doesn't exist, return null

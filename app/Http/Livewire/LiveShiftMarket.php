@@ -2,14 +2,16 @@
 
 namespace App\Http\Livewire;
 
-use Livewire\Component;
 use App\Models\Shift;
 use Carbon\Carbon;
+use Livewire\Component;
 
 class LiveShiftMarket extends Component
 {
     public $selectedIndustry = 'all';
+
     public $shifts = [];
+
     public $industryRates = [];
 
     protected $listeners = ['refreshShifts' => '$refresh'];
@@ -37,11 +39,12 @@ class LiveShiftMarket extends Component
     public function loadShifts()
     {
         // Use withCount to eager load applications count and prevent N+1 queries
-        $query = Shift::with(['business', 'location'])
+        $query = Shift::with(['business'])
             ->withCount('applications')
             ->where('status', 'open')
-            ->where('start_datetime', '>', now())
-            ->orderBy('start_datetime', 'asc')
+            ->where('shift_date', '>=', now()->toDateString())
+            ->orderBy('shift_date', 'asc')
+            ->orderBy('start_time', 'asc')
             ->limit(12);
 
         if ($this->selectedIndustry !== 'all') {
@@ -51,25 +54,45 @@ class LiveShiftMarket extends Component
         $this->shifts = $query->get()->map(function ($shift) {
             // Use the eager loaded applications_count instead of calling count() again
             $applicationsCount = $shift->applications_count;
+
+            // Combine shift_date and start_time/end_time for display
+            $startDateTime = $this->combineDateTime($shift->shift_date, $shift->start_time);
+            $endDateTime = $this->combineDateTime($shift->shift_date, $shift->end_time);
+
             return [
                 'id' => $shift->id,
                 'title' => $shift->title,
-                'business_name' => $shift->business->business_name ?? $shift->business->name,
-                'location' => $shift->location_address ?? $shift->location_city,
+                'business_name' => $shift->business->business_name ?? $shift->business->name ?? 'Unknown',
+                'location' => $shift->location_address ?? $shift->location_city ?? $shift->city,
                 'hourly_rate' => $shift->hourly_rate,
                 'rate_trend' => $this->getRateTrend($shift->hourly_rate),
-                'start_time' => Carbon::parse($shift->start_datetime)->format('M j, g:i A'),
-                'end_time' => Carbon::parse($shift->end_datetime)->format('g:i A'),
-                'duration' => $this->calculateDuration($shift->start_datetime, $shift->end_datetime),
+                'start_time' => $startDateTime ? $startDateTime->format('M j, g:i A') : 'TBD',
+                'end_time' => $endDateTime ? $endDateTime->format('g:i A') : 'TBD',
+                'duration' => $this->calculateDuration($startDateTime, $endDateTime),
                 'skills' => $shift->required_skills ? json_decode($shift->required_skills, true) : [],
                 'demand_level' => $this->calculateDemandLevelFromCount($applicationsCount, $shift->max_workers ?? 1),
                 'urgency' => $this->calculateUrgency($shift),
-                'countdown' => $this->calculateCountdown($shift->start_datetime),
-                'viewers' => rand(3, 24),
+                'countdown' => $this->calculateCountdown($startDateTime),
+                'viewers' => $shift->market_views ?? 0,
                 'applications_count' => $applicationsCount,
                 'max_workers' => $shift->max_workers ?? 1,
             ];
         })->toArray();
+    }
+
+    /**
+     * Combine shift_date and time into a Carbon datetime.
+     */
+    private function combineDateTime($date, $time): ?Carbon
+    {
+        if (! $date) {
+            return null;
+        }
+
+        $dateStr = $date instanceof Carbon ? $date->format('Y-m-d') : $date;
+        $timeStr = $time instanceof Carbon ? $time->format('H:i:s') : ($time ?? '00:00:00');
+
+        return Carbon::parse("{$dateStr} {$timeStr}");
     }
 
     public function filterByIndustry($industry)
@@ -85,11 +108,15 @@ class LiveShiftMarket extends Component
 
     private function calculateDuration($start, $end)
     {
-        $start = Carbon::parse($start);
-        $end = Carbon::parse($end);
+        if (! $start || ! $end) {
+            return 'N/A';
+        }
+
+        $start = $start instanceof Carbon ? $start : Carbon::parse($start);
+        $end = $end instanceof Carbon ? $end : Carbon::parse($end);
         $hours = $start->diffInHours($end);
 
-        return $hours . 'h';
+        return $hours.'h';
     }
 
     /**
@@ -103,9 +130,16 @@ class LiveShiftMarket extends Component
 
         $ratio = $applicationsCount / max(1, $maxWorkers);
 
-        if ($ratio >= 5) return 'Very High';
-        if ($ratio >= 3) return 'High';
-        if ($ratio >= 1) return 'Medium';
+        if ($ratio >= 5) {
+            return 'Very High';
+        }
+        if ($ratio >= 3) {
+            return 'High';
+        }
+        if ($ratio >= 1) {
+            return 'Medium';
+        }
+
         return 'Low';
     }
 
@@ -122,18 +156,38 @@ class LiveShiftMarket extends Component
 
     private function calculateUrgency($shift)
     {
-        $hoursUntilStart = Carbon::now()->diffInHours(Carbon::parse($shift->start_datetime), false);
+        // Combine shift_date and start_time to get the full datetime
+        $startDateTime = $this->combineDateTime($shift->shift_date, $shift->start_time);
 
-        if ($hoursUntilStart < 0) return 'expired';
-        if ($hoursUntilStart <= 4) return 'urgent';
-        if ($hoursUntilStart <= 12) return 'high';
-        if ($hoursUntilStart <= 24) return 'medium';
+        if (! $startDateTime) {
+            return 'normal';
+        }
+
+        $hoursUntilStart = Carbon::now()->diffInHours($startDateTime, false);
+
+        if ($hoursUntilStart < 0) {
+            return 'expired';
+        }
+        if ($hoursUntilStart <= 4) {
+            return 'urgent';
+        }
+        if ($hoursUntilStart <= 12) {
+            return 'high';
+        }
+        if ($hoursUntilStart <= 24) {
+            return 'medium';
+        }
+
         return 'normal';
     }
 
-    private function calculateCountdown($startDatetime)
+    private function calculateCountdown($startDateTime)
     {
-        $start = Carbon::parse($startDatetime);
+        if (! $startDateTime) {
+            return 'TBD';
+        }
+
+        $start = $startDateTime instanceof Carbon ? $startDateTime : Carbon::parse($startDateTime);
         $now = Carbon::now();
 
         if ($start->isPast()) {
@@ -146,7 +200,7 @@ class LiveShiftMarket extends Component
             return $now->diffForHumans($start);
         }
 
-        return $start->diffInDays($now) . ' days';
+        return $start->diffInDays($now).' days';
     }
 
     public function render()

@@ -53,7 +53,7 @@ class AppealDecisionNotification extends Notification implements ShouldQueue
                 $message->line('Reviewer Notes: '.$this->appeal->review_notes);
             }
 
-            $message->action('Browse Available Shifts', route('worker.shifts.available'));
+            $message->action('Browse Available Shifts', route('dashboard.staff.marketplace'));
         } else {
             $message
                 ->line('Your appeal has been reviewed.')

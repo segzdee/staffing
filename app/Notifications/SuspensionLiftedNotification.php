@@ -58,7 +58,7 @@ class SuspensionLiftedNotification extends Notification implements ShouldQueue
 
         $message
             ->line('You can now access all platform features and apply for shifts again.')
-            ->action('Browse Available Shifts', route('worker.shifts.available'))
+            ->action('Browse Available Shifts', route('dashboard.staff.marketplace'))
             ->line('We appreciate your patience and look forward to having you back on the platform.');
 
         // Add a reminder about strikes if applicable

@@ -201,8 +201,9 @@ class ShiftApplicationController extends Controller
         // Rank applications by match score
         $this->rankApplications($shift);
 
-        // TODO: Notify business (consider priority tier for notification timing)
-        // event(new ShiftApplicationReceived($application));
+        // Notify business about new application using NotificationService
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->notifyApplicationReceived($application);
 
         return redirect()->back()
             ->with('success', "Application submitted successfully! Match score: {$matchScore}%")
@@ -869,8 +870,23 @@ class ShiftApplicationController extends Controller
             'status' => 'active',
         ]);
 
-        // TODO: Notify matching businesses
-        // event(new WorkerAvailabilityBroadcasted($broadcast));
+        // Notify matching businesses about worker availability
+        $worker = Auth::user();
+        $matchingBusinesses = \App\Models\User::where('user_type', 'business')
+            ->whereHas('businessProfile', function ($query) use ($broadcast) {
+                if (! empty($broadcast->industries)) {
+                    $query->whereJsonContains('industries', $broadcast->industries[0]);
+                    foreach (array_slice($broadcast->industries, 1) as $industry) {
+                        $query->orWhereJsonContains('industries', $industry);
+                    }
+                }
+            })
+            ->limit(50)
+            ->get();
+
+        foreach ($matchingBusinesses as $business) {
+            $business->notify(new \App\Notifications\WorkerAvailabilityBroadcastNotification($broadcast, $worker));
+        }
 
         return redirect()->back()
             ->with('success', 'Availability broadcasted! Businesses will be notified.');

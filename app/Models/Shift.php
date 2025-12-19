@@ -674,22 +674,239 @@ class Shift extends Model
 
     /**
      * Calculate demand-based surge (high application volume).
+     *
+     * Factors considered:
+     * - Application rate for similar shifts (industry, location, time)
+     * - Fill rate of recent similar shifts
+     * - Worker availability in the area
+     * - Time of day and day of week demand patterns
+     *
+     * @return float Surge multiplier (0.0 - 0.5)
      */
     protected function calculateDemandSurge()
     {
-        // TODO: Implement demand calculation based on recent application patterns
-        // For now, return the stored value or 0
-        return $this->demand_surge ?? 0.0;
+        // Return stored value if already calculated
+        if ($this->demand_surge !== null && $this->demand_surge > 0) {
+            return $this->demand_surge;
+        }
+
+        $surgeMultiplier = 0.0;
+
+        // Get similar shifts from the past 30 days (same industry, similar location)
+        $recentShifts = Shift::where('industry', $this->industry)
+            ->where('location_city', $this->location_city)
+            ->where('shift_date', '>=', now()->subDays(30))
+            ->where('shift_date', '<', now())
+            ->where('id', '!=', $this->id ?? 0)
+            ->get();
+
+        if ($recentShifts->isEmpty()) {
+            return $surgeMultiplier;
+        }
+
+        // Calculate average fill rate for similar shifts
+        $avgFillRate = $recentShifts->avg(function ($shift) {
+            if ($shift->required_workers == 0) {
+                return 1.0;
+            }
+
+            return $shift->filled_workers / $shift->required_workers;
+        });
+
+        // Low fill rate indicates high demand - increase surge
+        if ($avgFillRate < 0.5) {
+            $surgeMultiplier += 0.25; // 25% surge for very low fill rate
+        } elseif ($avgFillRate < 0.7) {
+            $surgeMultiplier += 0.15; // 15% surge for moderately low fill rate
+        } elseif ($avgFillRate < 0.85) {
+            $surgeMultiplier += 0.05; // 5% surge for slightly low fill rate
+        }
+
+        // Check application patterns - high applications per worker needed indicates demand
+        $avgApplicationRate = $recentShifts->avg(function ($shift) {
+            if ($shift->required_workers == 0) {
+                return 0;
+            }
+
+            return $shift->application_count / $shift->required_workers;
+        });
+
+        // Low application rate indicates high demand (not enough workers applying)
+        if ($avgApplicationRate < 1.5) {
+            $surgeMultiplier += 0.15; // Add 15% for very low application rate
+        } elseif ($avgApplicationRate < 2.5) {
+            $surgeMultiplier += 0.10; // Add 10% for low application rate
+        }
+
+        // Check time-to-fill metrics
+        $avgTimeToFillHours = $recentShifts
+            ->whereNotNull('first_application_at')
+            ->avg(function ($shift) {
+                if (! $shift->first_application_at) {
+                    return 24;
+                }
+
+                return $shift->created_at->diffInHours($shift->first_application_at);
+            }) ?? 24;
+
+        // Long time to fill indicates low supply
+        if ($avgTimeToFillHours > 12) {
+            $surgeMultiplier += 0.10; // Add 10% if takes >12 hours to get first application
+        } elseif ($avgTimeToFillHours > 6) {
+            $surgeMultiplier += 0.05; // Add 5% if takes >6 hours
+        }
+
+        // Cap the demand surge at 0.5 (50%)
+        return min(0.5, round($surgeMultiplier, 2));
     }
 
     /**
      * Calculate event-based surge (special circumstances).
+     *
+     * Detects events that may increase demand:
+     * - Public holidays
+     * - Major sports events (configurable)
+     * - Festivals and conferences
+     * - Seasonal peaks (e.g., Black Friday, New Year's Eve)
+     *
+     * @return float Surge multiplier (0.0 - 0.5)
      */
     protected function calculateEventSurge()
     {
-        // TODO: Implement event detection (sports events, festivals, etc.)
-        // For now, return the stored value or 0
-        return $this->event_surge ?? 0.0;
+        // Return stored value if already calculated
+        if ($this->event_surge !== null && $this->event_surge > 0) {
+            return $this->event_surge;
+        }
+
+        $surgeMultiplier = 0.0;
+        $shiftDate = $this->shift_date instanceof \Carbon\Carbon
+            ? $this->shift_date
+            : \Carbon\Carbon::parse($this->shift_date);
+
+        // Check for public holiday (already tracked on the shift)
+        if ($this->is_public_holiday) {
+            $surgeMultiplier += 0.25; // 25% surge for public holidays
+        }
+
+        // Check for known high-demand dates
+        $monthDay = $shiftDate->format('m-d');
+        $highDemandDates = config('overtimestaff.surge.high_demand_dates', [
+            '12-31' => 0.50, // New Year's Eve
+            '12-24' => 0.30, // Christmas Eve
+            '12-25' => 0.40, // Christmas Day
+            '01-01' => 0.40, // New Year's Day
+            '11-28' => 0.35, // Black Friday (approximate - last Friday of November)
+            '07-04' => 0.30, // Independence Day (US)
+            '02-14' => 0.20, // Valentine's Day
+            '10-31' => 0.20, // Halloween
+            '03-17' => 0.20, // St. Patrick's Day
+            '05-05' => 0.15, // Cinco de Mayo
+        ]);
+
+        if (isset($highDemandDates[$monthDay])) {
+            $surgeMultiplier = max($surgeMultiplier, $highDemandDates[$monthDay]);
+        }
+
+        // Check for major sporting events (by date range and location)
+        // This could be enhanced with an external API or database of events
+        $majorEvents = $this->detectMajorEvents($shiftDate);
+        if ($majorEvents['has_event']) {
+            $surgeMultiplier = max($surgeMultiplier, $majorEvents['surge']);
+        }
+
+        // Check for weekend premium (Friday/Saturday night shifts in entertainment industries)
+        $dayOfWeek = $shiftDate->dayOfWeek;
+        $startHour = $this->start_time instanceof \Carbon\Carbon
+            ? $this->start_time->hour
+            : (int) \Carbon\Carbon::parse($this->start_time)->format('H');
+
+        // Friday or Saturday evening (after 6pm)
+        if (in_array($dayOfWeek, [5, 6]) && $startHour >= 18) {
+            $entertainmentIndustries = ['hospitality', 'events', 'entertainment', 'nightlife', 'catering'];
+            if (in_array(strtolower($this->industry), $entertainmentIndustries)) {
+                $surgeMultiplier += 0.10; // 10% weekend evening surge for entertainment industries
+            }
+        }
+
+        // Check for month-end (often busy for retail/hospitality)
+        if ($shiftDate->day >= 28) {
+            $retailIndustries = ['retail', 'hospitality', 'food_service'];
+            if (in_array(strtolower($this->industry), $retailIndustries)) {
+                $surgeMultiplier += 0.05; // 5% month-end surge
+            }
+        }
+
+        // Cap the event surge at 0.5 (50%)
+        return min(0.5, round($surgeMultiplier, 2));
+    }
+
+    /**
+     * Detect major events near the shift location and date.
+     *
+     * @return array{has_event: bool, surge: float, event_name: string|null}
+     */
+    protected function detectMajorEvents(\Carbon\Carbon $shiftDate): array
+    {
+        $result = ['has_event' => false, 'surge' => 0.0, 'event_name' => null];
+
+        // Get configured events from config or database
+        // This could be replaced with an API call to an events service
+        $knownEvents = config('overtimestaff.surge.known_events', []);
+
+        // Also check for dynamically stored events in the database
+        // (Assuming an events table might exist - fallback to config)
+        try {
+            if (class_exists('App\Models\SpecialEvent')) {
+                $dbEvents = \App\Models\SpecialEvent::where('start_date', '<=', $shiftDate)
+                    ->where('end_date', '>=', $shiftDate)
+                    ->where(function ($query) {
+                        $query->where('location_city', $this->location_city)
+                            ->orWhereNull('location_city'); // National events
+                    })
+                    ->get();
+
+                foreach ($dbEvents as $event) {
+                    if ($event->surge_multiplier > $result['surge']) {
+                        $result = [
+                            'has_event' => true,
+                            'surge' => $event->surge_multiplier,
+                            'event_name' => $event->name,
+                        ];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // SpecialEvent model doesn't exist, continue with config-based events
+        }
+
+        // Check configured static events (date ranges)
+        foreach ($knownEvents as $event) {
+            if (! isset($event['start_date'], $event['end_date'], $event['surge'])) {
+                continue;
+            }
+
+            $eventStart = \Carbon\Carbon::parse($event['start_date']);
+            $eventEnd = \Carbon\Carbon::parse($event['end_date']);
+
+            // Check if shift date falls within event date range
+            if ($shiftDate->between($eventStart, $eventEnd)) {
+                // Check location match (if specified)
+                $locationMatch = true;
+                if (! empty($event['cities'])) {
+                    $locationMatch = in_array($this->location_city, $event['cities']);
+                }
+
+                if ($locationMatch && $event['surge'] > $result['surge']) {
+                    $result = [
+                        'has_event' => true,
+                        'surge' => (float) $event['surge'],
+                        'event_name' => $event['name'] ?? 'Major Event',
+                    ];
+                }
+            }
+        }
+
+        return $result;
     }
 
     // =========================================

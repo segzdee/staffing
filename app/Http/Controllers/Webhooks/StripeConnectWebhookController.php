@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
-use App\Models\AgencyProfile;
+use App\Notifications\AdminAlertNotification;
 use App\Notifications\StripeConnectRequiredNotification;
-use App\Notifications\StripePayoutSuccessNotification;
 use App\Notifications\StripePayoutFailedNotification;
+use App\Notifications\StripePayoutSuccessNotification;
 use App\Services\StripeConnectService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Stripe\Webhook;
-use Stripe\Exception\SignatureVerificationException;
 
 /**
  * StripeConnectWebhookController
@@ -56,8 +55,9 @@ class StripeConnectWebhookController extends Controller
         // Verify webhook signature
         $event = $this->stripeConnect->verifyWebhookSignature($payload, $signature);
 
-        if (!$event) {
+        if (! $event) {
             Log::warning('Stripe Connect webhook signature verification failed');
+
             return response('Invalid signature', 400);
         }
 
@@ -78,6 +78,7 @@ class StripeConnectWebhookController extends Controller
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
+
                 return response('Webhook handler error', 500);
             }
         }
@@ -102,10 +103,11 @@ class StripeConnectWebhookController extends Controller
 
         $agency = $this->stripeConnect->findAgencyByStripeAccountId($accountId);
 
-        if (!$agency) {
+        if (! $agency) {
             Log::warning('Stripe Connect account not found for webhook', [
                 'stripe_account_id' => $accountId,
             ]);
+
             return response('Account not found', 200);
         }
 
@@ -118,7 +120,7 @@ class StripeConnectWebhookController extends Controller
         ]);
 
         // Check if onboarding is now complete
-        if ($account->details_submitted && $account->payouts_enabled && !$agency->stripe_onboarding_complete) {
+        if ($account->details_submitted && $account->payouts_enabled && ! $agency->stripe_onboarding_complete) {
             $agency->markStripeOnboardingComplete();
 
             Log::info('Agency completed Stripe Connect onboarding', [
@@ -129,7 +131,7 @@ class StripeConnectWebhookController extends Controller
         }
 
         // Check for new requirements (may need additional info)
-        if (!empty($account->requirements?->currently_due)) {
+        if (! empty($account->requirements?->currently_due)) {
             Log::info('Agency has pending Stripe requirements', [
                 'agency_id' => $agency->id,
                 'requirements' => $account->requirements->currently_due,
@@ -166,17 +168,19 @@ class StripeConnectWebhookController extends Controller
         // Get the connected account ID
         $accountId = $event->account ?? null;
 
-        if (!$accountId) {
+        if (! $accountId) {
             Log::warning('No account ID in payout.paid webhook');
+
             return response('No account', 200);
         }
 
         $agency = $this->stripeConnect->findAgencyByStripeAccountId($accountId);
 
-        if (!$agency) {
+        if (! $agency) {
             Log::info('Payout for non-agency Connect account', [
                 'stripe_account_id' => $accountId,
             ]);
+
             return response('Account not tracked', 200);
         }
 
@@ -220,13 +224,13 @@ class StripeConnectWebhookController extends Controller
         $payout = $event->data->object;
         $accountId = $event->account ?? null;
 
-        if (!$accountId) {
+        if (! $accountId) {
             return response('No account', 200);
         }
 
         $agency = $this->stripeConnect->findAgencyByStripeAccountId($accountId);
 
-        if (!$agency) {
+        if (! $agency) {
             return response('Account not tracked', 200);
         }
 
@@ -275,13 +279,13 @@ class StripeConnectWebhookController extends Controller
         $transfer = $event->data->object;
         $destinationAccountId = $transfer->destination ?? null;
 
-        if (!$destinationAccountId) {
+        if (! $destinationAccountId) {
             return response('No destination', 200);
         }
 
         $agency = $this->stripeConnect->findAgencyByStripeAccountId($destinationAccountId);
 
-        if (!$agency) {
+        if (! $agency) {
             return response('Account not tracked', 200);
         }
 
@@ -308,13 +312,13 @@ class StripeConnectWebhookController extends Controller
         $transfer = $event->data->object;
         $destinationAccountId = $transfer->destination ?? null;
 
-        if (!$destinationAccountId) {
+        if (! $destinationAccountId) {
             return response('No destination', 200);
         }
 
         $agency = $this->stripeConnect->findAgencyByStripeAccountId($destinationAccountId);
 
-        if (!$agency) {
+        if (! $agency) {
             return response('Account not tracked', 200);
         }
 
@@ -328,7 +332,26 @@ class StripeConnectWebhookController extends Controller
         $agency->recordPayoutFailure();
 
         // Notify admin of critical failure
-        // TODO: Implement admin notification
+        AdminAlertNotification::send(
+            title: 'Stripe Transfer Failed to Agency',
+            message: sprintf(
+                'A Stripe transfer of %s to agency ID %d has failed. The agency payout was not completed.',
+                number_format(($transfer->amount ?? 0) / 100, 2),
+                $agency->id
+            ),
+            severity: AdminAlertNotification::SEVERITY_CRITICAL,
+            context: [
+                'agency_id' => $agency->id,
+                'agency_name' => $agency->company_name ?? 'Unknown',
+                'stripe_account_id' => $destinationAccountId,
+                'transfer_id' => $transfer->id,
+                'amount' => ($transfer->amount ?? 0) / 100,
+                'currency' => strtoupper($transfer->currency ?? 'USD'),
+            ],
+            actionUrl: '/panel/admin/agency-payouts',
+            actionLabel: 'View Agency Payouts',
+            category: 'stripe_failure'
+        );
 
         return response('Transfer failure recorded', 200);
     }
@@ -343,13 +366,13 @@ class StripeConnectWebhookController extends Controller
         $capability = $event->data->object;
         $accountId = $capability->account ?? null;
 
-        if (!$accountId) {
+        if (! $accountId) {
             return response('No account', 200);
         }
 
         $agency = $this->stripeConnect->findAgencyByStripeAccountId($accountId);
 
-        if (!$agency) {
+        if (! $agency) {
             return response('Account not tracked', 200);
         }
 

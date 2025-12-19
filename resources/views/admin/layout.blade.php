@@ -44,21 +44,45 @@
                     $adminNav = config('dashboard.navigation.admin', []);
                 @endphp
 
-                @foreach($adminNav as $item)
-                    <a href="{{ route($item['route']) }}"
-                        class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                                  {{ request()->routeIs($item['active']) ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
-                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] }}" />
-                        </svg>
-                        <span>{{ $item['label'] }}</span>
-                        @if(isset($item['badge']) && $item['badge'] > 0)
-                            <span
-                                class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
-                                {{ $item['badge'] }}
-                            </span>
-                        @endif
-                    </a>
+                @foreach($adminNav as $key => $item)
+                    @if(is_string($key) && is_array($item))
+                        {{-- Section header with items --}}
+                        <div class="pt-4 pb-2">
+                            <h3 class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">{{ $key }}</h3>
+                        </div>
+                        @foreach($item as $subItem)
+                            @if(isset($subItem['route']))
+                                <a href="{{ route($subItem['route']) }}"
+                                    class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                                              {{ request()->routeIs($subItem['active'] ?? []) ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $subItem['icon'] ?? '' }}" />
+                                    </svg>
+                                    <span>{{ $subItem['label'] ?? '' }}</span>
+                                    @if(isset($subItem['badge']) && $subItem['badge'] > 0)
+                                        <span class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+                                            {{ $subItem['badge'] }}
+                                        </span>
+                                    @endif
+                                </a>
+                            @endif
+                        @endforeach
+                    @elseif(isset($item['route']))
+                        {{-- Flat nav item --}}
+                        <a href="{{ route($item['route']) }}"
+                            class="flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                                      {{ request()->routeIs($item['active'] ?? []) ? 'bg-gray-100 text-gray-900' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $item['icon'] ?? '' }}" />
+                            </svg>
+                            <span>{{ $item['label'] ?? '' }}</span>
+                            @if(isset($item['badge']) && $item['badge'] > 0)
+                                <span class="ml-auto inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-red-100 text-red-600 rounded-full">
+                                    {{ $item['badge'] }}
+                                </span>
+                            @endif
+                        </a>
+                    @endif
                 @endforeach
             </nav>
         </aside>

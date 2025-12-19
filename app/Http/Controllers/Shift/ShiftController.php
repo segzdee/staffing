@@ -5,16 +5,17 @@ namespace App\Http\Controllers\Shift;
 use App\Http\Controllers\Controller;
 use App\Models\Shift;
 use App\Models\User;
-use App\Services\ShiftMatchingService;
 use App\Services\ComplianceService;
+use App\Services\ShiftMatchingService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 class ShiftController extends Controller
 {
     protected $matchingService;
+
     protected $complianceService;
 
     public function __construct(ShiftMatchingService $matchingService, ComplianceService $complianceService)
@@ -41,7 +42,7 @@ class ShiftController extends Controller
 
         // Filter by location (city)
         if ($request->has('city')) {
-            $query->where('location_city', 'LIKE', '%' . $request->city . '%');
+            $query->where('location_city', 'LIKE', '%'.$request->city.'%');
         }
 
         // Filter by date
@@ -111,7 +112,7 @@ class ShiftController extends Controller
                 $query->where('worker_id', Auth::id());
             },
             'assignments',
-            'attachments'
+            'attachments',
         ])->findOrFail($id);
 
         // Check if worker has already applied
@@ -139,7 +140,7 @@ class ShiftController extends Controller
     public function create()
     {
         // Check authorization
-        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
             abort(403, 'Only businesses and agencies can post shifts.');
         }
 
@@ -164,12 +165,12 @@ class ShiftController extends Controller
     public function store(\App\Http\Requests\StoreShiftRequest $request)
     {
         // Calculate duration
-        $startTime = Carbon::parse($request->shift_date . ' ' . $request->start_time);
-        $endTime = Carbon::parse($request->shift_date . ' ' . $request->end_time);
+        $startTime = Carbon::parse($request->shift_date.' '.$request->start_time);
+        $endTime = Carbon::parse($request->shift_date.' '.$request->end_time);
         $duration = $startTime->diffInHours($endTime, true);
 
         // Detect shift timing characteristics for surge pricing
-        $shiftDateTime = Carbon::parse($request->shift_date . ' ' . $request->start_time);
+        $shiftDateTime = Carbon::parse($request->shift_date.' '.$request->start_time);
         $isWeekend = $shiftDateTime->isWeekend();
         $isNightShift = $shiftDateTime->hour >= 22 || $shiftDateTime->hour < 6;
         $isPublicHoliday = app(\App\Services\ShiftPricingService::class)->isPublicHoliday($shiftDateTime);
@@ -187,13 +188,13 @@ class ShiftController extends Controller
             'shift_date' => $request->shift_date,
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
-            'duration_hours' => $duration
+            'duration_hours' => $duration,
         ]);
 
         // Validate compliance
         $complianceResult = $this->complianceService->validateShiftCreation($tempShift);
 
-        if (!$complianceResult['compliant']) {
+        if (! $complianceResult['compliant']) {
             return redirect()->back()
                 ->withErrors(['compliance' => $complianceResult['violations']])
                 ->withInput()
@@ -274,8 +275,8 @@ class ShiftController extends Controller
             'escrow_amount' => $shift->escrow_amount,
         ];
 
-        // TODO: Trigger notification to matching workers
-        // event(new ShiftPosted($shift));
+        // Notify matching workers about new shift (limited to prevent spam)
+        $this->notifyMatchingWorkers($shift);
 
         return redirect()->route('shifts.show', $shift->id)
             ->with('success', 'Shift posted successfully! Workers will be notified.')
@@ -337,8 +338,8 @@ class ShiftController extends Controller
         }
 
         // Recalculate duration and dynamic rate
-        $startTime = Carbon::parse($request->shift_date . ' ' . $request->start_time);
-        $endTime = Carbon::parse($request->shift_date . ' ' . $request->end_time);
+        $startTime = Carbon::parse($request->shift_date.' '.$request->start_time);
+        $endTime = Carbon::parse($request->shift_date.' '.$request->end_time);
         $duration = $startTime->diffInHours($endTime, true);
 
         $dynamicRate = $this->matchingService->calculateDynamicRate([
@@ -382,18 +383,136 @@ class ShiftController extends Controller
                 ->with('error', 'Cannot delete a completed shift.');
         }
 
-        // If shift has assignments, cancel them
+        // If shift has assignments, cancel them and handle refunds
         if ($shift->assignments()->count() > 0) {
-            // TODO: Notify assigned workers
-            // TODO: Handle payment refunds if applicable
+            // Notify assigned workers about cancellation
+            $this->notifyWorkersOfCancellation($shift);
+
+            // Handle payment refunds if applicable
+            $this->processShiftCancellationRefunds($shift);
+
             $shift->assignments()->update(['status' => 'cancelled']);
         }
 
-        $shift->update(['status' => 'cancelled']);
+        $shift->update([
+            'status' => 'cancelled',
+            'cancelled_by' => Auth::id(),
+            'cancelled_at' => now(),
+            'cancellation_reason' => 'Cancelled by business',
+            'cancellation_type' => 'business_initiated',
+        ]);
         $shift->delete(); // Soft delete
 
         return redirect()->route('business.shifts.index')
             ->with('success', 'Shift cancelled successfully.');
+    }
+
+    /**
+     * Notify workers about shift cancellation.
+     */
+    protected function notifyWorkersOfCancellation(Shift $shift): void
+    {
+        try {
+            $assignments = $shift->assignments()->with('worker')->get();
+
+            foreach ($assignments as $assignment) {
+                if ($assignment->worker) {
+                    $assignment->worker->notify(
+                        new \App\Notifications\ShiftCancelledNotification($shift, $assignment)
+                    );
+                }
+            }
+        } catch (\Exception $e) {
+            // Log but don't fail the cancellation if notification fails
+            \Illuminate\Support\Facades\Log::warning('Failed to send shift cancellation notifications', [
+                'shift_id' => $shift->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Process refunds for a cancelled shift.
+     *
+     * Refund policy:
+     * - Cancellation > 72 hours before shift: Full refund
+     * - Cancellation 24-72 hours before shift: 50% refund
+     * - Cancellation < 24 hours before shift: No refund (worker compensation applies)
+     */
+    protected function processShiftCancellationRefunds(Shift $shift): void
+    {
+        $refundService = app(\App\Services\RefundService::class);
+
+        // Calculate hours until shift start
+        $shiftStart = Carbon::parse($shift->shift_date.' '.$shift->start_time);
+        $hoursUntilShift = now()->diffInHours($shiftStart, false);
+
+        // Get all payments for this shift
+        $payments = $shift->payments()->with(['assignment.shift'])->get();
+
+        foreach ($payments as $payment) {
+            // Skip if payment is already refunded or not in a refundable state
+            if (in_array($payment->status, ['refunded', 'paid_out', 'payout_completed'])) {
+                continue;
+            }
+
+            // Skip if no payment was captured yet
+            if (! $payment->stripe_payment_intent_id && ! $payment->paypal_capture_id && ! $payment->paystack_transaction_id) {
+                continue;
+            }
+
+            try {
+                if ($hoursUntilShift >= 72) {
+                    // Full refund for cancellations > 72 hours in advance
+                    $refundService->createAutoCancellationRefund($shift, 'cancellation_72hr');
+
+                    \Illuminate\Support\Facades\Log::info('Full refund initiated for shift cancellation', [
+                        'shift_id' => $shift->id,
+                        'payment_id' => $payment->id,
+                        'hours_until_shift' => $hoursUntilShift,
+                    ]);
+                } elseif ($hoursUntilShift >= 24) {
+                    // Partial refund (50%) for cancellations 24-72 hours in advance
+                    $originalAmount = $payment->amount_gross->getAmount() / 100;
+                    $refundAmount = $originalAmount * 0.5;
+
+                    $refundService->createOverchargeRefund(
+                        $payment,
+                        $refundAmount,
+                        'Partial refund (50%) for shift cancelled 24-72 hours in advance'
+                    );
+
+                    \Illuminate\Support\Facades\Log::info('Partial refund initiated for shift cancellation', [
+                        'shift_id' => $shift->id,
+                        'payment_id' => $payment->id,
+                        'refund_amount' => $refundAmount,
+                        'hours_until_shift' => $hoursUntilShift,
+                    ]);
+                } else {
+                    // No refund for late cancellations - worker compensation may apply
+                    // Update shift with cancellation penalty info
+                    $penaltyAmount = $payment->amount_gross->getAmount() / 100;
+
+                    $shift->update([
+                        'cancellation_penalty_amount' => $penaltyAmount * 100, // Store in cents
+                        'worker_compensation_amount' => $penaltyAmount * 0.5 * 100, // 50% to worker
+                    ]);
+
+                    \Illuminate\Support\Facades\Log::info('Late cancellation - no refund, worker compensation applies', [
+                        'shift_id' => $shift->id,
+                        'payment_id' => $payment->id,
+                        'hours_until_shift' => $hoursUntilShift,
+                        'penalty_amount' => $penaltyAmount,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to process refund for shift cancellation', [
+                    'shift_id' => $shift->id,
+                    'payment_id' => $payment->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**
@@ -427,7 +546,7 @@ class ShiftController extends Controller
         $lng = $request->get('lng');
         $radius = $request->get('radius', 25); // Default 25 miles
 
-        if (!$lat || !$lng) {
+        if (! $lat || ! $lng) {
             return response()->json(['error' => 'Location required'], 400);
         }
 
@@ -445,7 +564,7 @@ class ShiftController extends Controller
      */
     public function recommended(Request $request)
     {
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can view recommendations.');
         }
 
@@ -474,4 +593,40 @@ class ShiftController extends Controller
 
     // Protected helper methods removed in favor of ShiftPricingService and Config
 
+    /**
+     * Notify matching workers about a new shift posting.
+     */
+    protected function notifyMatchingWorkers(Shift $shift): void
+    {
+        try {
+            // Find workers that match the shift criteria
+            $matchingWorkers = \App\Models\User::where('user_type', 'worker')
+                ->whereHas('workerProfile', function ($query) use ($shift) {
+                    // Match by required skills if any
+                    if ($shift->required_skills) {
+                        $query->whereHas('skills', function ($skillQuery) use ($shift) {
+                            $skillQuery->whereIn('name', (array) $shift->required_skills);
+                        });
+                    }
+                })
+                ->where('status', 'active')
+                ->limit(100) // Limit to prevent spam
+                ->get();
+
+            foreach ($matchingWorkers as $worker) {
+                $worker->notify(new \App\Notifications\NewShiftPostedNotification($shift));
+            }
+
+            \Illuminate\Support\Facades\Log::info('Notified matching workers about new shift', [
+                'shift_id' => $shift->id,
+                'workers_notified' => $matchingWorkers->count(),
+            ]);
+        } catch (\Exception $e) {
+            // Log but don't fail the shift creation if notification fails
+            \Illuminate\Support\Facades\Log::warning('Failed to notify workers about new shift', [
+                'shift_id' => $shift->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 }

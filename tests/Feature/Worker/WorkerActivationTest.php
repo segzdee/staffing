@@ -6,6 +6,7 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\WorkerProfile;
 use App\Models\Skill;
+use App\Models\Certification;
 use App\Services\WorkerActivationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -38,7 +39,7 @@ class WorkerActivationTest extends TestCase
             'background_check_status' => 'approved',
             'payment_setup_complete' => true,
             // Profile completion requirements (80%+)
-            'bio' => str_repeat('a', 50), // 50+ character bio
+            'bio' => str_repeat('a', 100), // 100+ character bio for full points
             'phone' => '1234567890',
             'date_of_birth' => '1990-01-01',
             'address' => '123 Main St',
@@ -57,14 +58,31 @@ class WorkerActivationTest extends TestCase
             'availability_schedule' => ['monday' => ['start' => '09:00', 'end' => '17:00']],
             'emergency_contact_name' => 'Emergency Contact',
             'emergency_contact_phone' => '9876543210',
+            'max_commute_distance' => 25,
+            'profile_photo_url' => 'https://example.com/photo.jpg',
+            'resume_url' => 'https://example.com/resume.pdf',
         ]);
 
-        // Add skills to meet profile completion (need 3+ for 80%+ completion)
+        // Add a certification to boost profile completion
+        $cert = Certification::create([
+            'name' => 'Food Safety Certificate',
+            'description' => 'Food handling safety certification',
+            'issuing_authority' => 'FDA',
+            'industry' => 'hospitality',
+        ]);
+        $profile->certifications()->attach($cert->id, [
+            'certification_number' => 'CERT-001',
+            'issue_date' => now()->subYear(),
+            'expiry_date' => now()->addYear(),
+            'verified' => true,
+            'verified_at' => now(),
+        ]);
+
+        // Add skills via worker relationship (matches what service checks)
         $skill1 = Skill::create(['name' => 'Customer Service', 'industry' => 'hospitality']);
         $skill2 = Skill::create(['name' => 'Food Handling', 'industry' => 'hospitality']);
         $skill3 = Skill::create(['name' => 'Cash Handling', 'industry' => 'retail']);
-        // Use the profile's user_id for the worker_id in the pivot table
-        $profile->skills()->attach([
+        $worker->skills()->attach([
             $skill1->id => ['proficiency_level' => 'intermediate'],
             $skill2->id => ['proficiency_level' => 'intermediate'],
             $skill3->id => ['proficiency_level' => 'intermediate'],

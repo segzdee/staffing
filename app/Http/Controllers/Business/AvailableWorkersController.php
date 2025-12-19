@@ -4,14 +4,12 @@ namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
 use App\Models\AvailabilityBroadcast;
-use App\Models\User;
-use App\Models\ShiftInvitation;
 use App\Models\Shift;
-use App\Models\WorkerFeaturedStatus;
+use App\Models\ShiftInvitation;
+use App\Models\User;
 use App\Services\ShiftMatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class AvailableWorkersController extends Controller
 {
@@ -31,26 +29,26 @@ class AvailableWorkersController extends Controller
     public function index(Request $request)
     {
         $query = AvailabilityBroadcast::with([
-                'worker.workerProfile',
-                'worker.skills',
-                'worker.certifications',
-                'worker.portfolioItems' => function($q) {
-                    $q->where('is_visible', true)
-                        ->where(function($query) {
-                            $query->where('is_featured', true)
-                                ->orWhere('display_order', 0);
-                        })
-                        ->limit(1);
-                },
-                'worker.activeFeaturedStatus'
-            ])
+            'worker.workerProfile',
+            'worker.skills',
+            'worker.certifications',
+            'worker.portfolioItems' => function ($q) {
+                $q->where('is_visible', true)
+                    ->where(function ($query) {
+                        $query->where('is_featured', true)
+                            ->orWhere('display_order', 0);
+                    })
+                    ->limit(1);
+            },
+            'worker.activeFeaturedStatus',
+        ])
             ->where('status', 'active')
             ->where('available_from', '<=', now())
             ->where('available_to', '>=', now());
 
         // Filter by industry
         if ($request->has('industry') && $request->industry != 'all') {
-            $query->whereRaw("JSON_CONTAINS(industries, ?)", [json_encode($request->industry)]);
+            $query->whereRaw('JSON_CONTAINS(industries, ?)', [json_encode($request->industry)]);
         }
 
         // Filter by location (if business has location set)
@@ -59,9 +57,9 @@ class AvailableWorkersController extends Controller
             $maxDistance = $request->max_distance;
 
             // Get all broadcasts and filter by distance
-            $broadcasts = $query->get()->filter(function($broadcast) use ($business, $maxDistance) {
+            $broadcasts = $query->get()->filter(function ($broadcast) use ($business, $maxDistance) {
                 $workerProfile = $broadcast->worker->workerProfile;
-                if (!$workerProfile || !$workerProfile->location_lat || !$workerProfile->location_lng) {
+                if (! $workerProfile || ! $workerProfile->location_lat || ! $workerProfile->location_lng) {
                     return false;
                 }
 
@@ -83,7 +81,7 @@ class AvailableWorkersController extends Controller
         if ($request->has('shift_id')) {
             $shift = Shift::find($request->shift_id);
             if ($shift && $shift->business_id === Auth::id()) {
-                $broadcasts = $broadcasts->map(function($broadcast) use ($shift) {
+                $broadcasts = $broadcasts->map(function ($broadcast) use ($shift) {
                     $baseScore = $this->matchingService->calculateWorkerShiftMatch(
                         $broadcast->worker,
                         $shift
@@ -107,13 +105,13 @@ class AvailableWorkersController extends Controller
             }
         } else {
             // Even without shift matching, boost featured workers to the top
-            $broadcasts = $broadcasts->map(function($broadcast) {
+            $broadcasts = $broadcasts->map(function ($broadcast) {
                 $broadcast->is_featured = $broadcast->worker->activeFeaturedStatus !== null;
                 $broadcast->featured_tier = $broadcast->worker->activeFeaturedStatus?->tier;
                 $broadcast->portfolio_thumbnail = $broadcast->worker->portfolioItems->first()?->thumbnail_url;
 
                 // Featured score for sorting
-                $broadcast->featured_score = match($broadcast->featured_tier) {
+                $broadcast->featured_score = match ($broadcast->featured_tier) {
                     'gold' => 3,
                     'silver' => 2,
                     'bronze' => 1,
@@ -194,8 +192,9 @@ class AvailableWorkersController extends Controller
             $broadcast->increment('responses_count');
         }
 
-        // TODO: Send notification to worker
-        // event(new WorkerInvited($invitation));
+        // Send notification to worker about invitation
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->notifyShiftInvitation($invitation);
 
         return redirect()->back()
             ->with('success', 'Invitation sent successfully! The worker will be notified.');
@@ -231,6 +230,7 @@ class AvailableWorkersController extends Controller
 
             if ($existingInvitation) {
                 $skippedCount++;
+
                 continue;
             }
 
@@ -283,12 +283,13 @@ class AvailableWorkersController extends Controller
         );
 
         // Calculate match score for each
-        $rankedWorkers = collect($availableWorkers)->map(function($worker) use ($shift) {
+        $rankedWorkers = collect($availableWorkers)->map(function ($worker) use ($shift) {
             $user = User::find($worker->id);
             if ($user) {
                 $matchScore = $this->matchingService->calculateWorkerShiftMatch($user, $shift);
                 $worker->match_score = $matchScore;
             }
+
             return $worker;
         })->sortByDesc('match_score');
 

@@ -12,6 +12,12 @@ class DashboardAuditTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     /** @test */
     public function worker_can_access_all_dashboard_routes()
     {

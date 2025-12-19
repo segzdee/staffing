@@ -31,7 +31,7 @@ class RefundController extends Controller
             'business.businessProfile',
             'shift',
             'shiftPayment',
-            'processedByAdmin'
+            'processedByAdmin',
         ])
             ->when($status === 'pending', function ($query) {
                 return $query->pending();
@@ -75,7 +75,7 @@ class RefundController extends Controller
             'business.businessProfile',
             'shift',
             'shiftPayment',
-            'processedByAdmin'
+            'processedByAdmin',
         ])->findOrFail($refundId);
 
         return view('admin.refunds.show', compact('refund'));
@@ -143,7 +143,7 @@ class RefundController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->with('error', 'Failed to create refund: ' . $e->getMessage())
+                ->with('error', 'Failed to create refund: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -155,7 +155,7 @@ class RefundController extends Controller
     {
         $refund = Refund::findOrFail($refundId);
 
-        if (!$refund->isPending()) {
+        if (! $refund->isPending()) {
             return redirect()
                 ->route('admin.refunds.show', $refund->id)
                 ->with('error', 'This refund is not pending.');
@@ -177,7 +177,7 @@ class RefundController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.refunds.show', $refund->id)
-                ->with('error', 'Error processing refund: ' . $e->getMessage());
+                ->with('error', 'Error processing refund: '.$e->getMessage());
         }
     }
 
@@ -188,7 +188,7 @@ class RefundController extends Controller
     {
         $refund = Refund::findOrFail($refundId);
 
-        if (!$refund->isFailed()) {
+        if (! $refund->isFailed()) {
             return redirect()
                 ->route('admin.refunds.show', $refund->id)
                 ->with('error', 'This refund has not failed.');
@@ -210,7 +210,7 @@ class RefundController extends Controller
         } catch (\Exception $e) {
             return redirect()
                 ->route('admin.refunds.show', $refund->id)
-                ->with('error', 'Error retrying refund: ' . $e->getMessage());
+                ->with('error', 'Error retrying refund: '.$e->getMessage());
         }
     }
 
@@ -221,7 +221,7 @@ class RefundController extends Controller
     {
         $refund = Refund::findOrFail($refundId);
 
-        if (!$refund->isPending()) {
+        if (! $refund->isPending()) {
             return redirect()
                 ->route('admin.refunds.show', $refund->id)
                 ->with('error', 'Only pending refunds can be cancelled.');
@@ -254,22 +254,21 @@ class RefundController extends Controller
     {
         $refund = Refund::findOrFail($refundId);
 
-        if (!$refund->isCompleted()) {
+        if (! $refund->isCompleted()) {
             return redirect()
                 ->route('admin.refunds.show', $refund->id)
                 ->with('error', 'Credit note is only available for completed refunds.');
         }
 
-        // Generate credit note if not exists
-        if (!$refund->hasCreditNote()) {
-            $refund->generateCreditNote();
+        // Use the PDF service to download or stream the credit note
+        $pdfService = app(\App\Services\CreditNotePdfService::class);
+
+        try {
+            return $pdfService->download($refund);
+        } catch (\Exception $e) {
+            // If download fails, stream instead
+            return $pdfService->stream($refund);
         }
-
-        // Return PDF download (implement PDF service)
-        // return response()->download(storage_path('app/' . $refund->credit_note_pdf_path));
-
-        // For now, return view
-        return view('admin.refunds.credit-note', compact('refund'));
     }
 
     /**

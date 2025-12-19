@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Notifications\AdminAlertNotification;
 use App\Services\UrgentFillService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -56,7 +57,7 @@ class RouteUrgentShiftsToAgencies implements ShouldQueue
      */
     public function handle(UrgentFillService $urgentFillService)
     {
-        Log::info("Starting urgent shift routing check", [
+        Log::info('Starting urgent shift routing check', [
             'timestamp' => now()->toDateTimeString(),
         ]);
 
@@ -65,28 +66,29 @@ class RouteUrgentShiftsToAgencies implements ShouldQueue
             $urgentShifts = $urgentFillService->detectUrgentShifts();
 
             if (empty($urgentShifts)) {
-                Log::info("No urgent shifts detected");
+                Log::info('No urgent shifts detected');
+
                 return;
             }
 
-            Log::info("Urgent shifts detected", [
+            Log::info('Urgent shifts detected', [
                 'count' => count($urgentShifts),
             ]);
 
             // Step 2: Route to agencies
             $routingSummary = $urgentFillService->routeToAgencies();
 
-            Log::info("Urgent shift routing completed", $routingSummary);
+            Log::info('Urgent shift routing completed', $routingSummary);
 
             // Step 3: Check SLA compliance
             $slaSummary = $urgentFillService->checkSLACompliance();
 
             if ($slaSummary['breached'] > 0) {
-                Log::warning("SLA breaches detected", $slaSummary);
+                Log::warning('SLA breaches detected', $slaSummary);
                 $this->notifyAdminOfBreaches($slaSummary);
             }
         } catch (\Exception $e) {
-            Log::error("Failed to route urgent shifts", [
+            Log::error('Failed to route urgent shifts', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -98,14 +100,30 @@ class RouteUrgentShiftsToAgencies implements ShouldQueue
     /**
      * Notify admin of SLA breaches.
      *
-     * @param array $slaSummary
+     * @param  array  $slaSummary
      * @return void
      */
     protected function notifyAdminOfBreaches($slaSummary)
     {
-        // TODO: Implement admin notification (email/Slack/in-app)
+        AdminAlertNotification::send(
+            title: 'Urgent Shift SLA Breaches Detected',
+            message: sprintf(
+                '%d urgent shifts have breached SLA and %d are approaching breach. Immediate attention required.',
+                $slaSummary['breached'],
+                $slaSummary['approaching_breach']
+            ),
+            severity: AdminAlertNotification::SEVERITY_WARNING,
+            context: [
+                'total_breached' => $slaSummary['breached'],
+                'approaching_breach' => $slaSummary['approaching_breach'],
+                'timestamp' => now()->toDateTimeString(),
+            ],
+            actionUrl: '/panel/admin/urgent-shifts',
+            actionLabel: 'View Urgent Shifts',
+            category: 'urgent_shifts'
+        );
 
-        Log::critical("Urgent shift SLA breaches require attention", [
+        Log::critical('Urgent shift SLA breaches require attention', [
             'total_breached' => $slaSummary['breached'],
             'approaching_breach' => $slaSummary['approaching_breach'],
         ]);
@@ -114,15 +132,26 @@ class RouteUrgentShiftsToAgencies implements ShouldQueue
     /**
      * Handle a job failure.
      *
-     * @param \Throwable $exception
      * @return void
      */
     public function failed(\Throwable $exception)
     {
-        Log::critical("Urgent shift routing job failed after all retries", [
+        Log::critical('Urgent shift routing job failed after all retries', [
             'error' => $exception->getMessage(),
         ]);
 
-        // TODO: Send critical alert to admin
+        AdminAlertNotification::send(
+            title: 'Urgent Shift Routing Job Failed',
+            message: 'The RouteUrgentShiftsToAgencies job has failed after all retry attempts. Urgent shifts may not be routed to agencies.',
+            severity: AdminAlertNotification::SEVERITY_CRITICAL,
+            context: [
+                'error' => $exception->getMessage(),
+                'job' => 'RouteUrgentShiftsToAgencies',
+                'failed_at' => now()->toDateTimeString(),
+            ],
+            actionUrl: '/panel/admin/failed-jobs',
+            actionLabel: 'View Failed Jobs',
+            category: 'job_failure'
+        );
     }
 }

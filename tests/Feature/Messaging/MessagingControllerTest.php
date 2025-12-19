@@ -6,6 +6,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\InAppMessagingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 /**
@@ -63,6 +64,8 @@ class MessagingControllerTest extends TestCase
     /** @test */
     public function it_can_send_message_via_legacy_endpoint(): void
     {
+        Notification::fake();
+
         $response = $this->actingAs($this->worker)
             ->post(route('messages.send'), [
                 'to_user_id' => $this->business->id,

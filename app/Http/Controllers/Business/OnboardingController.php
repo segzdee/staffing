@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Business;
 
 use App\Http\Controllers\Controller;
 use App\Services\OnboardingProgressService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -68,8 +68,7 @@ class OnboardingController extends Controller
         $user = Auth::user();
 
         // Check if payment method is already configured
-        // TODO: Add proper payment gateway check when implemented
-        $hasPaymentMethod = false;
+        $hasPaymentMethod = $this->hasValidPaymentMethod($user);
 
         if ($hasPaymentMethod) {
             return redirect()->route('business.dashboard')
@@ -80,9 +79,155 @@ class OnboardingController extends Controller
     }
 
     /**
-     * Get current onboarding progress.
+     * Check if the business has a valid payment method configured.
      *
-     * @return JsonResponse
+     * Checks multiple payment gateways in order of priority:
+     * 1. Stripe (via Laravel Cashier)
+     * 2. PayPal
+     * 3. Other regional gateways (Paystack, Razorpay, Mollie, etc.)
+     *
+     * @param  \App\Models\User  $user
+     */
+    protected function hasValidPaymentMethod($user): bool
+    {
+        $profile = $user->businessProfile;
+
+        // Check profile flag first (fastest check)
+        if ($profile && $profile->has_payment_method) {
+            return true;
+        }
+
+        // Check Stripe via Laravel Cashier (if Billable trait is used)
+        if ($this->hasStripePaymentMethod($user)) {
+            // Update profile flag for future fast checks
+            $this->updatePaymentMethodFlag($profile, true);
+
+            return true;
+        }
+
+        // Check PayPal stored credentials
+        if ($this->hasPayPalPaymentMethod($profile)) {
+            $this->updatePaymentMethodFlag($profile, true);
+
+            return true;
+        }
+
+        // Check other regional payment gateways
+        if ($this->hasRegionalPaymentMethod($profile)) {
+            $this->updatePaymentMethodFlag($profile, true);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user has a Stripe payment method via Laravel Cashier.
+     *
+     * @param  \App\Models\User  $user
+     */
+    protected function hasStripePaymentMethod($user): bool
+    {
+        // Check if the user model uses Laravel Cashier's Billable trait
+        if (! method_exists($user, 'hasDefaultPaymentMethod')) {
+            return false;
+        }
+
+        try {
+            // Check for default payment method (card, bank account, etc.)
+            if ($user->hasDefaultPaymentMethod()) {
+                return true;
+            }
+
+            // Also check for any stored payment methods
+            $paymentMethods = $user->paymentMethods();
+
+            return $paymentMethods->isNotEmpty();
+
+        } catch (\Exception $e) {
+            // Stripe API might be unavailable or credentials misconfigured
+            \Log::warning('Stripe payment method check failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Check if business has PayPal payment method configured.
+     *
+     * @param  \App\Models\BusinessProfile|null  $profile
+     */
+    protected function hasPayPalPaymentMethod($profile): bool
+    {
+        if (! $profile) {
+            return false;
+        }
+
+        // Check for stored PayPal billing agreement or payer ID
+        return ! empty($profile->paypal_payer_id)
+            || ! empty($profile->paypal_billing_agreement_id);
+    }
+
+    /**
+     * Check if business has regional payment gateway configured.
+     *
+     * Supports: Paystack (Africa), Razorpay (India), Mollie (Europe),
+     * Flutterwave (Africa), MercadoPago (Latin America)
+     *
+     * @param  \App\Models\BusinessProfile|null  $profile
+     */
+    protected function hasRegionalPaymentMethod($profile): bool
+    {
+        if (! $profile) {
+            return false;
+        }
+
+        // Check for any regional payment gateway authorization
+        $regionalGateways = [
+            'paystack_authorization_code',
+            'paystack_customer_code',
+            'razorpay_customer_id',
+            'razorpay_token_id',
+            'mollie_customer_id',
+            'mollie_mandate_id',
+            'flutterwave_customer_id',
+            'flutterwave_token',
+            'mercadopago_customer_id',
+            'mercadopago_card_id',
+        ];
+
+        foreach ($regionalGateways as $field) {
+            if (! empty($profile->$field)) {
+                return true;
+            }
+        }
+
+        // Check payment_methods JSON field if it exists
+        if (! empty($profile->payment_methods) && is_array($profile->payment_methods)) {
+            return count($profile->payment_methods) > 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update the has_payment_method flag on the business profile.
+     *
+     * @param  \App\Models\BusinessProfile|null  $profile
+     */
+    protected function updatePaymentMethodFlag($profile, bool $hasMethod): void
+    {
+        if ($profile && $profile->has_payment_method !== $hasMethod) {
+            $profile->update(['has_payment_method' => $hasMethod]);
+        }
+    }
+
+    /**
+     * Get current onboarding progress.
      */
     public function getProgress(): JsonResponse
     {
@@ -101,15 +246,13 @@ class OnboardingController extends Controller
 
     /**
      * Get the next step to complete.
-     *
-     * @return JsonResponse
      */
     public function getNextStep(): JsonResponse
     {
         $business = Auth::user();
         $nextStep = $this->onboardingProgressService->getNextRequiredStep($business);
 
-        if (!$nextStep) {
+        if (! $nextStep) {
             return response()->json([
                 'success' => true,
                 'all_complete' => true,
@@ -134,9 +277,6 @@ class OnboardingController extends Controller
 
     /**
      * Complete a specific step.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function completeStep(Request $request): JsonResponse
     {
@@ -156,7 +296,7 @@ class OnboardingController extends Controller
             ]
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['message'] ?? 'Failed to complete step.',
@@ -180,9 +320,6 @@ class OnboardingController extends Controller
 
     /**
      * Skip an optional step.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function skipOptionalStep(Request $request): JsonResponse
     {
@@ -202,7 +339,7 @@ class OnboardingController extends Controller
             ]
         );
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['message'] ?? 'Failed to skip step.',
@@ -244,15 +381,13 @@ class OnboardingController extends Controller
 
     /**
      * Initialize onboarding for a new business.
-     *
-     * @return JsonResponse
      */
     public function initialize(): JsonResponse
     {
         $business = Auth::user();
         $result = $this->onboardingProgressService->initializeOnboarding($business);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'error' => $result['message'] ?? 'Failed to initialize onboarding.',
@@ -269,14 +404,13 @@ class OnboardingController extends Controller
     /**
      * Auto-validate and complete steps based on current business data.
      *
-     * @param \App\Models\User $business
-     * @return void
+     * @param  \App\Models\User  $business
      */
     protected function autoValidateSteps($business): void
     {
         $profile = $business->businessProfile;
 
-        if (!$profile) {
+        if (! $profile) {
             return;
         }
 
@@ -344,28 +478,45 @@ class OnboardingController extends Controller
     /**
      * Calculate profile completeness percentage (legacy method for auto-validation).
      *
-     * @param \App\Models\User $user
-     * @return int
+     * @param  \App\Models\User  $user
      */
     protected function calculateProfileCompleteness($user): int
     {
         $completeness = 0;
 
         // Base user fields (30%)
-        if ($user->name) $completeness += 10;
-        if ($user->email) $completeness += 10;
-        if ($user->avatar && $user->avatar != 'avatar.jpg') $completeness += 10;
+        if ($user->name) {
+            $completeness += 10;
+        }
+        if ($user->email) {
+            $completeness += 10;
+        }
+        if ($user->avatar && $user->avatar != 'avatar.jpg') {
+            $completeness += 10;
+        }
 
         // Business profile fields (70%)
         if ($user->businessProfile) {
             $profile = $user->businessProfile;
 
-            if ($profile->business_name) $completeness += 15;
-            if ($profile->business_type) $completeness += 10;
-            if ($profile->address) $completeness += 10;
-            if ($profile->city && $profile->state) $completeness += 15;
-            if ($profile->phone) $completeness += 10;
-            if ($profile->description) $completeness += 10;
+            if ($profile->business_name) {
+                $completeness += 15;
+            }
+            if ($profile->business_type) {
+                $completeness += 10;
+            }
+            if ($profile->address) {
+                $completeness += 10;
+            }
+            if ($profile->city && $profile->state) {
+                $completeness += 15;
+            }
+            if ($profile->phone) {
+                $completeness += 10;
+            }
+            if ($profile->description) {
+                $completeness += 10;
+            }
         }
 
         return min($completeness, 100);
@@ -374,77 +525,76 @@ class OnboardingController extends Controller
     /**
      * Get list of missing profile fields (legacy method for backwards compatibility).
      *
-     * @param \App\Models\User $user
-     * @return array
+     * @param  \App\Models\User  $user
      */
     protected function getMissingFields($user): array
     {
         $missing = [];
 
         // Check base user fields
-        if (!$user->avatar || $user->avatar == 'avatar.jpg') {
+        if (! $user->avatar || $user->avatar == 'avatar.jpg') {
             $missing[] = [
                 'field' => 'avatar',
                 'label' => 'Company Logo',
                 'description' => 'A logo helps workers recognize your business',
-                'priority' => 'medium'
+                'priority' => 'medium',
             ];
         }
 
         // Check business profile fields
         $profile = $user->businessProfile;
 
-        if (!$profile || !$profile->business_name) {
+        if (! $profile || ! $profile->business_name) {
             $missing[] = [
                 'field' => 'business_name',
                 'label' => 'Business Name',
                 'description' => 'Your official business name',
-                'priority' => 'high'
+                'priority' => 'high',
             ];
         }
 
-        if (!$profile || !$profile->business_type) {
+        if (! $profile || ! $profile->business_type) {
             $missing[] = [
                 'field' => 'business_type',
                 'label' => 'Business Type',
                 'description' => 'What industry is your business in?',
-                'priority' => 'high'
+                'priority' => 'high',
             ];
         }
 
-        if (!$profile || !$profile->address) {
+        if (! $profile || ! $profile->address) {
             $missing[] = [
                 'field' => 'address',
                 'label' => 'Business Address',
                 'description' => 'Where workers will report for shifts',
-                'priority' => 'high'
+                'priority' => 'high',
             ];
         }
 
-        if (!$profile || !$profile->city || !$profile->state) {
+        if (! $profile || ! $profile->city || ! $profile->state) {
             $missing[] = [
                 'field' => 'location',
                 'label' => 'City and State',
                 'description' => 'Your business location',
-                'priority' => 'high'
+                'priority' => 'high',
             ];
         }
 
-        if (!$profile || !$profile->phone) {
+        if (! $profile || ! $profile->phone) {
             $missing[] = [
                 'field' => 'phone',
                 'label' => 'Business Phone',
                 'description' => 'Contact number for workers',
-                'priority' => 'high'
+                'priority' => 'high',
             ];
         }
 
-        if (!$profile || !$profile->description) {
+        if (! $profile || ! $profile->description) {
             $missing[] = [
                 'field' => 'description',
                 'label' => 'Business Description',
                 'description' => 'Tell workers about your company',
-                'priority' => 'medium'
+                'priority' => 'medium',
             ];
         }
 

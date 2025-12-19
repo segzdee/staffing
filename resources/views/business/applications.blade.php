@@ -20,6 +20,7 @@
 
 @section('content')
 <div class="p-6 space-y-6">
+    @if($shift)
     <!-- Back Button & Shift Info -->
     <div>
         <a href="{{ route('business.shifts.show', $shift->id) }}" class="text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center">
@@ -36,24 +37,31 @@
             </p>
         </div>
     </div>
+    @else
+    <!-- All Applications Header -->
+    <div>
+        <h2 class="text-2xl font-bold text-gray-900">All Applications</h2>
+        <p class="text-sm text-gray-500 mt-1">Review applications from workers for your shifts</p>
+    </div>
+    @endif
 
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-lg border border-gray-200 p-4">
             <p class="text-sm text-gray-600">Total Applications</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">{{ $applications->count() }}</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ $stats['total'] ?? $applications->count() }}</p>
         </div>
         <div class="bg-white rounded-lg border border-gray-200 p-4">
             <p class="text-sm text-gray-600">Pending Review</p>
-            <p class="text-2xl font-bold text-yellow-600 mt-1">{{ $applications->where('status', 'pending')->count() }}</p>
+            <p class="text-2xl font-bold text-yellow-600 mt-1">{{ $stats['pending'] ?? $applications->where('status', 'pending')->count() }}</p>
         </div>
         <div class="bg-white rounded-lg border border-gray-200 p-4">
-            <p class="text-sm text-gray-600">Assigned</p>
-            <p class="text-2xl font-bold text-green-600 mt-1">{{ $shift->assignments->count() }}</p>
+            <p class="text-sm text-gray-600">Approved</p>
+            <p class="text-2xl font-bold text-green-600 mt-1">{{ $stats['approved'] ?? ($shift ? $shift->assignments->count() : 0) }}</p>
         </div>
         <div class="bg-white rounded-lg border border-gray-200 p-4">
-            <p class="text-sm text-gray-600">Positions Remaining</p>
-            <p class="text-2xl font-bold text-brand-600 mt-1">{{ max(0, $shift->workers_needed - $shift->assignments->count()) }}</p>
+            <p class="text-sm text-gray-600">Rejected</p>
+            <p class="text-2xl font-bold text-red-600 mt-1">{{ $stats['rejected'] ?? 0 }}</p>
         </div>
     </div>
 
@@ -150,7 +158,10 @@
                     <!-- Actions -->
                     <div class="ml-6 flex flex-col space-y-2">
                         @if($application->status === 'pending')
-                            @if($shift->assignments->count() < $shift->workers_needed)
+                            @php
+                                $canAccept = !$shift || ($shift && $shift->assignments->count() < $shift->workers_needed);
+                            @endphp
+                            @if($canAccept)
                             <form action="{{ route('business.shifts.assignWorker', $application->id) }}" method="POST">
                                 @csrf
                                 <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm">

@@ -451,6 +451,39 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
         Route::put('/settings', [App\Http\Controllers\Worker\InstaPayController::class, 'updateSettings'])
             ->name('settings.update');
     });
+
+    // ========================================
+    // STAFF-REG-008: Payment Setup API Routes
+    // ========================================
+    Route::prefix('payment')->name('payment.')->group(function () {
+        // Get payment status
+        Route::get('/status', [App\Http\Controllers\Worker\PaymentSetupController::class, 'getStatus'])
+            ->name('status');
+
+        // Initiate Stripe Connect onboarding
+        Route::post('/initiate', [App\Http\Controllers\Worker\PaymentSetupController::class, 'initiateOnboarding'])
+            ->name('initiate');
+
+        // Refresh payment status from Stripe
+        Route::post('/refresh', [App\Http\Controllers\Worker\PaymentSetupController::class, 'refreshStatus'])
+            ->name('refresh');
+
+        // Get missing requirements
+        Route::get('/requirements', [App\Http\Controllers\Worker\PaymentSetupController::class, 'getRequirements'])
+            ->name('requirements');
+
+        // Update payout schedule
+        Route::put('/schedule', [App\Http\Controllers\Worker\PaymentSetupController::class, 'updateSchedule'])
+            ->name('schedule');
+
+        // Get Stripe dashboard link
+        Route::get('/dashboard-link', [App\Http\Controllers\Worker\PaymentSetupController::class, 'getDashboardLink'])
+            ->name('dashboard-link');
+
+        // Handle callback from Stripe
+        Route::get('/callback', [App\Http\Controllers\Worker\PaymentSetupController::class, 'handleCallback'])
+            ->name('callback');
+    });
 });
 
 // ============================================================================

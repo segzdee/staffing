@@ -49,7 +49,7 @@ describe('SafetyCertification Model', function () {
         $expiryDate = $certification->calculateExpiryDate($issueDate);
 
         expect($expiryDate)->toBeInstanceOf(\Carbon\Carbon::class)
-            ->and($expiryDate->diffInMonths($issueDate))->toBe(12);
+            ->and((int) $issueDate->diffInMonths($expiryDate))->toBe(12);
     });
 
     test('returns null expiry date when validity_months is null', function () {

@@ -60,6 +60,17 @@ class BookingConfirmation extends Model
     public const STATUS_EXPIRED = 'expired';
 
     /**
+     * The model's default values for attributes.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'worker_confirmed' => false,
+        'business_confirmed' => false,
+        'auto_confirmed' => false,
+    ];
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>

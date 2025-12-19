@@ -8,6 +8,8 @@ use Tests\Traits\DatabaseMigrationsWithTransactions;
 uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
+    $this->initializeMigrations();
+
     // Create a business user with profile
     $this->business = User::factory()->create([
         'user_type' => 'business',
@@ -55,7 +57,8 @@ test('open scope returns only open shifts', function () {
         'start_datetime' => now()->subDays(1),
     ]);
 
-    $openShifts = Shift::open()->get();
+    // Query only this business's shifts to avoid interference from other tests
+    $openShifts = Shift::where('business_id', $this->business->id)->open()->get();
 
     expect($openShifts)->toHaveCount(1)
         ->and($openShifts->first()->id)->toBe($openShift->id);
@@ -77,7 +80,8 @@ test('upcoming scope returns shifts ordered by start time', function () {
         'start_datetime' => now()->addDays(2),
     ]);
 
-    $upcomingShifts = Shift::upcoming()->get();
+    // Query only this business's shifts to avoid interference from other tests
+    $upcomingShifts = Shift::where('business_id', $this->business->id)->upcoming()->get();
 
     expect($upcomingShifts)->toHaveCount(3)
         ->and($upcomingShifts->first()->id)->toBe($shift2->id)

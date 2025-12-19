@@ -2,20 +2,18 @@
 
 namespace App\Services;
 
-use App\Models\ShiftSwap;
 use App\Models\ShiftAssignment;
+use App\Models\ShiftSwap;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 class ShiftSwapService
 {
     /**
      * Validate if a worker is eligible to offer a shift swap.
      *
-     * @param User $worker
-     * @param ShiftAssignment $assignment
      * @return array ['eligible' => bool, 'reason' => string]
      */
     public function validateSwapEligibility(User $worker, ShiftAssignment $assignment)
@@ -38,7 +36,7 @@ class ShiftSwapService
 
         // Check if shift is too soon (must be at least 24 hours away)
         $shift = $assignment->shift;
-        $hoursUntilShift = Carbon::parse($shift->shift_date . ' ' . $shift->start_time)
+        $hoursUntilShift = Carbon::parse($shift->shift_date.' '.$shift->start_time)
             ->diffInHours(Carbon::now());
 
         if ($hoursUntilShift < 24) {
@@ -69,8 +67,6 @@ class ShiftSwapService
     /**
      * Validate if a worker can accept a shift swap.
      *
-     * @param User $acceptingWorker
-     * @param ShiftSwap $shiftSwap
      * @return array ['eligible' => bool, 'reason' => string]
      */
     public function validateSwapAcceptance(User $acceptingWorker, ShiftSwap $shiftSwap)
@@ -88,12 +84,12 @@ class ShiftSwapService
 
         // Check for conflicting assignments
         $conflictingAssignment = ShiftAssignment::where('worker_id', $acceptingWorker->id)
-            ->whereHas('shift', function($q) use ($shift) {
+            ->whereHas('shift', function ($q) use ($shift) {
                 $q->where('shift_date', $shift->shift_date)
-                  ->where(function($query) use ($shift) {
-                      $query->whereBetween('start_time', [$shift->start_time, $shift->end_time])
+                    ->where(function ($query) use ($shift) {
+                        $query->whereBetween('start_time', [$shift->start_time, $shift->end_time])
                             ->orWhereBetween('end_time', [$shift->start_time, $shift->end_time]);
-                  });
+                    });
             })
             ->whereIn('status', ['assigned', 'checked_in'])
             ->exists();
@@ -107,7 +103,7 @@ class ShiftSwapService
 
         // Check worker meets shift requirements
         $workerProfile = $acceptingWorker->workerProfile;
-        if (!$workerProfile) {
+        if (! $workerProfile) {
             return [
                 'eligible' => false,
                 'reason' => 'Worker profile not found.',
@@ -118,11 +114,11 @@ class ShiftSwapService
         $shiftRequirements = $shift->requirements ?? [];
         $requiredSkills = $shiftRequirements['skills'] ?? [];
 
-        if (!empty($requiredSkills)) {
+        if (! empty($requiredSkills)) {
             $workerSkills = $acceptingWorker->skills()->pluck('skill_name')->toArray();
             $hasRequiredSkills = empty(array_diff($requiredSkills, $workerSkills));
 
-            if (!$hasRequiredSkills) {
+            if (! $hasRequiredSkills) {
                 return [
                     'eligible' => false,
                     'reason' => 'You do not meet the required skills for this shift.',
@@ -139,7 +135,6 @@ class ShiftSwapService
     /**
      * Process a shift swap after business approval.
      *
-     * @param ShiftSwap $shiftSwap
      * @return bool
      */
     public function processSwap(ShiftSwap $shiftSwap)
@@ -185,23 +180,46 @@ class ShiftSwapService
 
             DB::commit();
 
-            Log::info("Shift swap processed successfully", [
+            Log::info('Shift swap processed successfully', [
                 'swap_id' => $shiftSwap->id,
                 'original_worker' => $offeringAssignment->worker_id,
                 'new_worker' => $acceptingWorker->id,
             ]);
 
-            // TODO: Notify all parties
-            // event(new ShiftSwapCompleted($shiftSwap));
+            // Notify all parties about the completed swap
+            $shiftSwap->load(['offeringWorker', 'receivingWorker', 'assignment.shift.business']);
+
+            // Notify the original worker (offerer)
+            if ($shiftSwap->offeringWorker) {
+                $shiftSwap->offeringWorker->notify(
+                    new \App\Notifications\ShiftSwapCompletedNotification($shiftSwap, 'offerer')
+                );
+            }
+
+            // Notify the accepting worker
+            if ($acceptingWorker) {
+                $acceptingWorker->notify(
+                    new \App\Notifications\ShiftSwapCompletedNotification($shiftSwap, 'accepter')
+                );
+            }
+
+            // Notify the business
+            $business = $shiftSwap->assignment?->shift?->business;
+            if ($business) {
+                $business->notify(
+                    new \App\Notifications\ShiftSwapCompletedNotification($shiftSwap, 'business')
+                );
+            }
 
             return true;
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Shift swap processing error", [
+            Log::error('Shift swap processing error', [
                 'swap_id' => $shiftSwap->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -209,12 +227,10 @@ class ShiftSwapService
     /**
      * Cancel a shift swap.
      *
-     * @param ShiftSwap $shiftSwap
-     * @param string $cancelledBy ('offerer', 'accepter', 'business')
-     * @param string|null $reason
+     * @param  string  $cancelledBy  ('offerer', 'accepter', 'business')
      * @return bool
      */
-    public function cancelSwap(ShiftSwap $shiftSwap, string $cancelledBy, string $reason = null)
+    public function cancelSwap(ShiftSwap $shiftSwap, string $cancelledBy, ?string $reason = null)
     {
         try {
             $shiftSwap->update([
@@ -224,7 +240,7 @@ class ShiftSwapService
                 'cancelled_at' => now(),
             ]);
 
-            Log::info("Shift swap cancelled", [
+            Log::info('Shift swap cancelled', [
                 'swap_id' => $shiftSwap->id,
                 'cancelled_by' => $cancelledBy,
             ]);
@@ -232,10 +248,11 @@ class ShiftSwapService
             return true;
 
         } catch (\Exception $e) {
-            Log::error("Shift swap cancellation error", [
+            Log::error('Shift swap cancellation error', [
                 'swap_id' => $shiftSwap->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -243,7 +260,6 @@ class ShiftSwapService
     /**
      * Find available swap opportunities for a worker.
      *
-     * @param User $worker
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function findSwapOpportunities(User $worker)
@@ -253,14 +269,14 @@ class ShiftSwapService
         // Get all pending swaps
         $availableSwaps = ShiftSwap::with(['offeringAssignment.shift.business', 'offeringAssignment.worker'])
             ->where('status', 'pending')
-            ->whereHas('offeringAssignment', function($q) use ($worker) {
+            ->whereHas('offeringAssignment', function ($q) use ($worker) {
                 // Exclude worker's own swaps
                 $q->where('worker_id', '!=', $worker->id);
             })
             ->get();
 
         // Calculate match score for each swap
-        $rankedSwaps = $availableSwaps->map(function($swap) use ($worker, $matchingService) {
+        $rankedSwaps = $availableSwaps->map(function ($swap) use ($worker, $matchingService) {
             $shift = $swap->offeringAssignment->shift;
             $matchScore = $matchingService->calculateWorkerShiftMatch($worker, $shift);
             $swap->match_score = $matchScore;

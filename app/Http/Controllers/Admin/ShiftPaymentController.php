@@ -64,9 +64,9 @@ class ShiftPaymentController extends Controller
         // Statistics
         $stats = [
             'total_payments' => ShiftPayment::count(),
-            'total_amount' => ShiftPayment::sum('amount'),
+            'total_amount' => ShiftPayment::sum('amount_gross'),
             'total_platform_fees' => ShiftPayment::sum('platform_fee'),
-            'in_escrow' => ShiftPayment::where('status', 'in_escrow')->sum('amount'),
+            'in_escrow' => ShiftPayment::where('status', 'in_escrow')->sum('amount_gross'),
             'disputed' => ShiftPayment::where('status', 'disputed')->count(),
             'failed_payouts' => ShiftPayment::where('payout_status', 'failed')->count(),
         ];
@@ -305,13 +305,13 @@ class ShiftPaymentController extends Controller
         $stats = [
             // Total metrics
             'total_payments' => ShiftPayment::count(),
-            'total_volume' => ShiftPayment::sum('amount'),
+            'total_volume' => ShiftPayment::sum('amount_gross'),
             'total_platform_revenue' => ShiftPayment::sum('platform_fee'),
-            'total_worker_earnings' => ShiftPayment::sum('worker_amount'),
+            'total_worker_earnings' => ShiftPayment::sum('amount_net'),
 
             // Status breakdown
-            'in_escrow' => ShiftPayment::where('status', 'in_escrow')->sum('amount'),
-            'released' => ShiftPayment::where('status', 'released')->sum('amount'),
+            'in_escrow' => ShiftPayment::where('status', 'in_escrow')->sum('amount_gross'),
+            'released' => ShiftPayment::where('status', 'released')->sum('amount_gross'),
             'refunded' => ShiftPayment::where('status', 'refunded')->sum('refund_amount'),
             'disputed_count' => ShiftPayment::where('status', 'disputed')->count(),
 

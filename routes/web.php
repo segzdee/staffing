@@ -290,6 +290,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/placements/active', [App\Http\Controllers\Agency\DashboardController::class, 'placementsActive'])->name('placements.active');
         Route::get('/placements/history', [App\Http\Controllers\Agency\DashboardController::class, 'placementsHistory'])->name('placements.history');
 
+        // Assignments
+        Route::get('/assignments', [App\Http\Controllers\Agency\DashboardController::class, 'assignments'])->name('assignments');
+
+        // Commissions (shortcut route for sidebar)
+        Route::get('/commissions', [App\Http\Controllers\Agency\DashboardController::class, 'financeCommissions'])->name('commissions');
+
         // Shifts
         Route::get('/shifts/browse', [App\Http\Controllers\Agency\DashboardController::class, 'shiftsBrowse'])->name('shifts.browse');
         Route::get('/shifts/assign', [App\Http\Controllers\Agency\DashboardController::class, 'shiftsAssign'])->name('shifts.assign');
@@ -328,6 +334,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/domain/{domain}/verify', [App\Http\Controllers\Agency\WhiteLabelController::class, 'verifyDomain'])->name('domain.verify.check');
             Route::delete('/domain', [App\Http\Controllers\Agency\WhiteLabelController::class, 'removeDomain'])->name('domain.remove');
         });
+
+        // Stripe Connect
+        Route::prefix('stripe')->name('stripe.')->group(function () {
+            Route::get('/onboarding', [App\Http\Controllers\Agency\StripeConnectController::class, 'onboarding'])->name('onboarding');
+            Route::get('/connect', [App\Http\Controllers\Agency\StripeConnectController::class, 'connect'])->name('connect');
+            Route::get('/callback', [App\Http\Controllers\Agency\StripeConnectController::class, 'callback'])->name('callback');
+            Route::get('/status', [App\Http\Controllers\Agency\StripeConnectController::class, 'status'])->name('status');
+            Route::get('/dashboard', [App\Http\Controllers\Agency\StripeConnectController::class, 'dashboard'])->name('dashboard');
+            Route::post('/refresh-status', [App\Http\Controllers\Agency\StripeConnectController::class, 'refreshStatus'])->name('refresh-status');
+            Route::get('/balance', [App\Http\Controllers\Agency\StripeConnectController::class, 'balance'])->name('balance');
+        });
     });
 
     // Admin Dashboard Routes
@@ -354,11 +371,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Finance
         Route::get('/finance/transactions', [App\Http\Controllers\Admin\DashboardController::class, 'financeTransactions'])->name('finance.transactions');
         Route::get('/finance/escrow', [App\Http\Controllers\Admin\DashboardController::class, 'financeEscrow'])->name('finance.escrow');
+        Route::post('/finance/escrow/release-all-due', [App\Http\Controllers\Admin\DashboardController::class, 'financeEscrowReleaseAllDue'])->name('finance.escrow.release-all-due');
         Route::get('/finance/payouts', [App\Http\Controllers\Admin\DashboardController::class, 'financePayouts'])->name('finance.payouts');
         Route::get('/finance/refunds', [App\Http\Controllers\Admin\DashboardController::class, 'financeRefunds'])->name('finance.refunds');
         Route::get('/finance/disputed', [App\Http\Controllers\Admin\DashboardController::class, 'financeDisputed'])->name('finance.disputed');
         Route::get('/finance/commissions', [App\Http\Controllers\Admin\DashboardController::class, 'financeCommissions'])->name('finance.commissions');
         Route::get('/finance/reports', [App\Http\Controllers\Admin\DashboardController::class, 'financeReports'])->name('finance.reports');
+        Route::get('/finance/reports/generate', [App\Http\Controllers\Admin\DashboardController::class, 'financeReportsGenerate'])->name('finance.reports.generate');
 
         // Moderation
         Route::get('/moderation/reports', [App\Http\Controllers\Admin\DashboardController::class, 'moderationReports'])->name('moderation.reports');
@@ -768,6 +787,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // ============================================================================
 Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::get('/settings', [App\Http\Controllers\User\SettingsController::class, 'index'])->name('settings.index');
+    Route::put('/settings/profile', [App\Http\Controllers\User\SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+    Route::put('/settings/password', [App\Http\Controllers\User\SettingsController::class, 'updatePassword'])->name('settings.password.update');
+    Route::put('/settings/notifications', [App\Http\Controllers\User\SettingsController::class, 'updateNotificationPreferences'])->name('settings.notifications.update');
+    Route::delete('/settings/account', [App\Http\Controllers\User\SettingsController::class, 'deleteAccount'])->name('settings.account.delete');
     Route::get('/help', fn () => view('help.index'))->name('help.index');
     Route::get('/notifications', fn () => view('notifications.index'))->name('notifications.index');
 
@@ -919,12 +942,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/payments/history', [App\Http\Controllers\Business\DashboardController::class, 'paymentsHistory'])->name('payments.history');
         Route::get('/payments/invoices', [App\Http\Controllers\Business\DashboardController::class, 'paymentsInvoices'])->name('payments.invoices');
         Route::get('/payments/add-funds', [App\Http\Controllers\Business\DashboardController::class, 'paymentsAddFunds'])->name('payments.add-funds');
+        Route::post('/payments/create-intent', [App\Http\Controllers\Business\DashboardController::class, 'paymentsCreateIntent'])->name('payments.create-intent');
 
         // Reports
         Route::get('/reports/spending', [App\Http\Controllers\Business\DashboardController::class, 'reportsSpending'])->name('reports.spending');
         Route::get('/reports/performance', [App\Http\Controllers\Business\DashboardController::class, 'reportsPerformance'])->name('reports.performance');
         Route::get('/reports/analytics', [App\Http\Controllers\Business\DashboardController::class, 'reportsAnalytics'])->name('reports.analytics');
         Route::get('/reports/export', [App\Http\Controllers\Business\DashboardController::class, 'reportsExport'])->name('reports.export');
+
+        // Analytics (shortcut - views reference business.analytics directly)
+        Route::get('/analytics-overview', [App\Http\Controllers\Business\AnalyticsController::class, 'index'])->name('analytics');
 
         // Workers
         Route::get('/workers/favourites', [App\Http\Controllers\Business\DashboardController::class, 'workersFavourites'])->name('workers.favourites');
@@ -1636,9 +1663,36 @@ Route::prefix('admin/subscriptions')->name('admin.subscriptions.')->middleware([
     Route::get('/export', [App\Http\Controllers\Admin\SubscriptionManagementController::class, 'export'])->name('export');
 });
 
+// Admin configuration management routes
+Route::prefix('admin/configuration')->name('admin.configuration.')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/', [App\Http\Controllers\Admin\ConfigurationController::class, 'index'])->name('index');
+    Route::put('/', [App\Http\Controllers\Admin\ConfigurationController::class, 'update'])->name('update');
+    Route::get('/history', [App\Http\Controllers\Admin\ConfigurationController::class, 'history'])->name('history');
+    Route::get('/setting-history/{key}', [App\Http\Controllers\Admin\ConfigurationController::class, 'settingHistory'])->name('setting-history');
+    Route::get('/export', [App\Http\Controllers\Admin\ConfigurationController::class, 'export'])->name('export');
+    Route::post('/import', [App\Http\Controllers\Admin\ConfigurationController::class, 'import'])->name('import');
+    Route::post('/reset/{key}', [App\Http\Controllers\Admin\ConfigurationController::class, 'reset'])->name('reset');
+    Route::post('/reset-all', [App\Http\Controllers\Admin\ConfigurationController::class, 'resetAll'])->name('reset-all');
+    Route::get('/all-grouped', [App\Http\Controllers\Admin\ConfigurationController::class, 'allGrouped'])->name('all-grouped');
+    Route::post('/batch-update', [App\Http\Controllers\Admin\ConfigurationController::class, 'batchUpdate'])->name('batch-update');
+    Route::post('/clear-cache', [App\Http\Controllers\Admin\ConfigurationController::class, 'clearCache'])->name('clear-cache');
+});
+
 // Stripe subscription webhook (no auth, csrf exempt)
 Route::post('/webhook/stripe/subscription', [App\Http\Controllers\Webhook\StripeSubscriptionWebhookController::class, 'handle'])
     ->name('webhook.stripe.subscription')
+    ->middleware('web')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// PayPal webhook (no auth, csrf exempt)
+Route::post('/webhooks/paypal', [App\Http\Controllers\Webhooks\PayPalWebhookController::class, 'handle'])
+    ->name('webhooks.paypal')
+    ->middleware('web')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// Paystack webhook (no auth, csrf exempt)
+Route::post('/webhooks/paystack', [App\Http\Controllers\Webhooks\PaystackWebhookController::class, 'handle'])
+    ->name('webhooks.paystack')
     ->middleware('web')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
@@ -1724,3 +1778,12 @@ Route::prefix('worker/paystubs')->name('worker.paystubs.')->middleware(['auth'])
     Route::get('/{payrollRun}/download', [App\Http\Controllers\Worker\PaystubController::class, 'download'])->name('download');
     Route::get('/{payrollRun}/preview', [App\Http\Controllers\Worker\PaystubController::class, 'preview'])->name('preview');
 });
+
+// ============================================================================
+// Route Aliases for Backward Compatibility
+// These aliases support legacy code that uses the old naming convention
+// ============================================================================
+Route::get('/dashboard-worker', fn () => redirect()->route('worker.dashboard'))->name('dashboard.worker');
+Route::get('/dashboard-company', fn () => redirect()->route('business.dashboard'))->name('dashboard.company');
+Route::get('/dashboard-agency', fn () => redirect()->route('agency.dashboard'))->name('dashboard.agency');
+Route::get('/dashboard-admin', fn () => redirect()->route('admin.dashboard'))->name('dashboard.admin');

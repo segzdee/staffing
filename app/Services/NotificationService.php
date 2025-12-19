@@ -472,15 +472,118 @@ class NotificationService
     }
 
     /**
-     * Send SMS notification (via Twilio, etc.)
+     * Send SMS notification via Twilio.
+     *
+     * Requires the following environment variables:
+     * - TWILIO_SID: Your Twilio Account SID
+     * - TWILIO_AUTH_TOKEN: Your Twilio Auth Token
+     * - TWILIO_PHONE_NUMBER: Your Twilio phone number (E.164 format)
+     *
+     * If Twilio SDK is not installed or credentials are missing,
+     * the SMS will be logged instead of sent.
      */
     protected function sendSMSNotification(User $user, ShiftNotification $notification)
     {
-        // TODO: Implement SMS service (Twilio)
-        Log::info('SMS notification sent', [
-            'user_id' => $user->id,
-            'notification_id' => $notification->id,
-        ]);
+        $phoneNumber = $user->phone ?? $user->workerProfile?->phone ?? $user->businessProfile?->phone;
+
+        if (! $phoneNumber) {
+            Log::debug('SMS notification skipped - no phone number', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+            ]);
+
+            return;
+        }
+
+        // Check if Twilio SDK is available
+        if (! class_exists(\Twilio\Rest\Client::class)) {
+            Log::info('SMS notification logged (Twilio SDK not installed)', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+                'message' => $notification->message,
+            ]);
+
+            return;
+        }
+
+        // Check for Twilio credentials
+        $twilioSid = config('services.twilio.sid');
+        $twilioToken = config('services.twilio.token');
+        $twilioFromNumber = config('services.twilio.from');
+
+        if (! $twilioSid || ! $twilioToken || ! $twilioFromNumber) {
+            Log::info('SMS notification logged (Twilio credentials not configured)', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+                'message' => $notification->message,
+            ]);
+
+            return;
+        }
+
+        try {
+            $client = new \Twilio\Rest\Client($twilioSid, $twilioToken);
+
+            $message = $client->messages->create(
+                $phoneNumber,
+                [
+                    'from' => $twilioFromNumber,
+                    'body' => $this->formatSMSMessage($notification),
+                ]
+            );
+
+            Log::info('SMS notification sent via Twilio', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'twilio_sid' => $message->sid,
+                'phone' => $this->maskPhoneNumber($phoneNumber),
+            ]);
+
+        } catch (\Twilio\Exceptions\TwilioException $e) {
+            Log::error('Twilio SMS send error', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('SMS notification error', [
+                'user_id' => $user->id,
+                'notification_id' => $notification->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Format SMS message content.
+     * SMS messages should be concise (160 chars for single SMS).
+     */
+    protected function formatSMSMessage(ShiftNotification $notification): string
+    {
+        $message = $notification->title.': '.$notification->message;
+
+        // Truncate to 160 characters for single SMS segment
+        if (strlen($message) > 160) {
+            $message = substr($message, 0, 157).'...';
+        }
+
+        return $message;
+    }
+
+    /**
+     * Mask phone number for logging (privacy).
+     */
+    protected function maskPhoneNumber(string $phone): string
+    {
+        $length = strlen($phone);
+        if ($length <= 4) {
+            return str_repeat('*', $length);
+        }
+
+        return substr($phone, 0, 2).str_repeat('*', $length - 4).substr($phone, -2);
     }
 
     /**

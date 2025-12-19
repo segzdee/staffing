@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Worker;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Worker\UploadPortfolioItemRequest;
-use App\Http\Requests\Worker\UpdatePortfolioItemRequest;
-use App\Http\Requests\Worker\ReorderPortfolioRequest;
 use App\Http\Requests\Worker\PurchaseFeaturedStatusRequest;
-use App\Models\WorkerPortfolioItem;
+use App\Http\Requests\Worker\ReorderPortfolioRequest;
+use App\Http\Requests\Worker\UpdatePortfolioItemRequest;
+use App\Http\Requests\Worker\UploadPortfolioItemRequest;
 use App\Models\WorkerFeaturedStatus;
+use App\Models\WorkerPortfolioItem;
 use App\Services\WorkerPortfolioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -69,7 +69,7 @@ class PortfolioController extends Controller
 
         if ($currentCount >= WorkerPortfolioItem::MAX_ITEMS_PER_WORKER) {
             return redirect()->route('worker.portfolio.index')
-                ->with('error', 'You have reached the maximum number of portfolio items (' . WorkerPortfolioItem::MAX_ITEMS_PER_WORKER . ').');
+                ->with('error', 'You have reached the maximum number of portfolio items ('.WorkerPortfolioItem::MAX_ITEMS_PER_WORKER.').');
         }
 
         return view('worker.portfolio.upload', [
@@ -90,10 +90,11 @@ class PortfolioController extends Controller
         $worker = auth()->user();
 
         // Rate limiting: 5 uploads per hour
-        $key = 'portfolio-upload:' . $worker->id;
+        $key = 'portfolio-upload:'.$worker->id;
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
-            return back()->with('error', 'Too many uploads. Please try again in ' . ceil($seconds / 60) . ' minutes.');
+
+            return back()->with('error', 'Too many uploads. Please try again in '.ceil($seconds / 60).' minutes.');
         }
 
         try {
@@ -267,9 +268,11 @@ class PortfolioController extends Controller
         try {
             if ($enable) {
                 $slug = $this->portfolioService->enablePublicProfile($worker);
-                return back()->with('success', 'Public profile enabled. Your profile URL is: ' . route('profile.public', $slug));
+
+                return back()->with('success', 'Public profile enabled. Your profile URL is: '.route('profile.public', $slug));
             } else {
                 $this->portfolioService->disablePublicProfile($worker);
+
                 return back()->with('success', 'Public profile disabled.');
             }
         } catch (\Exception $e) {
@@ -311,26 +314,84 @@ class PortfolioController extends Controller
             // Check if worker already has active featured status
             $existing = $this->portfolioService->getActiveFeaturedStatus($worker);
             if ($existing) {
-                return back()->with('error', 'You already have an active featured status until ' . $existing->end_date->format('M d, Y'));
+                return back()->with('error', 'You already have an active featured status until '.$existing->end_date->format('M d, Y'));
             }
 
-            // TODO: Process payment using Stripe or other payment gateway
-            // For now, create with pending status
             $tier = $request->input('tier');
-            $paymentReference = 'PENDING_' . time(); // Replace with actual payment processing
+            $tierConfig = WorkerFeaturedStatus::TIERS[$tier] ?? WorkerFeaturedStatus::TIERS['bronze'];
+            $amountCents = $tierConfig['cost_cents'];
+            $paymentMethod = $request->input('payment_method_id');
 
-            $featuredStatus = $this->portfolioService->purchaseFeaturedStatus(
-                $worker,
-                $tier,
-                $paymentReference
-            );
+            // Process payment using Stripe
+            \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-            // Activate immediately for demo purposes
-            // In production, activate after payment confirmation
-            $featuredStatus->activate();
+            // Create or retrieve Stripe customer
+            $stripeCustomerId = $worker->stripe_customer_id;
 
-            return redirect()->route('worker.profile.featured')
-                ->with('success', 'Featured status activated! Your profile will be boosted for ' . $featuredStatus->tier_config['duration_days'] . ' days.');
+            if (! $stripeCustomerId) {
+                $customer = \Stripe\Customer::create([
+                    'email' => $worker->email,
+                    'name' => $worker->name,
+                    'metadata' => [
+                        'user_id' => $worker->id,
+                        'user_type' => 'worker',
+                    ],
+                ]);
+                $stripeCustomerId = $customer->id;
+                $worker->update(['stripe_customer_id' => $stripeCustomerId]);
+            }
+
+            // Create a PaymentIntent for the featured status purchase
+            $paymentIntent = \Stripe\PaymentIntent::create([
+                'amount' => $amountCents,
+                'currency' => 'eur',
+                'customer' => $stripeCustomerId,
+                'payment_method' => $paymentMethod,
+                'confirmation_method' => 'manual',
+                'confirm' => true,
+                'description' => "Featured Status: {$tierConfig['name']} ({$tierConfig['duration_days']} days)",
+                'metadata' => [
+                    'worker_id' => $worker->id,
+                    'tier' => $tier,
+                    'product_type' => 'featured_status',
+                ],
+                'return_url' => route('worker.profile.featured'),
+            ]);
+
+            // Check payment status
+            if ($paymentIntent->status === 'succeeded') {
+                // Payment successful - create and activate featured status
+                $featuredStatus = $this->portfolioService->purchaseFeaturedStatus(
+                    $worker,
+                    $tier,
+                    $paymentIntent->id
+                );
+
+                $featuredStatus->activate();
+
+                return redirect()->route('worker.profile.featured')
+                    ->with('success', 'Featured status activated! Your profile will be boosted for '.$featuredStatus->tier_config['duration_days'].' days.');
+            } elseif ($paymentIntent->status === 'requires_action') {
+                // 3D Secure or additional authentication required
+                return back()->with('requires_action', [
+                    'payment_intent_client_secret' => $paymentIntent->client_secret,
+                    'tier' => $tier,
+                ]);
+            } else {
+                // Payment failed or pending
+                return back()->with('error', 'Payment could not be processed. Please try again or use a different payment method.');
+            }
+        } catch (\Stripe\Exception\CardException $e) {
+            // Card was declined
+            return back()->with('error', 'Payment declined: '.$e->getError()->message);
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            // Stripe API error
+            \Illuminate\Support\Facades\Log::error('Stripe API error during featured status purchase', [
+                'worker_id' => $worker->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->with('error', 'Payment processing error. Please try again later.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

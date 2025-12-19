@@ -582,7 +582,11 @@ class SubscriptionService
             );
         }
 
-        // TODO: Send notification to user about failed payment
+        // Send notification to user about failed payment
+        $user = $subscription->user;
+        if ($user) {
+            $user->notify(new \App\Notifications\SubscriptionPaymentFailedNotification($subscription));
+        }
 
         Log::warning('Invoice payment failed', [
             'subscription_id' => $subscription->id,
@@ -650,7 +654,14 @@ class SubscriptionService
             return ['success' => true, 'message' => 'Subscription not found locally'];
         }
 
-        // TODO: Send notification to user about trial ending
+        // Send notification to user about trial ending
+        $user = $subscription->user;
+        if ($user) {
+            $user->notify(new \App\Notifications\SubscriptionTrialEndingNotification(
+                $subscription,
+                $data['trial_end'] ?? null
+            ));
+        }
 
         Log::info('Trial will end notification', [
             'subscription_id' => $subscription->id,

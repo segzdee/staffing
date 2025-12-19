@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Worker;
 
 use App\Http\Controllers\Controller;
 use App\Models\AvailabilityBroadcast;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
 
 class AvailabilityBroadcastController extends Controller
 {
@@ -88,8 +88,8 @@ class AvailabilityBroadcastController extends Controller
             'responses_count' => 0,
         ]);
 
-        // TODO: Notify relevant businesses
-        // event(new WorkerAvailabilityBroadcast($broadcast));
+        // Notify relevant businesses about worker availability
+        $this->notifyMatchingBusinesses($broadcast, $worker);
 
         return redirect()->route('worker.availability.index')
             ->with('success', 'Your availability has been broadcast! Businesses will be notified.');
@@ -138,5 +138,28 @@ class AvailabilityBroadcastController extends Controller
 
         return redirect()->route('worker.availability.index')
             ->with('success', "Broadcast extended by {$request->extend_hours} hours.");
+    }
+
+    /**
+     * Notify businesses that match the worker's broadcast criteria.
+     */
+    protected function notifyMatchingBusinesses(AvailabilityBroadcast $broadcast, $worker): void
+    {
+        // Find businesses that have posted shifts in matching industries
+        $matchingBusinesses = \App\Models\User::where('user_type', 'business')
+            ->whereHas('businessProfile', function ($query) use ($broadcast) {
+                if (! empty($broadcast->industries)) {
+                    $query->whereJsonContains('industries', $broadcast->industries[0]);
+                    foreach (array_slice($broadcast->industries, 1) as $industry) {
+                        $query->orWhereJsonContains('industries', $industry);
+                    }
+                }
+            })
+            ->limit(50) // Limit notifications to prevent spam
+            ->get();
+
+        foreach ($matchingBusinesses as $business) {
+            $business->notify(new \App\Notifications\WorkerAvailabilityBroadcastNotification($broadcast, $worker));
+        }
     }
 }

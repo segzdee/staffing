@@ -224,37 +224,221 @@ class DashboardController extends Controller
     // Finance routes
     public function financeTransactions(): \Illuminate\View\View
     {
-        return view('admin.finance.transactions');
+        $query = \App\Models\ShiftPayment::with(['assignment.shift.business', 'worker']);
+
+        // Apply filters
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('transaction_id', 'like', "%{$search}%")
+                    ->orWhereHas('worker', fn ($w) => $w->where('name', 'like', "%{$search}%"));
+            });
+        }
+        if (request('date_from')) {
+            $query->whereDate('created_at', '>=', request('date_from'));
+        }
+        if (request('date_to')) {
+            $query->whereDate('created_at', '<=', request('date_to'));
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(50);
+
+        return view('admin.finance.transactions', [
+            'transactions' => $transactions,
+            'totalTransactions' => \App\Models\ShiftPayment::count(),
+            'totalVolume' => \App\Models\ShiftPayment::sum('amount_gross'),
+            'platformFees' => \App\Models\ShiftPayment::sum('platform_fee'),
+            'pendingAmount' => \App\Models\ShiftPayment::where('status', 'in_escrow')->sum('amount_gross'),
+        ]);
     }
 
     public function financeEscrow(): \Illuminate\View\View
     {
-        return view('admin.finance.escrow');
+        $query = \App\Models\ShiftPayment::with(['assignment.shift.business', 'worker'])
+            ->where('status', 'in_escrow');
+
+        // Apply filters
+        if (request('flagged') === 'flagged') {
+            $query->where('disputed', true);
+        } elseif (request('flagged') === 'releasing_today') {
+            $query->whereDate('escrow_held_at', today());
+        }
+
+        $escrowPayments = $query->orderBy('escrow_held_at', 'asc')->paginate(30);
+
+        return view('admin.finance.escrow', [
+            'escrowPayments' => $escrowPayments,
+            'totalInEscrow' => \App\Models\ShiftPayment::where('status', 'in_escrow')->sum('amount_gross'),
+            'pendingRelease' => \App\Models\ShiftPayment::where('status', 'in_escrow')
+                ->whereNotNull('released_at')
+                ->sum('amount_gross'),
+            'autoReleasingToday' => \App\Models\ShiftPayment::where('status', 'in_escrow')
+                ->whereNotNull('escrow_held_at')
+                ->sum('amount_gross'),
+            'autoReleasingTodayCount' => \App\Models\ShiftPayment::where('status', 'in_escrow')
+                ->whereNotNull('escrow_held_at')
+                ->count(),
+            'heldForReview' => \App\Models\ShiftPayment::where('status', 'disputed')
+                ->sum('amount_gross'),
+            'heldForReviewCount' => \App\Models\ShiftPayment::where('status', 'disputed')
+                ->count(),
+        ]);
+    }
+
+    public function financeEscrowReleaseAllDue(): \Illuminate\Http\RedirectResponse
+    {
+        // Release all escrow payments that are due for release
+        $released = \App\Models\ShiftPayment::where('status', 'in_escrow')
+            ->whereNotNull('escrow_held_at')
+            ->update(['status' => 'released', 'released_at' => now()]);
+
+        return redirect()->route('admin.finance.escrow')
+            ->with('success', "Released {$released} payments from escrow.");
     }
 
     public function financePayouts(): \Illuminate\View\View
     {
-        return view('admin.finance.payouts');
+        $query = \App\Models\ShiftPayment::with(['worker', 'assignment.shift'])
+            ->whereNotNull('payout_initiated_at');
+
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+
+        $payouts = $query->orderBy('payout_initiated_at', 'desc')->paginate(30);
+
+        return view('admin.finance.payouts', [
+            'payouts' => $payouts,
+            'totalPaidOut' => \App\Models\ShiftPayment::where('status', 'paid_out')->sum('amount_net'),
+            'pendingPayouts' => \App\Models\ShiftPayment::where('status', 'released')->sum('amount_net'),
+            'failedPayouts' => \App\Models\ShiftPayment::where('status', 'failed')->count(),
+            'thisWeekPayouts' => \App\Models\ShiftPayment::where('status', 'paid_out')
+                ->whereBetween('payout_completed_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->sum('amount_net'),
+        ]);
     }
 
     public function financeRefunds(): \Illuminate\View\View
     {
-        return view('admin.finance.refunds');
+        $refunds = \App\Models\Refund::with(['business', 'shift'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(30);
+
+        return view('admin.finance.refunds', [
+            'refunds' => $refunds,
+            'totalRefunded' => \App\Models\Refund::where('status', 'completed')->sum('refund_amount'),
+            'pendingRefunds' => \App\Models\Refund::where('status', 'pending')->count(),
+            'failedRefunds' => \App\Models\Refund::where('status', 'failed')->count(),
+            'thisMonthRefunded' => \App\Models\Refund::where('status', 'completed')
+                ->whereMonth('completed_at', Carbon::now()->month)
+                ->sum('refund_amount'),
+            'autoRefundsCount' => \App\Models\Refund::where('refund_type', 'auto_cancellation')->count(),
+            'manualRefundsCount' => \App\Models\Refund::where('refund_type', 'manual_adjustment')->count(),
+        ]);
     }
 
     public function financeDisputed(): \Illuminate\View\View
     {
-        return view('admin.finance.disputed');
+        $disputes = \App\Models\ShiftPayment::with(['assignment.shift.business', 'worker'])
+            ->where('status', 'disputed')
+            ->orderBy('disputed_at', 'desc')
+            ->paginate(30);
+
+        $avgResolutionTime = \App\Models\ShiftPayment::whereNotNull('resolved_at')
+            ->whereNotNull('disputed_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, disputed_at, resolved_at)) as avg_hours')
+            ->first()
+            ->avg_hours ?? 0;
+
+        return view('admin.finance.disputed', [
+            'disputes' => $disputes,
+            'activeDisputes' => \App\Models\ShiftPayment::where('status', 'disputed')->count(),
+            'pendingResolution' => \App\Models\ShiftPayment::where('status', 'disputed')
+                ->whereNull('resolved_at')
+                ->count(),
+            'resolvedThisWeek' => \App\Models\ShiftPayment::whereNotNull('resolved_at')
+                ->whereBetween('resolved_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])
+                ->count(),
+            'avgResolutionTime' => round($avgResolutionTime, 1),
+        ]);
     }
 
     public function financeCommissions(): \Illuminate\View\View
     {
-        return view('admin.finance.commissions');
+        $commissions = \App\Models\ShiftPayment::with(['assignment.shift.business', 'worker'])
+            ->where('platform_fee', '>', 0)
+            ->orWhere('agency_commission', '>', 0)
+            ->orderBy('created_at', 'desc')
+            ->paginate(30);
+
+        return view('admin.finance.commissions', [
+            'commissions' => $commissions,
+            'totalCommissions' => \App\Models\ShiftPayment::sum('platform_fee') + \App\Models\ShiftPayment::sum('agency_commission'),
+            'platformRevenue' => \App\Models\ShiftPayment::sum('platform_fee'),
+            'agencyCommissions' => \App\Models\ShiftPayment::sum('agency_commission'),
+            'thisMonthCommissions' => \App\Models\ShiftPayment::whereMonth('created_at', Carbon::now()->month)
+                ->sum('platform_fee'),
+        ]);
     }
 
     public function financeReports(): \Illuminate\View\View
     {
-        return view('admin.finance.reports');
+        // Get summary stats for the reports page
+        $todayStats = [
+            'transactions' => \App\Models\ShiftPayment::whereDate('created_at', today())->count(),
+            'volume' => \App\Models\ShiftPayment::whereDate('created_at', today())->sum('amount_gross'),
+            'revenue' => \App\Models\ShiftPayment::whereDate('created_at', today())->sum('platform_fee'),
+        ];
+
+        $weekStats = [
+            'transactions' => \App\Models\ShiftPayment::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count(),
+            'volume' => \App\Models\ShiftPayment::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('amount_gross'),
+            'revenue' => \App\Models\ShiftPayment::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->sum('platform_fee'),
+        ];
+
+        $monthStats = [
+            'transactions' => \App\Models\ShiftPayment::whereMonth('created_at', Carbon::now()->month)->count(),
+            'volume' => \App\Models\ShiftPayment::whereMonth('created_at', Carbon::now()->month)->sum('amount_gross'),
+            'revenue' => \App\Models\ShiftPayment::whereMonth('created_at', Carbon::now()->month)->sum('platform_fee'),
+        ];
+
+        return view('admin.finance.reports', [
+            'todayStats' => $todayStats,
+            'weekStats' => $weekStats,
+            'monthStats' => $monthStats,
+        ]);
+    }
+
+    public function financeReportsGenerate(): \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $type = request('type', 'transactions');
+        $startDate = request('start_date', today()->format('Y-m-d'));
+        $endDate = request('end_date', today()->format('Y-m-d'));
+
+        $query = \App\Models\ShiftPayment::whereBetween('created_at', [$startDate, $endDate]);
+
+        $payments = $query->get();
+
+        $csv = "ID,Date,Worker,Business,Amount,Fee,Status\n";
+        foreach ($payments as $payment) {
+            $csv .= implode(',', [
+                $payment->id,
+                $payment->created_at->format('Y-m-d'),
+                $payment->worker->name ?? 'N/A',
+                $payment->assignment?->shift?->business?->name ?? 'N/A',
+                $payment->amount_gross / 100,
+                $payment->platform_fee / 100,
+                $payment->status,
+            ]) . "\n";
+        }
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"finance-report-{$startDate}-{$endDate}.csv\"",
+        ]);
     }
 
     // Moderation routes
@@ -346,7 +530,26 @@ class DashboardController extends Controller
     // Shifts routes
     public function shiftsIndex(): \Illuminate\View\View
     {
-        return view('admin.shifts.index');
+        $query = \App\Models\Shift::with(['business', 'applications']);
+
+        // Apply filters
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+        if (request('industry')) {
+            $query->where('industry', request('industry'));
+        }
+        if (request('urgency')) {
+            $query->where('urgency_level', request('urgency'));
+        }
+
+        $shifts = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        $statuses = ['open', 'filled', 'in_progress', 'completed', 'cancelled'];
+        $industries = \App\Models\Shift::distinct()->pluck('industry')->filter()->values()->toArray();
+        $urgency_levels = ['normal', 'urgent', 'critical'];
+
+        return view('admin.shifts.index', compact('shifts', 'statuses', 'industries', 'urgency_levels'));
     }
 
     public function shiftsActive(): \Illuminate\View\View
@@ -436,11 +639,11 @@ class DashboardController extends Controller
         // Apply status filter
         if ($status !== 'all') {
             if ($status === 'active') {
-                $query->where('is_active', true)->whereNull('suspended_at');
+                $query->where('status', 'active')->where('is_suspended', false);
             } elseif ($status === 'suspended') {
-                $query->whereNotNull('suspended_at');
+                $query->where('is_suspended', true);
             } elseif ($status === 'inactive') {
-                $query->where('is_active', false);
+                $query->where('status', 'inactive');
             }
         }
 
@@ -462,7 +665,7 @@ class DashboardController extends Controller
             'workers' => User::where('user_type', 'worker')->count(),
             'businesses' => User::where('user_type', 'business')->count(),
             'agencies' => User::where('user_type', 'agency')->count(),
-            'suspended' => User::whereNotNull('suspended_at')->count(),
+            'suspended' => User::where('is_suspended', true)->count(),
             'new_today' => User::whereDate('created_at', today())->count(),
         ];
 

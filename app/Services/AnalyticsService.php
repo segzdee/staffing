@@ -44,9 +44,9 @@ class AnalyticsService
         $cancelledShifts = $shifts->where('status', 'cancelled')->count();
         $totalWorkers = $shifts->sum('filled_workers');
 
-        $assignments = ShiftAssignment::whereHas('shift', function($q) use ($business, $start, $end) {
+        $assignments = ShiftAssignment::whereHas('shift', function ($q) use ($business, $start, $end) {
             $q->where('business_id', $business->id)
-              ->whereBetween('shift_date', [$start, $end]);
+                ->whereBetween('shift_date', [$start, $end]);
         })->get();
 
         $noShows = $assignments->where('status', 'no_show')->count();
@@ -68,7 +68,7 @@ class AnalyticsService
     protected function getLaborCostAnalysis(User $business, $start, $end)
     {
         $payments = ShiftPayment::where('business_id', $business->id)
-            ->whereHas('shift', function($q) use ($start, $end) {
+            ->whereHas('shift', function ($q) use ($start, $end) {
                 $q->whereBetween('shift_date', [$start, $end]);
             })
             ->get();
@@ -82,7 +82,7 @@ class AnalyticsService
 
         // Get cost by industry
         $costByIndustry = ShiftPayment::where('business_id', $business->id)
-            ->whereHas('shift', function($q) use ($start, $end) {
+            ->whereHas('shift', function ($q) use ($start, $end) {
                 $q->whereBetween('shift_date', [$start, $end]);
             })
             ->join('shifts', 'shift_payments.shift_id', '=', 'shifts.id')
@@ -112,7 +112,7 @@ class AnalyticsService
 
         $totalPositions = $shifts->sum('required_workers');
         $filledPositions = $shifts->sum('filled_workers');
-        $fullyStaffedShifts = $shifts->filter(function($shift) {
+        $fullyStaffedShifts = $shifts->filter(function ($shift) {
             return $shift->filled_workers >= $shift->required_workers;
         })->count();
 
@@ -121,7 +121,7 @@ class AnalyticsService
         $avgFillTime = 0;
 
         if ($filledShifts->count() > 0) {
-            $totalMinutes = $filledShifts->sum(function($shift) {
+            $totalMinutes = $filledShifts->sum(function ($shift) {
                 return Carbon::parse($shift->created_at)->diffInMinutes($shift->filled_at);
             });
             $count = $filledShifts->count();
@@ -129,9 +129,10 @@ class AnalyticsService
         }
 
         // Fill rate by urgency
-        $fillRateByUrgency = $shifts->groupBy('urgency_level')->map(function($urgencyShifts) {
+        $fillRateByUrgency = $shifts->groupBy('urgency_level')->map(function ($urgencyShifts) {
             $total = $urgencyShifts->sum('required_workers');
             $filled = $urgencyShifts->sum('filled_workers');
+
             return $total > 0 ? round(($filled / $total) * 100, 2) : 0;
         });
 
@@ -150,14 +151,14 @@ class AnalyticsService
     protected function getWorkerPerformanceMetrics(User $business, $start, $end)
     {
         $assignments = ShiftAssignment::with('worker')
-            ->whereHas('shift', function($q) use ($business, $start, $end) {
+            ->whereHas('shift', function ($q) use ($business, $start, $end) {
                 $q->where('business_id', $business->id)
-                  ->whereBetween('shift_date', [$start, $end]);
+                    ->whereBetween('shift_date', [$start, $end]);
             })
             ->get();
 
         // Top performers
-        $workerStats = $assignments->groupBy('worker_id')->map(function($workerAssignments, $workerId) {
+        $workerStats = $assignments->groupBy('worker_id')->map(function ($workerAssignments, $workerId) {
             $worker = $workerAssignments->first()->worker;
             $completed = $workerAssignments->where('status', 'completed')->count();
             $noShows = $workerAssignments->where('status', 'no_show')->count();
@@ -176,7 +177,7 @@ class AnalyticsService
         return [
             'total_unique_workers' => $assignments->unique('worker_id')->count(),
             'top_performers' => $workerStats->values(),
-            'average_worker_rating' => round($assignments->avg(function($assignment) {
+            'average_worker_rating' => round($assignments->avg(function ($assignment) {
                 return $assignment->worker->rating_as_worker ?? 0;
             }), 2),
         ];
@@ -262,21 +263,21 @@ class AnalyticsService
             ->get();
 
         // Cost per shift
-        $avgCostPerShift = $shifts->avg(function($shift) {
+        $avgCostPerShift = $shifts->avg(function ($shift) {
             return $shift->payments->sum('amount_gross');
         });
 
         // Cost by day of week
-        $costByDayOfWeek = $shifts->groupBy(function($shift) {
+        $costByDayOfWeek = $shifts->groupBy(function ($shift) {
             return Carbon::parse($shift->shift_date)->format('l');
-        })->map(function($dayShifts) {
-            return $dayShifts->sum(function($shift) {
+        })->map(function ($dayShifts) {
+            return $dayShifts->sum(function ($shift) {
                 return $shift->payments->sum('amount_gross');
             });
         });
 
         // Budget comparison (if they have a budget set)
-        $totalSpent = $shifts->sum(function($shift) {
+        $totalSpent = $shifts->sum(function ($shift) {
             return $shift->payments->sum('amount_gross');
         });
 
@@ -340,14 +341,14 @@ class AnalyticsService
     {
         $now = Carbon::now();
 
-        return ShiftAssignment::whereHas('shift', function($q) use ($business, $now) {
+        return ShiftAssignment::whereHas('shift', function ($q) use ($business, $now) {
             $q->where('business_id', $business->id)
-              ->whereDate('shift_date', $now->toDateString())
-              ->whereTime('start_time', '<=', $now->toTimeString())
-              ->whereTime('end_time', '>=', $now->toTimeString());
+                ->whereDate('shift_date', $now->toDateString())
+                ->whereTime('start_time', '<=', $now->toTimeString())
+                ->whereTime('end_time', '>=', $now->toTimeString());
         })
-        ->whereIn('status', ['checked_in'])
-        ->count();
+            ->whereIn('status', ['checked_in'])
+            ->count();
     }
 
     /**
@@ -365,12 +366,187 @@ class AnalyticsService
 
     /**
      * Export analytics data to CSV
+     *
+     * @param  string|null  $startDate
+     * @param  string|null  $endDate
+     * @return string Path to the generated CSV file
      */
     public function exportToCSV(User $business, $startDate, $endDate)
     {
         $analytics = $this->getBusinessAnalytics($business, $startDate, $endDate);
+        $start = $startDate ? Carbon::parse($startDate) : Carbon::now()->subDays(30);
+        $end = $endDate ? Carbon::parse($endDate) : Carbon::now();
 
-        // TODO: Generate CSV file
-        return $analytics;
+        // Generate unique filename
+        $filename = sprintf(
+            'analytics_%s_%s_to_%s.csv',
+            $business->id,
+            $start->format('Y-m-d'),
+            $end->format('Y-m-d')
+        );
+        $filepath = storage_path('app/exports/'.$filename);
+
+        // Ensure exports directory exists
+        if (! file_exists(storage_path('app/exports'))) {
+            mkdir(storage_path('app/exports'), 0755, true);
+        }
+
+        // Open file for writing
+        $handle = fopen($filepath, 'w');
+
+        // Write BOM for Excel UTF-8 compatibility
+        fwrite($handle, "\xEF\xBB\xBF");
+
+        // Write header section
+        fputcsv($handle, ['Analytics Report for '.$business->name]);
+        fputcsv($handle, ['Period: '.$start->format('M d, Y').' to '.$end->format('M d, Y')]);
+        fputcsv($handle, ['Generated: '.now()->format('M d, Y H:i:s')]);
+        fputcsv($handle, []); // Empty row
+
+        // Overview Metrics Section
+        fputcsv($handle, ['=== OVERVIEW METRICS ===']);
+        fputcsv($handle, ['Metric', 'Value']);
+        $overview = $analytics['overview'] ?? [];
+        fputcsv($handle, ['Total Shifts Posted', $overview['total_shifts_posted'] ?? 0]);
+        fputcsv($handle, ['Shifts Completed', $overview['shifts_completed'] ?? 0]);
+        fputcsv($handle, ['Shifts Cancelled', $overview['shifts_cancelled'] ?? 0]);
+        fputcsv($handle, ['Total Workers Hired', $overview['total_workers_hired'] ?? 0]);
+        fputcsv($handle, ['No-Show Count', $overview['no_show_count'] ?? 0]);
+        fputcsv($handle, ['No-Show Rate (%)', $overview['no_show_rate'] ?? 0]);
+        fputcsv($handle, ['Completion Rate (%)', $overview['completion_rate'] ?? 0]);
+        fputcsv($handle, []);
+
+        // Labor Costs Section
+        fputcsv($handle, ['=== LABOR COSTS ===']);
+        fputcsv($handle, ['Metric', 'Value']);
+        $laborCosts = $analytics['labor_costs'] ?? [];
+        fputcsv($handle, ['Total Spent ($)', number_format($laborCosts['total_spent'] ?? 0, 2)]);
+        fputcsv($handle, ['Total Paid to Workers ($)', number_format($laborCosts['total_paid_to_workers'] ?? 0, 2)]);
+        fputcsv($handle, ['Platform Fees Paid ($)', number_format($laborCosts['platform_fees_paid'] ?? 0, 2)]);
+        fputcsv($handle, ['Total Hours Worked', number_format($laborCosts['total_hours_worked'] ?? 0, 2)]);
+        fputcsv($handle, ['Average Hourly Rate ($)', number_format($laborCosts['average_hourly_rate'] ?? 0, 2)]);
+        fputcsv($handle, []);
+
+        // Cost by Industry
+        if (! empty($laborCosts['cost_by_industry'])) {
+            fputcsv($handle, ['Cost by Industry']);
+            fputcsv($handle, ['Industry', 'Total Cost ($)', 'Shift Count']);
+            foreach ($laborCosts['cost_by_industry'] as $industryData) {
+                fputcsv($handle, [
+                    $industryData->industry ?? 'Unknown',
+                    number_format($industryData->total_cost ?? 0, 2),
+                    $industryData->shift_count ?? 0,
+                ]);
+            }
+            fputcsv($handle, []);
+        }
+
+        // Fill Rate Metrics Section
+        fputcsv($handle, ['=== FILL RATE METRICS ===']);
+        fputcsv($handle, ['Metric', 'Value']);
+        $fillRate = $analytics['fill_rate'] ?? [];
+        fputcsv($handle, ['Overall Fill Rate (%)', $fillRate['overall_fill_rate'] ?? 0]);
+        fputcsv($handle, ['Fully Staffed Shifts', $fillRate['fully_staffed_shifts'] ?? 0]);
+        fputcsv($handle, ['Partially Staffed Shifts', $fillRate['partially_staffed_shifts'] ?? 0]);
+        fputcsv($handle, ['Average Time to Fill (hours)', $fillRate['average_time_to_fill_hours'] ?? 0]);
+        fputcsv($handle, []);
+
+        // Fill Rate by Urgency
+        if (! empty($fillRate['fill_rate_by_urgency'])) {
+            fputcsv($handle, ['Fill Rate by Urgency Level']);
+            fputcsv($handle, ['Urgency Level', 'Fill Rate (%)']);
+            foreach ($fillRate['fill_rate_by_urgency'] as $urgency => $rate) {
+                fputcsv($handle, [ucfirst($urgency), $rate]);
+            }
+            fputcsv($handle, []);
+        }
+
+        // Worker Performance Section
+        fputcsv($handle, ['=== WORKER PERFORMANCE ===']);
+        fputcsv($handle, ['Metric', 'Value']);
+        $workerPerf = $analytics['worker_performance'] ?? [];
+        fputcsv($handle, ['Total Unique Workers', $workerPerf['total_unique_workers'] ?? 0]);
+        fputcsv($handle, ['Average Worker Rating', $workerPerf['average_worker_rating'] ?? 0]);
+        fputcsv($handle, []);
+
+        // Top Performers
+        if (! empty($workerPerf['top_performers'])) {
+            fputcsv($handle, ['Top Performers']);
+            fputcsv($handle, ['Worker Name', 'Shifts Completed', 'No-Shows', 'Reliability Rate (%)', 'Rating']);
+            foreach ($workerPerf['top_performers'] as $performer) {
+                fputcsv($handle, [
+                    $performer['worker_name'] ?? 'Unknown',
+                    $performer['shifts_completed'] ?? 0,
+                    $performer['no_shows'] ?? 0,
+                    $performer['reliability_rate'] ?? 0,
+                    $performer['rating'] ?? 0,
+                ]);
+            }
+            fputcsv($handle, []);
+        }
+
+        // Daily Trends Section
+        if (! empty($analytics['shift_trends']['daily_trends'])) {
+            fputcsv($handle, ['=== DAILY TRENDS ===']);
+            fputcsv($handle, ['Date', 'Total Shifts', 'Completed', 'Workers Hired']);
+            foreach ($analytics['shift_trends']['daily_trends'] as $day) {
+                fputcsv($handle, [
+                    $day->date ?? '',
+                    $day->total ?? 0,
+                    $day->completed ?? 0,
+                    $day->workers_hired ?? 0,
+                ]);
+            }
+            fputcsv($handle, []);
+        }
+
+        // Day of Week Analysis
+        if (! empty($analytics['shift_trends']['day_of_week_analysis'])) {
+            fputcsv($handle, ['=== DAY OF WEEK ANALYSIS ===']);
+            fputcsv($handle, ['Day', 'Shift Count', 'Average Workers']);
+            foreach ($analytics['shift_trends']['day_of_week_analysis'] as $dayData) {
+                fputcsv($handle, [
+                    $dayData->day_of_week ?? '',
+                    $dayData->shift_count ?? 0,
+                    number_format($dayData->avg_workers ?? 0, 2),
+                ]);
+            }
+            fputcsv($handle, []);
+        }
+
+        // Peak Demand Analysis
+        if (! empty($analytics['peak_demand']['peak_hours'])) {
+            fputcsv($handle, ['=== PEAK HOURS ===']);
+            fputcsv($handle, ['Hour', 'Shift Count', 'Workers Needed']);
+            foreach ($analytics['peak_demand']['peak_hours'] as $hourData) {
+                fputcsv($handle, [
+                    sprintf('%02d:00', $hourData->hour ?? 0),
+                    $hourData->shift_count ?? 0,
+                    $hourData->workers_needed ?? 0,
+                ]);
+            }
+            fputcsv($handle, []);
+        }
+
+        // Cost Breakdown Section
+        fputcsv($handle, ['=== COST BREAKDOWN ===']);
+        fputcsv($handle, ['Metric', 'Value']);
+        $costBreakdown = $analytics['cost_breakdown'] ?? [];
+        fputcsv($handle, ['Total Spent ($)', number_format($costBreakdown['total_spent'] ?? 0, 2)]);
+        fputcsv($handle, ['Average Cost per Shift ($)', number_format($costBreakdown['average_cost_per_shift'] ?? 0, 2)]);
+        fputcsv($handle, []);
+
+        // Cost by Day of Week
+        if (! empty($costBreakdown['cost_by_day_of_week'])) {
+            fputcsv($handle, ['Cost by Day of Week']);
+            fputcsv($handle, ['Day', 'Total Cost ($)']);
+            foreach ($costBreakdown['cost_by_day_of_week'] as $day => $cost) {
+                fputcsv($handle, [$day, number_format($cost ?? 0, 2)]);
+            }
+        }
+
+        fclose($handle);
+
+        return $filepath;
     }
 }

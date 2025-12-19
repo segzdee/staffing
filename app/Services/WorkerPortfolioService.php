@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\WorkerPortfolioItem;
 use App\Models\WorkerFeaturedStatus;
+use App\Models\WorkerPortfolioItem;
 use App\Models\WorkerProfileView;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -34,17 +34,12 @@ class WorkerPortfolioService
      * Thumbnail dimensions.
      */
     protected int $thumbnailWidth = 300;
+
     protected int $thumbnailHeight = 300;
 
     /**
      * Upload a portfolio item.
      *
-     * @param User $worker
-     * @param UploadedFile $file
-     * @param string $type
-     * @param string $title
-     * @param string|null $description
-     * @return WorkerPortfolioItem
      * @throws \Exception
      */
     public function uploadItem(
@@ -57,24 +52,24 @@ class WorkerPortfolioService
         // Validate worker can add more items
         $currentCount = WorkerPortfolioItem::where('worker_id', $worker->id)->count();
         if ($currentCount >= WorkerPortfolioItem::MAX_ITEMS_PER_WORKER) {
-            throw new \Exception('Maximum portfolio items limit reached (' . WorkerPortfolioItem::MAX_ITEMS_PER_WORKER . ')');
+            throw new \Exception('Maximum portfolio items limit reached ('.WorkerPortfolioItem::MAX_ITEMS_PER_WORKER.')');
         }
 
         // Validate file type and size
         $mimeType = $file->getMimeType();
-        if (!WorkerPortfolioItem::isAllowedMimeType($type, $mimeType)) {
-            throw new \Exception('File type not allowed for ' . $type);
+        if (! WorkerPortfolioItem::isAllowedMimeType($type, $mimeType)) {
+            throw new \Exception('File type not allowed for '.$type);
         }
 
         $maxSize = WorkerPortfolioItem::getMaxFileSize($type);
         if ($file->getSize() > $maxSize) {
-            throw new \Exception('File size exceeds maximum allowed (' . $this->formatFileSize($maxSize) . ')');
+            throw new \Exception('File size exceeds maximum allowed ('.$this->formatFileSize($maxSize).')');
         }
 
         // Generate storage paths
-        $workerFolder = $this->basePath . '/' . $worker->id;
-        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
-        $filePath = $workerFolder . '/' . $filename;
+        $workerFolder = $this->basePath.'/'.$worker->id;
+        $filename = Str::uuid().'.'.$file->getClientOriginalExtension();
+        $filePath = $workerFolder.'/'.$filename;
 
         // Store the file
         Storage::disk($this->disk)->putFileAs($workerFolder, $file, $filename);
@@ -115,10 +110,6 @@ class WorkerPortfolioService
 
     /**
      * Update a portfolio item.
-     *
-     * @param WorkerPortfolioItem $item
-     * @param array $data
-     * @return WorkerPortfolioItem
      */
     public function updateItem(WorkerPortfolioItem $item, array $data): WorkerPortfolioItem
     {
@@ -131,9 +122,6 @@ class WorkerPortfolioService
 
     /**
      * Delete a portfolio item.
-     *
-     * @param WorkerPortfolioItem $item
-     * @return bool
      */
     public function deleteItem(WorkerPortfolioItem $item): bool
     {
@@ -152,9 +140,7 @@ class WorkerPortfolioService
     /**
      * Reorder portfolio items.
      *
-     * @param User $worker
-     * @param array $itemIds Array of item IDs in desired order
-     * @return void
+     * @param  array  $itemIds  Array of item IDs in desired order
      */
     public function reorderItems(User $worker, array $itemIds): void
     {
@@ -169,10 +155,6 @@ class WorkerPortfolioService
 
     /**
      * Set a portfolio item as featured.
-     *
-     * @param User $worker
-     * @param WorkerPortfolioItem $item
-     * @return WorkerPortfolioItem
      */
     public function setFeaturedItem(User $worker, WorkerPortfolioItem $item): WorkerPortfolioItem
     {
@@ -191,21 +173,17 @@ class WorkerPortfolioService
 
     /**
      * Remove featured status from an item.
-     *
-     * @param WorkerPortfolioItem $item
-     * @return WorkerPortfolioItem
      */
     public function removeFeatured(WorkerPortfolioItem $item): WorkerPortfolioItem
     {
         $item->update(['is_featured' => false]);
+
         return $item->fresh();
     }
 
     /**
      * Get worker's portfolio items.
      *
-     * @param User $worker
-     * @param bool $visibleOnly
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getPortfolioItems(User $worker, bool $visibleOnly = false)
@@ -222,9 +200,6 @@ class WorkerPortfolioService
 
     /**
      * Get featured portfolio item for a worker.
-     *
-     * @param User $worker
-     * @return WorkerPortfolioItem|null
      */
     public function getFeaturedItem(User $worker): ?WorkerPortfolioItem
     {
@@ -236,15 +211,12 @@ class WorkerPortfolioService
 
     /**
      * Generate public profile data.
-     *
-     * @param User $worker
-     * @return array
      */
     public function generatePublicProfile(User $worker): array
     {
         $profile = $worker->workerProfile;
 
-        if (!$profile || !$profile->public_profile_enabled) {
+        if (! $profile || ! $profile->public_profile_enabled) {
             return ['enabled' => false];
         }
 
@@ -347,7 +319,7 @@ class WorkerPortfolioService
                 'days_remaining' => $featuredStatus->days_remaining,
             ] : null,
             'meta' => [
-                'title' => $worker->name . ' - Professional Profile | OvertimeStaff',
+                'title' => $worker->name.' - Professional Profile | OvertimeStaff',
                 'description' => $this->generateMetaDescription($worker, $profile),
                 'keywords' => $this->generateMetaKeywords($skills, $profile),
             ],
@@ -357,14 +329,13 @@ class WorkerPortfolioService
     /**
      * Enable public profile for a worker.
      *
-     * @param User $worker
      * @return string The public profile slug
      */
     public function enablePublicProfile(User $worker): string
     {
         $profile = $worker->workerProfile;
 
-        if (!$profile->public_profile_slug) {
+        if (! $profile->public_profile_slug) {
             $profile->public_profile_slug = $this->generateUniqueSlug($worker);
         }
 
@@ -377,9 +348,6 @@ class WorkerPortfolioService
 
     /**
      * Disable public profile.
-     *
-     * @param User $worker
-     * @return void
      */
     public function disablePublicProfile(User $worker): void
     {
@@ -390,11 +358,6 @@ class WorkerPortfolioService
 
     /**
      * Record a profile view.
-     *
-     * @param User $worker
-     * @param User|null $viewer
-     * @param string $source
-     * @return WorkerProfileView
      */
     public function recordProfileView(User $worker, ?User $viewer, string $source = 'other'): WorkerProfileView
     {
@@ -413,10 +376,6 @@ class WorkerPortfolioService
 
     /**
      * Get profile view analytics for a worker.
-     *
-     * @param User $worker
-     * @param int $days
-     * @return array
      */
     public function getProfileAnalytics(User $worker, int $days = 30): array
     {
@@ -425,11 +384,6 @@ class WorkerPortfolioService
 
     /**
      * Purchase featured status for a worker.
-     *
-     * @param User $worker
-     * @param string $tier
-     * @param string|null $paymentReference
-     * @return WorkerFeaturedStatus
      */
     public function purchaseFeaturedStatus(User $worker, string $tier, ?string $paymentReference = null): WorkerFeaturedStatus
     {
@@ -447,9 +401,6 @@ class WorkerPortfolioService
 
     /**
      * Get active featured status for a worker.
-     *
-     * @param User $worker
-     * @return WorkerFeaturedStatus|null
      */
     public function getActiveFeaturedStatus(User $worker): ?WorkerFeaturedStatus
     {
@@ -460,9 +411,6 @@ class WorkerPortfolioService
 
     /**
      * Calculate featured score boost for search results.
-     *
-     * @param User $worker
-     * @return float
      */
     public function getFeaturedSearchBoost(User $worker): float
     {
@@ -473,16 +421,12 @@ class WorkerPortfolioService
 
     /**
      * Generate image thumbnail.
-     *
-     * @param UploadedFile $file
-     * @param string $folder
-     * @return string|null
      */
     protected function generateImageThumbnail(UploadedFile $file, string $folder): ?string
     {
         try {
-            $thumbnailFilename = 'thumb_' . Str::uuid() . '.jpg';
-            $thumbnailPath = $folder . '/' . $thumbnailFilename;
+            $thumbnailFilename = 'thumb_'.Str::uuid().'.jpg';
+            $thumbnailPath = $folder.'/'.$thumbnailFilename;
 
             $image = Image::make($file);
             $image->fit($this->thumbnailWidth, $this->thumbnailHeight);
@@ -493,36 +437,121 @@ class WorkerPortfolioService
             return $thumbnailPath;
         } catch (\Exception $e) {
             // Log error but don't fail the upload
-            \Log::warning('Failed to generate image thumbnail: ' . $e->getMessage());
+            \Log::warning('Failed to generate image thumbnail: '.$e->getMessage());
+
             return null;
         }
     }
 
     /**
-     * Generate video thumbnail (placeholder - requires FFmpeg).
+     * Generate video thumbnail using Laravel FFmpeg.
      *
-     * @param string $videoPath
-     * @param string $folder
-     * @return string|null
+     * Extracts a frame from the video at 1 second (or 10% of duration if shorter)
+     * and creates a thumbnail image.
+     *
+     * @param  string  $videoPath  Path to the video file in storage
+     * @param  string  $folder  Folder to store the thumbnail
+     * @return string|null Path to the generated thumbnail, or null on failure
      */
     protected function generateVideoThumbnail(string $videoPath, string $folder): ?string
     {
-        // Video thumbnail generation requires FFmpeg
-        // For now, return null and use placeholder
-        // TODO: Implement with Laravel FFmpeg package
-        return null;
+        // Check if Laravel FFmpeg is available
+        if (! class_exists(\ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::class)) {
+            \Log::warning('Video thumbnail generation skipped - Laravel FFmpeg not available');
+
+            return null;
+        }
+
+        try {
+            $thumbnailFilename = 'thumb_'.Str::uuid().'.jpg';
+            $thumbnailPath = $folder.'/'.$thumbnailFilename;
+
+            // Get the full storage path for the video
+            $fullVideoPath = Storage::disk($this->disk)->path($videoPath);
+
+            // Check if file exists
+            if (! file_exists($fullVideoPath)) {
+                \Log::warning('Video file not found for thumbnail generation', [
+                    'path' => $videoPath,
+                ]);
+
+                return null;
+            }
+
+            // Open the video with FFmpeg
+            $ffmpeg = \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::fromDisk($this->disk)
+                ->open($videoPath);
+
+            // Get video duration to determine frame position
+            $durationInSeconds = $ffmpeg->getDurationInSeconds();
+
+            // Extract frame at 1 second or 10% of duration (whichever is less)
+            $framePosition = min(1, $durationInSeconds * 0.1);
+
+            // Generate the thumbnail
+            $ffmpeg->getFrameFromSeconds($framePosition)
+                ->export()
+                ->toDisk($this->disk)
+                ->save($thumbnailPath);
+
+            // Resize the thumbnail if Intervention Image is available
+            if (class_exists(\Intervention\Image\Facades\Image::class)) {
+                $this->resizeVideoThumbnail($thumbnailPath);
+            }
+
+            \Log::info('Video thumbnail generated successfully', [
+                'video_path' => $videoPath,
+                'thumbnail_path' => $thumbnailPath,
+            ]);
+
+            return $thumbnailPath;
+
+        } catch (\ProtoneMedia\LaravelFFMpeg\Exceptions\EncodingException $e) {
+            \Log::warning('FFmpeg encoding error during thumbnail generation', [
+                'video_path' => $videoPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        } catch (\Exception $e) {
+            \Log::warning('Failed to generate video thumbnail', [
+                'video_path' => $videoPath,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Resize video thumbnail to standard dimensions.
+     *
+     * @param  string  $thumbnailPath  Path to the thumbnail in storage
+     */
+    protected function resizeVideoThumbnail(string $thumbnailPath): void
+    {
+        try {
+            $fullPath = Storage::disk($this->disk)->path($thumbnailPath);
+
+            $image = Image::make($fullPath);
+            $image->fit($this->thumbnailWidth, $this->thumbnailHeight);
+            $image->save($fullPath, 85);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to resize video thumbnail', [
+                'path' => $thumbnailPath,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
      * Get image metadata.
-     *
-     * @param UploadedFile $file
-     * @return array
      */
     protected function getImageMetadata(UploadedFile $file): array
     {
         try {
             $image = Image::make($file);
+
             return [
                 'width' => $image->width(),
                 'height' => $image->height(),
@@ -533,22 +562,182 @@ class WorkerPortfolioService
     }
 
     /**
-     * Get video metadata (placeholder).
+     * Get video metadata using Laravel FFmpeg.
      *
-     * @param UploadedFile $file
-     * @return array
+     * Extracts duration, dimensions, codec, bitrate, and frame rate.
+     * Falls back to sensible defaults if FFmpeg is not available.
+     *
+     * @return array Video metadata including duration, width, height, codec, bitrate, framerate
      */
     protected function getVideoMetadata(UploadedFile $file): array
     {
-        // TODO: Implement with FFmpeg for duration, dimensions, etc.
-        return [];
+        // Check if Laravel FFmpeg is available
+        if (! class_exists(\ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::class)) {
+            \Log::debug('Video metadata extraction skipped - Laravel FFmpeg not available');
+
+            return $this->getDefaultVideoMetadata($file);
+        }
+
+        try {
+            // Store temporarily to analyze with FFmpeg
+            $tempPath = $file->store('temp', $this->disk);
+
+            $ffmpeg = \ProtoneMedia\LaravelFFMpeg\Support\FFMpeg::fromDisk($this->disk)
+                ->open($tempPath);
+
+            // Get video stream for dimensions
+            $videoStream = $ffmpeg->getVideoStream();
+            $format = $ffmpeg->getFormat();
+
+            $metadata = [
+                'duration' => (float) $ffmpeg->getDurationInSeconds(),
+                'duration_formatted' => $this->formatDuration($ffmpeg->getDurationInSeconds()),
+                'width' => $videoStream ? (int) $videoStream->get('width') : null,
+                'height' => $videoStream ? (int) $videoStream->get('height') : null,
+                'codec' => $videoStream ? $videoStream->get('codec_name') : null,
+                'bitrate' => $format ? (int) $format->get('bit_rate') : null,
+                'framerate' => $this->extractFrameRate($videoStream),
+                'file_size' => $file->getSize(),
+            ];
+
+            // Calculate aspect ratio
+            if ($metadata['width'] && $metadata['height']) {
+                $metadata['aspect_ratio'] = $this->calculateAspectRatio(
+                    $metadata['width'],
+                    $metadata['height']
+                );
+            }
+
+            // Clean up temp file
+            Storage::disk($this->disk)->delete($tempPath);
+
+            \Log::info('Video metadata extracted successfully', [
+                'duration' => $metadata['duration'],
+                'dimensions' => $metadata['width'].'x'.$metadata['height'],
+            ]);
+
+            return $metadata;
+
+        } catch (\Exception $e) {
+            \Log::warning('Failed to extract video metadata', [
+                'error' => $e->getMessage(),
+            ]);
+
+            // Clean up temp file on error
+            if (isset($tempPath)) {
+                Storage::disk($this->disk)->delete($tempPath);
+            }
+
+            return $this->getDefaultVideoMetadata($file);
+        }
+    }
+
+    /**
+     * Get default video metadata when FFmpeg is not available.
+     */
+    protected function getDefaultVideoMetadata(UploadedFile $file): array
+    {
+        return [
+            'duration' => null,
+            'duration_formatted' => null,
+            'width' => null,
+            'height' => null,
+            'codec' => null,
+            'bitrate' => null,
+            'framerate' => null,
+            'file_size' => $file->getSize(),
+            'aspect_ratio' => null,
+        ];
+    }
+
+    /**
+     * Extract frame rate from video stream.
+     *
+     * @param  mixed  $videoStream
+     */
+    protected function extractFrameRate($videoStream): ?float
+    {
+        if (! $videoStream) {
+            return null;
+        }
+
+        // Try avg_frame_rate first (e.g., "30000/1001" or "30/1")
+        $avgFrameRate = $videoStream->get('avg_frame_rate');
+        if ($avgFrameRate && str_contains($avgFrameRate, '/')) {
+            [$numerator, $denominator] = explode('/', $avgFrameRate);
+            if ((int) $denominator > 0) {
+                return round((int) $numerator / (int) $denominator, 2);
+            }
+        }
+
+        // Fall back to r_frame_rate
+        $rFrameRate = $videoStream->get('r_frame_rate');
+        if ($rFrameRate && str_contains($rFrameRate, '/')) {
+            [$numerator, $denominator] = explode('/', $rFrameRate);
+            if ((int) $denominator > 0) {
+                return round((int) $numerator / (int) $denominator, 2);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Format duration in seconds to human-readable string.
+     */
+    protected function formatDuration(float $seconds): string
+    {
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+        $secs = floor($seconds % 60);
+
+        if ($hours > 0) {
+            return sprintf('%d:%02d:%02d', $hours, $minutes, $secs);
+        }
+
+        return sprintf('%d:%02d', $minutes, $secs);
+    }
+
+    /**
+     * Calculate aspect ratio from dimensions.
+     */
+    protected function calculateAspectRatio(int $width, int $height): string
+    {
+        $gcd = $this->gcd($width, $height);
+        $ratioWidth = $width / $gcd;
+        $ratioHeight = $height / $gcd;
+
+        // Common aspect ratios
+        $common = [
+            '16:9' => 16 / 9,
+            '4:3' => 4 / 3,
+            '1:1' => 1,
+            '9:16' => 9 / 16,
+            '3:4' => 3 / 4,
+            '21:9' => 21 / 9,
+        ];
+
+        $actualRatio = $width / $height;
+
+        foreach ($common as $name => $ratio) {
+            if (abs($actualRatio - $ratio) < 0.05) {
+                return $name;
+            }
+        }
+
+        return $ratioWidth.':'.$ratioHeight;
+    }
+
+    /**
+     * Calculate greatest common divisor.
+     */
+    protected function gcd(int $a, int $b): int
+    {
+        return $b === 0 ? $a : $this->gcd($b, $a % $b);
     }
 
     /**
      * Generate a unique public profile slug.
-     *
-     * @param User $worker
-     * @return string
      */
     protected function generateUniqueSlug(User $worker): string
     {
@@ -562,7 +751,7 @@ class WorkerPortfolioService
         $counter = 1;
 
         while (\App\Models\WorkerProfile::where('public_profile_slug', $slug)->exists()) {
-            $slug = $baseSlug . '-' . $counter;
+            $slug = $baseSlug.'-'.$counter;
             $counter++;
         }
 
@@ -572,8 +761,7 @@ class WorkerPortfolioService
     /**
      * Format location for display.
      *
-     * @param \App\Models\WorkerProfile $profile
-     * @return string|null
+     * @param  \App\Models\WorkerProfile  $profile
      */
     protected function formatLocation($profile): ?string
     {
@@ -583,30 +771,28 @@ class WorkerPortfolioService
             $profile->country ?? $profile->location_country,
         ]);
 
-        return !empty($parts) ? implode(', ', $parts) : null;
+        return ! empty($parts) ? implode(', ', $parts) : null;
     }
 
     /**
      * Generate meta description for SEO.
      *
-     * @param User $worker
-     * @param \App\Models\WorkerProfile $profile
-     * @return string
+     * @param  \App\Models\WorkerProfile  $profile
      */
     protected function generateMetaDescription(User $worker, $profile): string
     {
         $desc = $worker->name;
 
         if ($profile->years_experience > 0) {
-            $desc .= ' - ' . $profile->years_experience . ' years experience';
+            $desc .= ' - '.$profile->years_experience.' years experience';
         }
 
         if ($profile->total_shifts_completed > 0) {
-            $desc .= ', ' . $profile->total_shifts_completed . ' shifts completed';
+            $desc .= ', '.$profile->total_shifts_completed.' shifts completed';
         }
 
         if ($profile->rating_average > 0) {
-            $desc .= ', ' . number_format($profile->rating_average, 1) . ' star rating';
+            $desc .= ', '.number_format($profile->rating_average, 1).' star rating';
         }
 
         $desc .= '. Available for temporary staffing and shift work on OvertimeStaff.';
@@ -617,9 +803,8 @@ class WorkerPortfolioService
     /**
      * Generate meta keywords for SEO.
      *
-     * @param \Illuminate\Support\Collection $skills
-     * @param \App\Models\WorkerProfile $profile
-     * @return string
+     * @param  \Illuminate\Support\Collection  $skills
+     * @param  \App\Models\WorkerProfile  $profile
      */
     protected function generateMetaKeywords($skills, $profile): string
     {
@@ -629,7 +814,7 @@ class WorkerPortfolioService
             $keywords[] = $skill['name'];
         }
 
-        if (!empty($profile->industries)) {
+        if (! empty($profile->industries)) {
             $keywords = array_merge($keywords, (array) $profile->industries);
         }
 
@@ -643,19 +828,17 @@ class WorkerPortfolioService
 
     /**
      * Format file size for display.
-     *
-     * @param int $bytes
-     * @return string
      */
     protected function formatFileSize(int $bytes): string
     {
         if ($bytes >= 1073741824) {
-            return number_format($bytes / 1073741824, 2) . ' GB';
+            return number_format($bytes / 1073741824, 2).' GB';
         } elseif ($bytes >= 1048576) {
-            return number_format($bytes / 1048576, 2) . ' MB';
+            return number_format($bytes / 1048576, 2).' MB';
         } elseif ($bytes >= 1024) {
-            return number_format($bytes / 1024, 2) . ' KB';
+            return number_format($bytes / 1024, 2).' KB';
         }
-        return $bytes . ' bytes';
+
+        return $bytes.' bytes';
     }
 }

@@ -29,6 +29,8 @@ use Illuminate\Support\Facades\Notification;
 uses(DatabaseMigrationsWithTransactions::class);
 
 beforeEach(function () {
+    $this->initializeMigrations();
+
     // Create an agency user with profile
     $this->agency = User::factory()->create(['user_type' => 'agency']);
     $this->agencyProfile = AgencyProfile::factory()->create([
@@ -158,36 +160,49 @@ describe('Notification Type Determination', function () {
 describe('Duplicate Notification Prevention', function () {
 
     it('prevents duplicate notifications of same type within 7 days', function () {
+        // Create scorecard first
+        $scorecard = AgencyPerformanceScorecard::factory()->create([
+            'agency_id' => $this->agency->id,
+        ]);
+
         // Create existing notification
         AgencyPerformanceNotification::factory()->create([
             'agency_id' => $this->agency->id,
             'notification_type' => AgencyPerformanceNotification::TYPE_YELLOW_WARNING,
-            'scorecard_id' => 1,
+            'scorecard_id' => $scorecard->id,
             'created_at' => now()->subDays(3),
         ]);
 
         $shouldSend = $this->notificationService->shouldSendNotification(
             $this->agency->id,
             AgencyPerformanceNotification::TYPE_YELLOW_WARNING,
-            1 // Same scorecard
+            $scorecard->id // Same scorecard
         );
 
         expect($shouldSend)->toBeFalse();
     });
 
     it('allows notification for different scorecard', function () {
+        // Create two scorecards
+        $scorecard1 = AgencyPerformanceScorecard::factory()->create([
+            'agency_id' => $this->agency->id,
+        ]);
+        $scorecard2 = AgencyPerformanceScorecard::factory()->create([
+            'agency_id' => $this->agency->id,
+        ]);
+
         // Create existing notification for scorecard 1
         AgencyPerformanceNotification::factory()->create([
             'agency_id' => $this->agency->id,
             'notification_type' => AgencyPerformanceNotification::TYPE_YELLOW_WARNING,
-            'scorecard_id' => 1,
+            'scorecard_id' => $scorecard1->id,
             'created_at' => now()->subDays(3),
         ]);
 
         $shouldSend = $this->notificationService->shouldSendNotification(
             $this->agency->id,
             AgencyPerformanceNotification::TYPE_YELLOW_WARNING,
-            2 // Different scorecard
+            $scorecard2->id // Different scorecard
         );
 
         expect($shouldSend)->toBeTrue();

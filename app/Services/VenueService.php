@@ -2,17 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\Venue;
-use App\Models\VenueOperatingHour;
-use App\Models\VenueManager;
-use App\Models\TeamMember;
 use App\Models\TeamActivity;
+use App\Models\TeamMember;
 use App\Models\User;
-use App\Models\BusinessProfile;
+use App\Models\Venue;
+use App\Models\VenueManager;
+use App\Models\VenueOperatingHour;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 
 /**
  * BIZ-REG-006: Venue Service
@@ -44,7 +43,7 @@ class VenueService
         return DB::transaction(function () use ($data, $createdBy) {
             // Get business profile
             $businessProfile = $createdBy->businessProfile;
-            if (!$businessProfile) {
+            if (! $businessProfile) {
                 throw new \Exception('User does not have a business profile.');
             }
 
@@ -94,8 +93,8 @@ class VenueService
                 'dress_code' => $data['dress_code'] ?? null,
                 'equipment_provided' => $data['equipment_provided'] ?? null,
                 'equipment_required' => $data['equipment_required'] ?? null,
-                'monthly_budget' => isset($data['monthly_budget']) ? (int)($data['monthly_budget'] * 100) : 0,
-                'default_hourly_rate' => isset($data['default_hourly_rate']) ? (int)($data['default_hourly_rate'] * 100) : null,
+                'monthly_budget' => isset($data['monthly_budget']) ? (int) ($data['monthly_budget'] * 100) : 0,
+                'default_hourly_rate' => isset($data['default_hourly_rate']) ? (int) ($data['default_hourly_rate'] * 100) : null,
                 'auto_approve_favorites' => $data['auto_approve_favorites'] ?? false,
                 'require_checkin_photo' => $data['require_checkin_photo'] ?? false,
                 'require_checkout_signature' => $data['require_checkout_signature'] ?? false,
@@ -107,7 +106,7 @@ class VenueService
             ]);
 
             // Create default operating hours
-            if (isset($data['operating_hours']) && !empty($data['operating_hours'])) {
+            if (isset($data['operating_hours']) && ! empty($data['operating_hours'])) {
                 $this->updateOperatingHours($venue, $data['operating_hours']);
             } else {
                 VenueOperatingHour::createDefaultHours($venue->id);
@@ -160,10 +159,10 @@ class VenueService
 
             // Convert money fields from dollars to cents
             if (isset($data['monthly_budget'])) {
-                $data['monthly_budget'] = (int)($data['monthly_budget'] * 100);
+                $data['monthly_budget'] = (int) ($data['monthly_budget'] * 100);
             }
             if (isset($data['default_hourly_rate'])) {
-                $data['default_hourly_rate'] = (int)($data['default_hourly_rate'] * 100);
+                $data['default_hourly_rate'] = (int) ($data['default_hourly_rate'] * 100);
             }
 
             // Update venue
@@ -190,7 +189,7 @@ class VenueService
                 }
             }
 
-            if (!empty($changes)) {
+            if (! empty($changes)) {
                 TeamActivity::log(
                     $venue->businessProfile->user_id,
                     $updatedBy->id,
@@ -243,13 +242,13 @@ class VenueService
     public function updateSettings(Venue $venue, array $data, User $updatedBy): Venue
     {
         $venue->update([
-            'default_hourly_rate' => isset($data['default_hourly_rate']) ? (int)($data['default_hourly_rate'] * 100) : $venue->default_hourly_rate,
+            'default_hourly_rate' => isset($data['default_hourly_rate']) ? (int) ($data['default_hourly_rate'] * 100) : $venue->default_hourly_rate,
             'auto_approve_favorites' => $data['auto_approve_favorites'] ?? $venue->auto_approve_favorites,
             'require_checkin_photo' => $data['require_checkin_photo'] ?? $venue->require_checkin_photo,
             'require_checkout_signature' => $data['require_checkout_signature'] ?? $venue->require_checkout_signature,
             'gps_accuracy_required' => $data['gps_accuracy_required'] ?? $venue->gps_accuracy_required,
             'geofence_radius' => $data['geofence_radius'] ?? $venue->geofence_radius,
-            'monthly_budget' => isset($data['monthly_budget']) ? (int)($data['monthly_budget'] * 100) : $venue->monthly_budget,
+            'monthly_budget' => isset($data['monthly_budget']) ? (int) ($data['monthly_budget'] * 100) : $venue->monthly_budget,
             'settings' => array_merge($venue->settings ?? [], $data['settings'] ?? []),
         ]);
 
@@ -372,8 +371,9 @@ class VenueService
 
                 if ($response->successful()) {
                     $result = $response->json();
-                    if (!empty($result['results'][0])) {
+                    if (! empty($result['results'][0])) {
                         $location = $result['results'][0]['geometry']['location'];
+
                         return [
                             'lat' => $location['lat'],
                             'lng' => $location['lng'],
@@ -385,7 +385,7 @@ class VenueService
 
             // Fallback to Nominatim (OpenStreetMap)
             $response = Http::withHeaders([
-                'User-Agent' => config('app.name') . ' Geocoder',
+                'User-Agent' => config('app.name').' Geocoder',
             ])->get('https://nominatim.openstreetmap.org/search', [
                 'q' => $address,
                 'format' => 'json',
@@ -394,7 +394,7 @@ class VenueService
 
             if ($response->successful()) {
                 $result = $response->json();
-                if (!empty($result[0])) {
+                if (! empty($result[0])) {
                     return [
                         'lat' => (float) $result[0]['lat'],
                         'lng' => (float) $result[0]['lon'],
@@ -403,7 +403,7 @@ class VenueService
                 }
             }
         } catch (\Exception $e) {
-            Log::warning('Geocoding failed: ' . $e->getMessage());
+            Log::warning('Geocoding failed: '.$e->getMessage());
         }
 
         return null;
@@ -462,7 +462,7 @@ class VenueService
 
         // Create new hours
         foreach ($hours as $dayData) {
-            if (!isset($dayData['day_of_week'])) {
+            if (! isset($dayData['day_of_week'])) {
                 continue;
             }
 
@@ -491,7 +491,7 @@ class VenueService
         $errors = [];
 
         foreach ($hours as $dayData) {
-            if (!isset($dayData['day_of_week'])) {
+            if (! isset($dayData['day_of_week'])) {
                 continue;
             }
 
@@ -505,8 +505,9 @@ class VenueService
                 $open = $slot['open_time'] ?? null;
                 $close = $slot['close_time'] ?? null;
 
-                if (!$open || !$close) {
+                if (! $open || ! $close) {
                     $errors[] = "Day {$dayData['day_of_week']}: Open and close times are required.";
+
                     continue;
                 }
 
@@ -534,7 +535,7 @@ class VenueService
         // Assign new managers
         foreach ($teamMemberIds as $teamMemberId) {
             $teamMember = TeamMember::find($teamMemberId);
-            if (!$teamMember || $teamMember->business_id !== $venue->businessProfile->user_id) {
+            if (! $teamMember || $teamMember->business_id !== $venue->businessProfile->user_id) {
                 continue;
             }
 
@@ -598,7 +599,7 @@ class VenueService
 
         // Update venue manager_ids
         $managerIds = $venue->manager_ids ?? [];
-        $managerIds = array_values(array_filter($managerIds, fn($id) => $id != $teamMember->id));
+        $managerIds = array_values(array_filter($managerIds, fn ($id) => $id != $teamMember->id));
         $venue->update(['manager_ids' => $managerIds]);
     }
 
@@ -618,8 +619,8 @@ class VenueService
             $businessProfile->update(['onboarding_data' => $onboardingData]);
         }
 
-        // TODO: Send congratulations notification
-        // $createdBy->notify(new FirstVenueCreatedNotification($venue));
+        // Send congratulations notification for first venue milestone
+        $createdBy->notify(new \App\Notifications\Business\FirstVenueCreatedNotification($venue));
     }
 
     /**
@@ -643,8 +644,8 @@ class VenueService
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%");
+                    ->orWhere('address', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%");
             });
         }
 

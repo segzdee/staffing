@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Rating;
+use App\Models\ShiftAssignment;
+use App\Models\ShiftPayment;
 use App\Models\User;
 use App\Models\WorkerBadge;
-use App\Models\ShiftAssignment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -19,14 +21,13 @@ class BadgeService
 
     /**
      * Check and award badges based on trigger event
-     * 
-     * @param User $worker
-     * @param string $trigger - 'shift_completed', 'rating_received', 'checked_in', 'time_based'
+     *
+     * @param  string  $trigger  - 'shift_completed', 'rating_received', 'checked_in', 'time_based'
      * @return array
      */
     public function checkAndAward(User $worker, string $trigger)
     {
-        if (!$worker->isWorker()) {
+        if (! $worker->isWorker()) {
             return [];
         }
 
@@ -57,7 +58,7 @@ class BadgeService
      */
     public function evaluateWorkerBadges(User $worker)
     {
-        if (!$worker->isWorker()) {
+        if (! $worker->isWorker()) {
             return;
         }
 
@@ -81,7 +82,7 @@ class BadgeService
     {
         $definitions = WorkerBadge::getBadgeDefinitions();
 
-        if (!isset($definitions[$badgeType])) {
+        if (! isset($definitions[$badgeType])) {
             return null;
         }
 
@@ -90,7 +91,7 @@ class BadgeService
 
         // Check each level (highest first)
         for ($level = 3; $level >= 1; $level--) {
-            if (!isset($definition['levels'][$level])) {
+            if (! isset($definition['levels'][$level])) {
                 continue;
             }
 
@@ -129,14 +130,16 @@ class BadgeService
         $totalShifts = $completedShifts->count();
 
         // Morning shifts (6am - 12pm)
-        $morningShifts = $completedShifts->filter(function($assignment) {
+        $morningShifts = $completedShifts->filter(function ($assignment) {
             $startHour = Carbon::parse($assignment->shift->start_time)->hour;
+
             return $startHour >= 6 && $startHour < 12;
         })->count();
 
         // Night shifts (10pm - 6am)
-        $nightShifts = $completedShifts->filter(function($assignment) {
+        $nightShifts = $completedShifts->filter(function ($assignment) {
             $startHour = Carbon::parse($assignment->shift->start_time)->hour;
+
             return $startHour >= 22 || $startHour < 6;
         })->count();
 
@@ -149,7 +152,7 @@ class BadgeService
 
         // Verified skills
         $verifiedSkills = $worker->skills()->where('verified', true)->count();
-        
+
         // Skills with max proficiency
         $maxProficiencySkills = DB::table('worker_skills')
             ->where('worker_id', $worker->id)
@@ -158,24 +161,25 @@ class BadgeService
 
         // Months active
         $monthsActive = $worker->created_at->diffInMonths(Carbon::now());
-        
+
         // Early check-ins (10+ mins early)
         $earlyCheckins = ShiftAssignment::where('worker_id', $worker->id)
             ->whereNotNull('check_in_time')
             ->get()
-            ->filter(function($assignment) {
-                if (!$assignment->shift || !$assignment->check_in_time) {
+            ->filter(function ($assignment) {
+                if (! $assignment->shift || ! $assignment->check_in_time) {
                     return false;
                 }
-                $shiftStart = Carbon::parse($assignment->shift->shift_date . ' ' . $assignment->shift->start_time);
+                $shiftStart = Carbon::parse($assignment->shift->shift_date.' '.$assignment->shift->start_time);
                 $checkIn = Carbon::parse($assignment->check_in_time);
+
                 return $checkIn->diffInMinutes($shiftStart) >= 10;
             })
             ->count();
-        
-        // Perfect weeks (5+ shifts in week, all 5-star)
-        $perfectWeeks = 0; // TODO: Calculate perfect weeks
-        
+
+        // Perfect weeks (a week where worker completed all assigned shifts without issues)
+        $perfectWeeks = $this->calculatePerfectWeeks($worker);
+
         // Monthly earnings (current month)
         $currentMonthEarnings = ShiftPayment::where('worker_id', $worker->id)
             ->where('status', 'paid_out')
@@ -207,7 +211,7 @@ class BadgeService
         foreach ($criteria as $key => $value) {
             $statKey = $this->mapCriteriaToStat($key);
 
-            if (!isset($stats[$statKey])) {
+            if (! isset($stats[$statKey])) {
                 continue;
             }
 
@@ -315,7 +319,7 @@ class BadgeService
             // Get next level
             $nextLevel = $earnedLevel + 1;
 
-            if (!isset($definition['levels'][$nextLevel])) {
+            if (! isset($definition['levels'][$nextLevel])) {
                 continue; // Max level already achieved
             }
 
@@ -323,7 +327,9 @@ class BadgeService
             $criteriaProgress = [];
 
             foreach ($criteria as $key => $value) {
-                if ($key === 'name') continue;
+                if ($key === 'name') {
+                    continue;
+                }
 
                 $statKey = $this->mapCriteriaToStat($key);
                 $current = $stats[$statKey] ?? 0;
@@ -345,5 +351,78 @@ class BadgeService
         }
 
         return $progress;
+    }
+
+    /**
+     * Calculate the number of perfect weeks for a worker.
+     *
+     * A perfect week is defined as a week where:
+     * - Worker had at least 1 shift assigned
+     * - All assigned shifts were completed (no no-shows, no cancellations)
+     * - No late arrivals (was_late = false)
+     * - Average rating for the week was 4.0 or higher (if ratings exist)
+     *
+     * @return int Number of perfect weeks
+     */
+    protected function calculatePerfectWeeks(User $worker): int
+    {
+        $perfectWeeks = 0;
+
+        // Get all completed assignments grouped by week
+        $assignments = ShiftAssignment::where('worker_id', $worker->id)
+            ->whereIn('status', ['completed', 'no_show', 'cancelled'])
+            ->with(['shift', 'ratings'])
+            ->get();
+
+        if ($assignments->isEmpty()) {
+            return 0;
+        }
+
+        // Group assignments by ISO week (year-week format)
+        $assignmentsByWeek = $assignments->groupBy(function ($assignment) {
+            return Carbon::parse($assignment->shift->shift_date)->format('o-W');
+        });
+
+        foreach ($assignmentsByWeek as $weekKey => $weekAssignments) {
+            // Skip if no assignments in this week
+            if ($weekAssignments->isEmpty()) {
+                continue;
+            }
+
+            // Check if all shifts were completed (no no-shows or cancellations)
+            $allCompleted = $weekAssignments->every(function ($assignment) {
+                return $assignment->status === 'completed';
+            });
+
+            if (! $allCompleted) {
+                continue;
+            }
+
+            // Check for any late arrivals
+            $anyLate = $weekAssignments->contains(function ($assignment) {
+                return $assignment->was_late || $assignment->late_minutes > 0;
+            });
+
+            if ($anyLate) {
+                continue;
+            }
+
+            // Check ratings for the week (if any exist)
+            $weekRatings = $weekAssignments->flatMap(function ($assignment) {
+                return $assignment->ratings->where('rater_type', 'business');
+            });
+
+            if ($weekRatings->isNotEmpty()) {
+                $averageRating = $weekRatings->avg('rating');
+                if ($averageRating < 4.0) {
+                    continue;
+                }
+            }
+
+            // This week is a perfect week
+            $perfectWeeks++;
+        }
+
+        return $perfectWeeks;
     }
 }

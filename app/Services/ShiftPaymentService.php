@@ -80,8 +80,7 @@ class ShiftPaymentService
 
             // Create shift payment record with SL-001 calculated values
             $shiftPayment = ShiftPayment::create([
-                'shift_id' => $shift->id,
-                'assignment_id' => $assignment->id,
+                'shift_assignment_id' => $assignment->id,
                 'worker_id' => $worker->id,
                 'business_id' => $business->id,
                 'amount_gross' => $amountGross,
@@ -144,7 +143,7 @@ class ShiftPaymentService
     public function releaseFromEscrow(ShiftAssignment $assignment)
     {
         try {
-            $shiftPayment = ShiftPayment::where('assignment_id', $assignment->id)
+            $shiftPayment = ShiftPayment::where('shift_assignment_id', $assignment->id)
                 ->where('status', 'in_escrow')
                 ->first();
 
@@ -455,7 +454,7 @@ class ShiftPaymentService
     public function handleDispute(ShiftAssignment $assignment, string $reason)
     {
         try {
-            $shiftPayment = ShiftPayment::where('assignment_id', $assignment->id)->first();
+            $shiftPayment = ShiftPayment::where('shift_assignment_id', $assignment->id)->first();
 
             if (! $shiftPayment) {
                 return false;
@@ -688,8 +687,14 @@ class ShiftPaymentService
             // Send reminder if 2 hours passed and no reminder sent yet
             if ($hoursElapsed >= 2 && ! $application->reminder_sent_at) {
                 $application->update(['reminder_sent_at' => $now]);
-                // TODO: Send reminder notification to worker
-                // event(new ShiftAcknowledgmentReminder($assignment));
+
+                // Send reminder notification to worker
+                if ($assignment->worker) {
+                    $assignment->worker->notify(
+                        new \App\Notifications\ShiftAcknowledgmentReminderNotification($assignment)
+                    );
+                }
+
                 $remindersSent++;
             }
 
@@ -707,7 +712,7 @@ class ShiftPaymentService
                 ]);
 
                 // Refund escrow to business
-                $shiftPayment = ShiftPayment::where('assignment_id', $assignment->id)
+                $shiftPayment = ShiftPayment::where('shift_assignment_id', $assignment->id)
                     ->where('status', 'in_escrow')
                     ->first();
 
@@ -725,8 +730,19 @@ class ShiftPaymentService
                     $workerProfile->updateReliabilityScore();
                 }
 
-                // TODO: Notify worker and business
-                // event(new ShiftAutoCancelled($assignment));
+                // Notify worker and business about auto-cancellation
+                if ($assignment->worker) {
+                    $assignment->worker->notify(
+                        new \App\Notifications\ShiftAutoCancelledNotification($assignment, 'worker')
+                    );
+                }
+
+                $business = $assignment->shift?->business;
+                if ($business) {
+                    $business->notify(
+                        new \App\Notifications\ShiftAutoCancelledNotification($assignment, 'business')
+                    );
+                }
 
                 $autoCancelled++;
 

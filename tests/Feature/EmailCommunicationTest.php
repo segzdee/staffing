@@ -492,7 +492,8 @@ describe('Admin Email Controller', function () {
 
         $response = $this->actingAs($user)->get(route('admin.email.index'));
 
-        $response->assertForbidden();
+        // The middleware redirects unauthorized users to the access-denied page
+        $response->assertRedirect(route('errors.access-denied'));
     });
 
     it('admin can view email dashboard', function () {

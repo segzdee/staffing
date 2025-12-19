@@ -19,14 +19,16 @@ class RefundService
         // Get the shift payment
         $payment = $shift->payment;
 
-        if (!$payment) {
+        if (! $payment) {
             Log::warning("No payment found for shift {$shift->id}, cannot create refund");
+
             return null;
         }
 
         // Check if refund already exists
         if (Refund::where('shift_payment_id', $payment->id)->exists()) {
             Log::info("Refund already exists for payment {$payment->id}");
+
             return null;
         }
 
@@ -42,7 +44,7 @@ class RefundService
                 'original_amount' => $refundAmount,
                 'refund_type' => 'auto_cancellation',
                 'refund_reason' => $reason,
-                'reason_description' => "Automatic refund for shift cancelled more than 72 hours in advance",
+                'reason_description' => 'Automatic refund for shift cancelled more than 72 hours in advance',
                 'refund_method' => 'original_payment_method',
                 'status' => 'pending',
                 'metadata' => [
@@ -67,7 +69,7 @@ class RefundService
     public function createDisputeRefund(
         ShiftPayment $payment,
         float $refundAmount,
-        string $description = null
+        ?string $description = null
     ) {
         return DB::transaction(function () use ($payment, $refundAmount, $description) {
             $refund = Refund::create([
@@ -78,7 +80,7 @@ class RefundService
                 'original_amount' => $payment->amount_gross->getAmount() / 100,
                 'refund_type' => 'dispute_resolution',
                 'refund_reason' => 'dispute_resolved',
-                'reason_description' => $description ?? "Refund issued due to dispute resolution",
+                'reason_description' => $description ?? 'Refund issued due to dispute resolution',
                 'refund_method' => 'original_payment_method',
                 'status' => 'pending',
                 'metadata' => [
@@ -131,8 +133,9 @@ class RefundService
      */
     public function processRefund(Refund $refund)
     {
-        if (!$refund->isPending()) {
+        if (! $refund->isPending()) {
             Log::warning("Refund {$refund->refund_number} is not pending, skipping");
+
             return false;
         }
 
@@ -147,6 +150,7 @@ class RefundService
             } else {
                 // Manual handling
                 $refund->update(['status' => 'pending']);
+
                 return false;
             }
         } catch (\Exception $e) {
@@ -154,6 +158,7 @@ class RefundService
             Log::error("Failed to process refund {$refund->refund_number}", [
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -196,8 +201,8 @@ class RefundService
 
             Log::info("Processed credit balance refund {$refund->refund_number}");
 
-            // Send notification
-            // NotificationService::notifyRefundCompleted($refund);
+            // Send notification to business
+            $this->sendRefundNotification($refund);
 
             return true;
         });
@@ -210,8 +215,8 @@ class RefundService
     {
         $payment = $refund->shiftPayment;
 
-        if (!$payment) {
-            throw new \Exception("No payment found for refund");
+        if (! $payment) {
+            throw new \Exception('No payment found for refund');
         }
 
         // Determine gateway from payment intent ID
@@ -220,7 +225,7 @@ class RefundService
         } elseif ($payment->paypal_transaction_id ?? false) {
             return $this->processPayPalRefund($refund, $payment);
         } else {
-            throw new \Exception("No payment gateway found for payment");
+            throw new \Exception('No payment gateway found for payment');
         }
     }
 
@@ -263,13 +268,13 @@ class RefundService
                 'stripe_refund_id' => $stripeRefund->id,
             ]);
 
-            // Send notification
-            // NotificationService::notifyRefundCompleted($refund);
+            // Send notification to business
+            $this->sendRefundNotification($refund);
 
             return true;
 
         } catch (\Stripe\Exception\ApiErrorException $e) {
-            throw new \Exception("Stripe error: " . $e->getMessage());
+            throw new \Exception('Stripe error: '.$e->getMessage());
         }
     }
 
@@ -278,10 +283,71 @@ class RefundService
      */
     protected function processPayPalRefund(Refund $refund, ShiftPayment $payment)
     {
-        // Implement PayPal refund logic
-        // This would use PayPal SDK to process the refund
+        try {
+            // Initialize PayPal client
+            $provider = new \Srmklive\PayPal\Services\PayPal;
+            $provider->setApiCredentials(config('paypal'));
+            $provider->getAccessToken();
 
-        throw new \Exception("PayPal refunds not yet implemented");
+            // Get the capture ID from the payment
+            $captureId = $payment->paypal_capture_id ?? $payment->paypal_transaction_id;
+
+            if (! $captureId) {
+                throw new \Exception('No PayPal capture ID found for payment');
+            }
+
+            // Create refund request
+            $refundData = [
+                'amount' => [
+                    'value' => number_format($refund->refund_amount, 2, '.', ''),
+                    'currency_code' => config('paypal.currency', 'USD'),
+                ],
+                'note_to_payer' => substr($refund->reason_description ?? 'Refund processed', 0, 255),
+            ];
+
+            // Process refund through PayPal
+            $response = $provider->refundCapturedPayment($captureId, $refundData);
+
+            // Check for successful refund
+            if (isset($response['id']) && isset($response['status'])) {
+                if ($response['status'] === 'COMPLETED' || $response['status'] === 'PENDING') {
+                    // Update payment record
+                    $payment->update([
+                        'status' => 'refunded',
+                        'refund_amount' => $refund->refund_amount,
+                        'refund_reason' => $refund->reason_description,
+                        'refunded_at' => now(),
+                        'paypal_refund_id' => $response['id'],
+                    ]);
+
+                    // Generate credit note
+                    $refund->generateCreditNote();
+
+                    // Mark refund as completed
+                    $refund->markAsCompleted($response['id'], 'paypal');
+
+                    Log::info("Processed PayPal refund {$refund->refund_number}", [
+                        'paypal_refund_id' => $response['id'],
+                        'status' => $response['status'],
+                    ]);
+
+                    // Send notification to business
+                    $this->sendRefundNotification($refund);
+
+                    return true;
+                }
+            }
+
+            // Handle error response
+            $errorMessage = $response['message'] ?? $response['error']['message'] ?? 'Unknown PayPal error';
+            throw new \Exception('PayPal refund failed: '.$errorMessage);
+        } catch (\Exception $e) {
+            Log::error("PayPal refund error for {$refund->refund_number}", [
+                'error' => $e->getMessage(),
+                'payment_id' => $payment->id,
+            ]);
+            throw new \Exception('PayPal error: '.$e->getMessage());
+        }
     }
 
     /**
@@ -348,7 +414,7 @@ class RefundService
      */
     public function retryRefund(Refund $refund)
     {
-        if (!$refund->isFailed()) {
+        if (! $refund->isFailed()) {
             return false;
         }
 
@@ -361,5 +427,28 @@ class RefundService
 
         // Process again
         return $this->processRefund($refund);
+    }
+
+    /**
+     * Send refund completion notification to the business.
+     */
+    protected function sendRefundNotification(Refund $refund): void
+    {
+        try {
+            $business = $refund->business;
+
+            if ($business) {
+                $business->notify(new \App\Notifications\RefundCompletedNotification($refund));
+
+                Log::info("Sent refund notification for {$refund->refund_number}", [
+                    'business_id' => $business->id,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Don't fail the refund if notification fails
+            Log::warning("Failed to send refund notification for {$refund->refund_number}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

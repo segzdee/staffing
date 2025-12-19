@@ -10,6 +10,9 @@ use App\Notifications\BookingPendingConfirmationNotification;
 use App\Notifications\ConfirmationReminderNotification;
 use App\Services\BookingConfirmationService;
 use Illuminate\Support\Facades\Notification;
+use Tests\Traits\DatabaseMigrationsWithTransactions;
+
+uses(DatabaseMigrationsWithTransactions::class);
 
 /**
  * SL-004: Booking Confirmation System Tests
@@ -17,6 +20,8 @@ use Illuminate\Support\Facades\Notification;
  * Tests the dual-confirmation workflow for shift bookings.
  */
 beforeEach(function () {
+    $this->initializeMigrations();
+
     // Create test users
     $this->worker = User::factory()->create(['user_type' => 'worker']);
     $this->business = User::factory()->create(['user_type' => 'business']);

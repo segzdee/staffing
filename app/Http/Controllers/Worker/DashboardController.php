@@ -655,15 +655,17 @@ class DashboardController extends Controller
 
         $profile = $user->workerProfile;
 
-        // Get current preferences
+        // Get current preferences (handle both JSON strings and already-decoded arrays)
+        $decodeIfNeeded = fn ($value, $default = []) => is_string($value) ? json_decode($value, true) : ($value ?? $default);
+
         $preferences = [
             'work' => [
-                'preferred_industries' => $profile?->preferred_industries ? json_decode($profile->preferred_industries, true) : [],
-                'preferred_shift_times' => $profile?->preferred_shift_times ? json_decode($profile->preferred_shift_times, true) : [],
+                'preferred_industries' => $decodeIfNeeded($profile?->preferred_industries),
+                'preferred_shift_times' => $decodeIfNeeded($profile?->preferred_shift_times),
                 'min_hourly_rate' => $profile?->min_hourly_rate ?? 15,
                 'max_commute_distance' => $profile?->max_commute_distance ?? 25,
                 'has_transportation' => $profile?->has_transportation ?? false,
-                'available_weekdays' => $profile?->available_weekdays ? json_decode($profile->available_weekdays, true) : ['mon', 'tue', 'wed', 'thu', 'fri'],
+                'available_weekdays' => $decodeIfNeeded($profile?->available_weekdays, ['mon', 'tue', 'wed', 'thu', 'fri']),
                 'available_weekends' => $profile?->available_weekends ?? true,
             ],
             'notifications' => [

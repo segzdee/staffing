@@ -9,13 +9,14 @@ use App\Models\ShiftAssignment;
 use App\Models\User;
 use App\Services\ShiftMatchingService;
 use App\Services\ShiftPaymentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class ShiftManagementController extends Controller
 {
     protected $matchingService;
+
     protected $paymentService;
 
     public function __construct(ShiftMatchingService $matchingService, ShiftPaymentService $paymentService)
@@ -31,7 +32,7 @@ class ShiftManagementController extends Controller
     public function myShifts(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
             abort(403, 'Only businesses and agencies can access this page.');
         }
 
@@ -55,7 +56,7 @@ class ShiftManagementController extends Controller
             'open' => Shift::where('business_id', Auth::id())->where('status', 'open')->count(),
             'in_progress' => Shift::where('business_id', Auth::id())->where('status', 'in_progress')->count(),
             'completed' => Shift::where('business_id', Auth::id())->where('status', 'completed')->count(),
-            'pending_applications' => ShiftApplication::whereHas('shift', function($q) {
+            'pending_applications' => ShiftApplication::whereHas('shift', function ($q) {
                 $q->where('business_id', Auth::id());
             })->where('status', 'pending')->count(),
         ];
@@ -69,7 +70,7 @@ class ShiftManagementController extends Controller
     public function show($shiftId)
     {
         // Check authorization
-        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
             abort(403, 'Only businesses and agencies can access this page.');
         }
 
@@ -91,14 +92,14 @@ class ShiftManagementController extends Controller
     {
         // Eager load relationships and use withCount to prevent N+1 queries for completed shifts count
         $shift = Shift::with([
-            'applications.worker' => function($query) {
+            'applications.worker' => function ($query) {
                 // Use withCount to eager load completed shifts count
                 $query->with(['workerProfile', 'badges'])
-                      ->withCount(['shiftAssignments as completed_shifts_count' => function($q) {
-                          $q->where('status', 'completed');
-                      }]);
+                    ->withCount(['shiftAssignments as completed_shifts_count' => function ($q) {
+                        $q->where('status', 'completed');
+                    }]);
             },
-            'assignments.worker'
+            'assignments.worker',
         ])->findOrFail($shiftId);
 
         // Check authorization
@@ -166,7 +167,7 @@ class ShiftManagementController extends Controller
         // Hold payment in escrow
         $escrowResult = $this->paymentService->holdInEscrow($assignment);
 
-        if (!$escrowResult) {
+        if (! $escrowResult) {
             // If escrow fails, revert assignment
             $assignment->delete();
             $application->update(['status' => 'pending']);
@@ -176,8 +177,9 @@ class ShiftManagementController extends Controller
                 ->with('error', 'Payment processing failed. Please ensure you have a valid payment method on file.');
         }
 
-        // TODO: Send notification to worker
-        // event(new WorkerAssigned($assignment));
+        // Send notification to worker about assignment
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->notifyShiftAssigned($assignment);
 
         return redirect()->back()
             ->with('success', 'Worker assigned successfully! Payment has been held in escrow.');
@@ -212,7 +214,7 @@ class ShiftManagementController extends Controller
         $shift->decrement('filled_workers');
 
         // Update shift status if it was assigned
-        if ($shift->status === 'assigned' && !$shift->isFull()) {
+        if ($shift->status === 'assigned' && ! $shift->isFull()) {
             $shift->update(['status' => 'open']);
         }
 
@@ -222,8 +224,9 @@ class ShiftManagementController extends Controller
             $this->paymentService->refundToBusiness($shiftPayment, $shiftPayment->amount_gross);
         }
 
-        // TODO: Notify worker
-        // event(new AssignmentCancelled($assignment));
+        // Notify worker about cancellation
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->notifyShiftCancelled($assignment, 'Assignment cancelled by business');
 
         return redirect()->back()
             ->with('success', 'Worker unassigned successfully. Payment refunded if applicable.');
@@ -249,7 +252,7 @@ class ShiftManagementController extends Controller
         $worker = User::findOrFail($request->worker_id);
 
         // Verify worker is a worker
-        if (!$worker->isWorker()) {
+        if (! $worker->isWorker()) {
             return redirect()->back()
                 ->with('error', 'Invalid worker selected.');
         }
@@ -273,8 +276,9 @@ class ShiftManagementController extends Controller
             'sent_at' => now(),
         ]);
 
-        // TODO: Send notification to worker
-        // event(new ShiftInvitationSent($invitation));
+        // Send notification to worker about invitation
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->notifyShiftInvitation($invitation);
 
         return redirect()->back()
             ->with('success', 'Invitation sent successfully!');
@@ -304,8 +308,13 @@ class ShiftManagementController extends Controller
             'started_at' => now(),
         ]);
 
-        // TODO: Notify assigned workers
-        // event(new ShiftStarted($shift));
+        // Notify assigned workers that shift has started
+        $shift->load('assignments.worker');
+        foreach ($shift->assignments as $assignment) {
+            if (in_array($assignment->status, ['assigned', 'checked_in']) && $assignment->worker) {
+                $assignment->worker->notify(new \App\Notifications\ShiftStartedNotification($shift));
+            }
+        }
 
         return redirect()->back()
             ->with('success', 'Shift marked as started.');
@@ -405,8 +414,9 @@ class ShiftManagementController extends Controller
             'responded_at' => now(),
         ]);
 
-        // TODO: Notify worker
-        // event(new ApplicationRejected($application));
+        // Notify worker about rejection
+        $notificationService = app(\App\Services\NotificationService::class);
+        $notificationService->notifyApplicationRejected($application);
 
         return redirect()->back()
             ->with('success', 'Application rejected.');
@@ -418,7 +428,7 @@ class ShiftManagementController extends Controller
     public function analytics(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
             abort(403, 'Only businesses and agencies can access analytics.');
         }
 
@@ -455,11 +465,12 @@ class ShiftManagementController extends Controller
             return 0;
         }
 
-        $totalMinutes = $filledShifts->sum(function($shift) {
+        $totalMinutes = $filledShifts->sum(function ($shift) {
             return Carbon::parse($shift->created_at)->diffInMinutes($shift->filled_at);
         });
 
         $count = $filledShifts->count();
+
         return $count > 0 ? round($totalMinutes / $count / 60, 1) : 0; // Convert to hours
     }
 
@@ -473,6 +484,7 @@ class ShiftManagementController extends Controller
                 }
             }
         }
+
         return $total;
     }
 

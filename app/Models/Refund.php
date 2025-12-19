@@ -93,10 +93,10 @@ class Refund extends Model
         parent::boot();
 
         static::creating(function ($refund) {
-            if (!$refund->refund_number) {
+            if (! $refund->refund_number) {
                 $refund->refund_number = self::generateRefundNumber();
             }
-            if (!$refund->initiated_at) {
+            if (! $refund->initiated_at) {
                 $refund->initiated_at = now();
             }
         });
@@ -254,19 +254,21 @@ class Refund extends Model
      */
     public function generateCreditNote()
     {
-        if (!$this->credit_note_number) {
+        if (! $this->credit_note_number) {
             $this->credit_note_number = self::generateCreditNoteNumber();
             $this->save();
         }
 
-        // Generate PDF (implement credit note PDF service)
-        // $pdfPath = app(CreditNotePdfService::class)->generate($this);
-        // $this->update([
-        //     'credit_note_pdf_path' => $pdfPath,
-        //     'credit_note_generated_at' => now(),
-        // ]);
+        // Generate PDF using the credit note service
+        try {
+            $pdfPath = app(\App\Services\CreditNotePdfService::class)->generate($this);
 
-        return $this;
+            return $this;
+        } catch (\Exception $e) {
+            \Log::warning("Failed to generate credit note PDF for refund {$this->refund_number}: ".$e->getMessage());
+
+            return $this;
+        }
     }
 
     /**
@@ -274,7 +276,7 @@ class Refund extends Model
      */
     public function hasCreditNote()
     {
-        return !empty($this->credit_note_number);
+        return ! empty($this->credit_note_number);
     }
 
     /**

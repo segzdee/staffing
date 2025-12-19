@@ -454,14 +454,18 @@ class LoginController extends Controller
             return redirect()->intended();
         }
 
-        // Route based on user type
+        // Route based on user type/role
         if ($user->isAdmin()) {
-            return redirect()->route('filament.admin.pages.dashboard');
+            return redirect()->route('admin.dashboard');
         }
 
-        // All other user types (worker, business, agency) use generic dashboard
-        // which automatically routes to correct dashboard based on user type
-        return redirect()->route('dashboard.index');
+        // Route to specific dashboard based on user type
+        return match ($user->user_type) {
+            'worker' => redirect()->route('worker.dashboard'),
+            'business' => redirect()->route('business.dashboard'),
+            'agency' => redirect()->route('agency.dashboard'),
+            default => redirect()->route('dashboard.index'),
+        };
     }
 
     /**
@@ -528,15 +532,15 @@ class LoginController extends Controller
 
         // 3. Admin Redirect
         if ($user->role === 'admin') {
-            return route('filament.admin.pages.dashboard');
+            return route('admin.dashboard');
         }
 
         // 4. User Type Redirect
         // Map user types to their respective dashboard route names
         $routeName = match ($user->user_type) {
-            'worker' => 'dashboard.worker',
-            'business' => 'dashboard.company',
-            'agency' => 'dashboard.agency',
+            'worker' => 'worker.dashboard',
+            'business' => 'business.dashboard',
+            'agency' => 'agency.dashboard',
             default => 'dashboard.index',
         };
 

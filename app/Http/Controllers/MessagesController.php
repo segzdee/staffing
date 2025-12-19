@@ -182,8 +182,9 @@ class MessagesController extends Controller
         // Update conversation last message timestamp
         $conversation->update(['last_message_at' => now()]);
 
-        // TODO: Send notification to recipient
-        // event(new MessageSent($message));
+        // Send notification to recipient
+        $sender = Auth::user();
+        $toUser->notify(new \App\Notifications\NewMessageNotification($message, $sender));
 
         return redirect()->route('messages.show', $conversation->id)
             ->with('success', 'Message sent successfully!');

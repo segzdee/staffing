@@ -40,8 +40,32 @@ class AvailabilityController extends Controller
         $worker = Auth::user();
         $availability = $this->availabilityService->getWorkerAvailability($worker);
 
+        // Get active broadcast if any
+        $activeBroadcast = \App\Models\AvailabilityBroadcast::where('worker_id', $worker->id)
+            ->where('status', 'active')
+            ->where('available_to', '>', now())
+            ->first();
+
+        // Add responses_count attribute if broadcast exists
+        if ($activeBroadcast) {
+            $activeBroadcast->responses_count = 0; // Default to 0 if responses relationship doesn't exist
+        }
+
+        // Get broadcast history
+        $broadcastHistory = \App\Models\AvailabilityBroadcast::where('worker_id', $worker->id)
+            ->where('status', '!=', 'active')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Calculate total responses across all broadcasts
+        $totalResponses = 0; // Default to 0
+
         return view('worker.availability.index', [
             'availability' => $availability,
+            'activeBroadcast' => $activeBroadcast,
+            'broadcastHistory' => $broadcastHistory,
+            'totalResponses' => $totalResponses,
             'shiftTypes' => \App\Models\WorkerPreference::SHIFT_TYPES ?? [],
             'days' => \App\Services\AvailabilityService::DAYS ?? [],
         ]);

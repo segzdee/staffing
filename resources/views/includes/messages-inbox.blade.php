@@ -73,9 +73,11 @@ if ($msg->last()->from_user_id == auth()->user()->id && $msg->last()->to()->id !
 		$styleStatus = null;
 	}
 
-	// Messages - TODO: Implement OvertimeStaff messaging system
-	// $messagesCount = Messages::where('from_user_id', $userID)->where('to_user_id', auth()->user()->id)->where('status','new')->count();
-	$messagesCount = 0; // Placeholder until messaging is implemented
+	// OvertimeStaff messaging system - count unread messages from this user
+	$messagesCount = \App\Models\Message::where('from_user_id', $userID)
+		->where('to_user_id', auth()->user()->id)
+		->where('is_read', false)
+		->count();
 
 	// Check Pay Per View - Not used in OvertimeStaff
 	// $checkPayPerView = auth()->user()->payPerViewMessages()->where('messages_id', $msg->last()->id)->first();

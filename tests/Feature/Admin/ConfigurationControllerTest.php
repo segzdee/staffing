@@ -29,8 +29,7 @@ class ConfigurationControllerTest extends TestCase
         // Create admin user
         $this->admin = User::factory()->create([
             'role' => 'admin',
-            'user_type' => 'worker',
-            'permissions' => 'full_access',
+            'user_type' => 'admin',
             'is_dev_account' => true, // Skip MFA for tests
         ]);
 

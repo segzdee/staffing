@@ -312,7 +312,10 @@ class DashboardController extends Controller
             ->orderBy('shift_date', 'asc')
             ->get(['id', 'title', 'shift_date']);
 
-        return view('business.applications', compact('applications', 'stats', 'status', 'shiftsWithApplications'));
+        // When viewing all applications, $shift is null
+        $shift = null;
+
+        return view('business.applications', compact('applications', 'stats', 'status', 'shiftsWithApplications', 'shift'));
     }
 
     /**
@@ -379,9 +382,10 @@ class DashboardController extends Controller
     public function locations(): \Illuminate\View\View
     {
         $user = Auth::user();
+        $businessProfile = $user->businessProfile;
 
         // Get all venues for this business
-        $venues = \App\Models\Venue::where('business_id', $user->id)
+        $venues = \App\Models\Venue::where('business_profile_id', $businessProfile?->id)
             ->withCount(['shifts', 'shifts as active_shifts_count' => function ($query) {
                 $query->where('shift_date', '>=', Carbon::today())
                     ->whereIn('status', ['open', 'filled', 'in_progress']);
@@ -405,6 +409,41 @@ class DashboardController extends Controller
     public function paymentsAddFunds(): \Illuminate\View\View
     {
         return view('business.payments.add-funds');
+    }
+
+    /**
+     * Create a Stripe payment intent for adding funds
+     */
+    public function paymentsCreateIntent(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'amount' => 'required|integer|min:2500|max:1000000', // Amount in cents ($25-$10,000)
+            'currency' => 'required|string|in:usd',
+        ]);
+
+        try {
+            $user = Auth::user();
+            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+
+            $paymentIntent = $stripe->paymentIntents->create([
+                'amount' => $validated['amount'],
+                'currency' => $validated['currency'],
+                'metadata' => [
+                    'user_id' => $user->id,
+                    'type' => 'add_funds',
+                ],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'client_secret' => $paymentIntent->client_secret,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create payment intent: '.$e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -596,11 +635,12 @@ class DashboardController extends Controller
         $templates = \App\Models\ShiftTemplate::where('business_id', $user->id)
             ->with('venue')
             ->withCount('shifts')
-            ->orderBy('name')
+            ->orderBy('template_name')
             ->get();
 
         // Get venues for the create form
-        $venues = \App\Models\Venue::where('business_id', $user->id)
+        $businessProfile = $user->businessProfile;
+        $venues = \App\Models\Venue::where('business_profile_id', $businessProfile?->id)
             ->where('is_active', true)
             ->orderBy('name')
             ->get(['id', 'name']);
@@ -768,24 +808,24 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Get reviews written by this business
-        $reviews = \App\Models\Review::where('reviewer_id', $user->id)
-            ->where('reviewer_type', 'business')
-            ->with(['reviewee.workerProfile', 'shift'])
+        // Get ratings written by this business
+        $reviews = \App\Models\Rating::where('rater_id', $user->id)
+            ->where('rater_type', 'business')
+            ->with(['rated.workerProfile', 'assignment.shift'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
         // Get stats
         $stats = [
-            'total_reviews' => \App\Models\Review::where('reviewer_id', $user->id)
-                ->where('reviewer_type', 'business')
+            'total_reviews' => \App\Models\Rating::where('rater_id', $user->id)
+                ->where('rater_type', 'business')
                 ->count(),
-            'average_rating' => \App\Models\Review::where('reviewer_id', $user->id)
-                ->where('reviewer_type', 'business')
+            'average_rating' => \App\Models\Rating::where('rater_id', $user->id)
+                ->where('rater_type', 'business')
                 ->avg('rating'),
             'pending_reviews' => ShiftAssignment::where('status', 'completed')
                 ->whereHas('shift', fn ($q) => $q->where('business_id', $user->id))
-                ->whereDoesntHave('businessReview')
+                ->whereDoesntHave('ratings', fn ($q) => $q->where('rater_type', 'business'))
                 ->count(),
         ];
 

@@ -580,8 +580,16 @@ class AgencyPerformanceNotificationService
 
         foreach ($scorecards as $scorecard) {
             if ($scorecard->status === 'red') {
+                // Stop counting red if we already started counting yellow
+                if ($consecutiveYellow > 0) {
+                    break;
+                }
                 $consecutiveRed++;
             } elseif ($scorecard->status === 'yellow') {
+                // Stop counting yellow if we already started counting red
+                if ($consecutiveRed > 0) {
+                    break;
+                }
                 $consecutiveYellow++;
             } else {
                 break;

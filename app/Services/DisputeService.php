@@ -661,10 +661,10 @@ class DisputeService
      */
     private function createAdminQueueEntry(Dispute $dispute, string $priority = 'medium', ?int $assignedTo = null): void
     {
-        // Find the shift payment for this dispute
-        $shiftPayment = ShiftPayment::where('shift_id', $dispute->shift_id)
-            ->where('worker_id', $dispute->worker_id)
-            ->first();
+        // Find the shift payment for this dispute (through shift assignment)
+        $shiftPayment = ShiftPayment::whereHas('assignment', function ($q) use ($dispute) {
+            $q->where('shift_id', $dispute->shift_id);
+        })->where('worker_id', $dispute->worker_id)->first();
 
         $adminQueue = AdminDisputeQueue::create([
             'shift_payment_id' => $shiftPayment?->id ?? 0,
@@ -684,6 +684,11 @@ class DisputeService
 
     /**
      * Process resolution payment.
+     *
+     * Routes payment based on resolution type:
+     * - worker_favor: Full amount to worker
+     * - business_favor: Full refund to business
+     * - split: Custom split between worker and business
      */
     private function processResolutionPayment(Dispute $dispute): void
     {
@@ -691,17 +696,107 @@ class DisputeService
             return;
         }
 
-        // This would integrate with the payment service
-        // For now, log the action
-        Log::info('Resolution payment to be processed', [
-            'dispute_id' => $dispute->id,
-            'resolution' => $dispute->resolution,
-            'amount' => $dispute->resolution_amount,
-            'worker_id' => $dispute->worker_id,
-            'business_id' => $dispute->business_id,
-        ]);
+        try {
+            // Get the shift payment associated with this dispute (through shift assignment)
+            $shiftPayment = ShiftPayment::whereHas('assignment', function ($q) use ($dispute) {
+                $q->where('shift_id', $dispute->shift_id);
+            })->where('worker_id', $dispute->worker_id)->first();
 
-        // TODO: Integrate with ShiftPaymentService or SettlementService to process actual payment
+            if (! $shiftPayment) {
+                Log::warning('No shift payment found for dispute resolution', [
+                    'dispute_id' => $dispute->id,
+                    'shift_id' => $dispute->shift_id,
+                    'worker_id' => $dispute->worker_id,
+                ]);
+
+                return;
+            }
+
+            /** @var ShiftPaymentService $paymentService */
+            $paymentService = app(ShiftPaymentService::class);
+
+            switch ($dispute->resolution) {
+                case Dispute::RESOLUTION_WORKER_FAVOR:
+                    // Release full disputed amount to worker
+                    $paymentService->resolveDispute(
+                        $shiftPayment,
+                        'release_to_worker',
+                        null,
+                        null
+                    );
+
+                    Log::info('Dispute resolution payment: Released to worker', [
+                        'dispute_id' => $dispute->id,
+                        'payment_id' => $shiftPayment->id,
+                        'amount' => $dispute->resolution_amount,
+                    ]);
+                    break;
+
+                case Dispute::RESOLUTION_BUSINESS_FAVOR:
+                    // Refund full disputed amount to business
+                    $paymentService->resolveDispute(
+                        $shiftPayment,
+                        'refund_to_business',
+                        null,
+                        null
+                    );
+
+                    Log::info('Dispute resolution payment: Refunded to business', [
+                        'dispute_id' => $dispute->id,
+                        'payment_id' => $shiftPayment->id,
+                        'amount' => $dispute->resolution_amount,
+                    ]);
+                    break;
+
+                case Dispute::RESOLUTION_SPLIT:
+                    // Calculate split amounts based on resolution calculation
+                    $splitDetails = $this->calculateResolutionSplit($dispute);
+                    $workerAmount = $splitDetails['worker_amount'];
+                    $businessRefund = $splitDetails['business_amount'];
+
+                    $paymentService->resolveDispute(
+                        $shiftPayment,
+                        'split',
+                        $workerAmount,
+                        $businessRefund
+                    );
+
+                    Log::info('Dispute resolution payment: Split between parties', [
+                        'dispute_id' => $dispute->id,
+                        'payment_id' => $shiftPayment->id,
+                        'worker_amount' => $workerAmount,
+                        'business_refund' => $businessRefund,
+                    ]);
+                    break;
+
+                case Dispute::RESOLUTION_WITHDRAWN:
+                case Dispute::RESOLUTION_EXPIRED:
+                    // No payment action needed - dispute was withdrawn or expired
+                    // The original payment remains unchanged
+                    Log::info('Dispute resolution: No payment action required', [
+                        'dispute_id' => $dispute->id,
+                        'resolution' => $dispute->resolution,
+                    ]);
+                    break;
+
+                default:
+                    Log::warning('Unknown dispute resolution type', [
+                        'dispute_id' => $dispute->id,
+                        'resolution' => $dispute->resolution,
+                    ]);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to process dispute resolution payment', [
+                'dispute_id' => $dispute->id,
+                'resolution' => $dispute->resolution,
+                'amount' => $dispute->resolution_amount,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Re-throw to allow the calling code to handle the error appropriately
+            throw $e;
+        }
     }
 
     /**

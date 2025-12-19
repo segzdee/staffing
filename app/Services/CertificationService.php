@@ -468,7 +468,11 @@ class CertificationService
         try {
             $certification->markAsRejected($verifiedBy, $reason);
 
-            // TODO: Send rejection notification
+            // Send rejection notification to worker
+            $worker = $certification->worker;
+            if ($worker) {
+                $worker->notify(new \App\Notifications\CertificationRejectedNotification($certification, $reason));
+            }
 
             return [
                 'success' => true,

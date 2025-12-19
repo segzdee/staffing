@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Models\AgencyPerformanceScorecard;
 use App\Models\AgencyProfile;
 use App\Models\AgencyWorker;
+use App\Models\Dispute;
+use App\Models\Rating;
 use App\Models\ShiftAssignment;
+use App\Models\ShiftAudit;
 use App\Models\UrgentShiftRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -29,19 +32,23 @@ class AgencyPerformanceService
 {
     // Performance targets
     const TARGET_FILL_RATE = 90.00;
+
     const TARGET_NO_SHOW_RATE = 3.00;
+
     const TARGET_AVERAGE_RATING = 4.30;
+
     const TARGET_COMPLAINT_RATE = 2.00;
 
     // Thresholds for yellow/red status
     const YELLOW_THRESHOLD_VARIANCE = 5.00; // 5% below target
+
     const RED_THRESHOLD_VARIANCE = 10.00;   // 10% below target
 
     /**
      * Generate weekly scorecards for all agencies.
      *
-     * @param \Carbon\Carbon|null $periodStart
-     * @param \Carbon\Carbon|null $periodEnd
+     * @param  \Carbon\Carbon|null  $periodStart
+     * @param  \Carbon\Carbon|null  $periodEnd
      * @return array Summary of generated scorecards
      */
     public function generateWeeklyScorecards($periodStart = null, $periodEnd = null)
@@ -82,7 +89,7 @@ class AgencyPerformanceService
             }
         }
 
-        Log::info("Weekly scorecards generated", $summary);
+        Log::info('Weekly scorecards generated', $summary);
 
         return $summary;
     }
@@ -90,9 +97,9 @@ class AgencyPerformanceService
     /**
      * Generate performance scorecard for a specific agency.
      *
-     * @param int $agencyId
-     * @param \Carbon\Carbon $periodStart
-     * @param \Carbon\Carbon $periodEnd
+     * @param  int  $agencyId
+     * @param  \Carbon\Carbon  $periodStart
+     * @param  \Carbon\Carbon  $periodEnd
      * @return AgencyPerformanceScorecard
      */
     public function generateScorecardForAgency($agencyId, $periodStart, $periodEnd)
@@ -131,17 +138,17 @@ class AgencyPerformanceService
     /**
      * Calculate performance metrics for an agency.
      *
-     * @param int $agencyId
-     * @param \Carbon\Carbon $periodStart
-     * @param \Carbon\Carbon $periodEnd
+     * @param  int  $agencyId
+     * @param  \Carbon\Carbon  $periodStart
+     * @param  \Carbon\Carbon  $periodEnd
      * @return array
      */
     protected function calculateMetrics($agencyId, $periodStart, $periodEnd)
     {
         // Get all shift assignments for agency workers in this period
         $assignments = ShiftAssignment::whereHas('agencyWorker', function ($query) use ($agencyId) {
-                $query->where('agency_id', $agencyId);
-            })
+            $query->where('agency_id', $agencyId);
+        })
             ->whereBetween('created_at', [$periodStart, $periodEnd])
             ->with(['shift', 'worker'])
             ->get();
@@ -167,8 +174,8 @@ class AgencyPerformanceService
         $totalRatingSum = $ratings->sum('rating');
         $averageRating = $totalRatings > 0 ? $totalRatingSum / $totalRatings : 0;
 
-        // Calculate complaint rate (placeholder - would need complaints table)
-        $complaints = 0; // TODO: Implement complaints tracking
+        // Calculate complaint rate from multiple sources
+        $complaints = $this->getComplaintsCount($agency, $periodStart, $periodEnd);
         $complaintRate = $totalAssignments > 0 ? ($complaints / $totalAssignments) * 100 : 0;
 
         // Calculate urgent fill metrics
@@ -205,7 +212,7 @@ class AgencyPerformanceService
     /**
      * Determine overall performance status.
      *
-     * @param array $metrics
+     * @param  array  $metrics
      * @return string green, yellow, or red
      */
     protected function determineStatus($metrics)
@@ -256,7 +263,7 @@ class AgencyPerformanceService
     /**
      * Generate warning messages for failed metrics.
      *
-     * @param array $metrics
+     * @param  array  $metrics
      * @return array
      */
     protected function generateWarnings($metrics)
@@ -265,7 +272,7 @@ class AgencyPerformanceService
 
         if ($metrics['fill_rate'] < self::TARGET_FILL_RATE) {
             $warnings[] = sprintf(
-                "Fill rate (%s%%) is below target (%s%%)",
+                'Fill rate (%s%%) is below target (%s%%)',
                 $metrics['fill_rate'],
                 self::TARGET_FILL_RATE
             );
@@ -273,7 +280,7 @@ class AgencyPerformanceService
 
         if ($metrics['no_show_rate'] > self::TARGET_NO_SHOW_RATE) {
             $warnings[] = sprintf(
-                "No-show rate (%s%%) exceeds target (%s%%)",
+                'No-show rate (%s%%) exceeds target (%s%%)',
                 $metrics['no_show_rate'],
                 self::TARGET_NO_SHOW_RATE
             );
@@ -281,7 +288,7 @@ class AgencyPerformanceService
 
         if ($metrics['average_worker_rating'] > 0 && $metrics['average_worker_rating'] < self::TARGET_AVERAGE_RATING) {
             $warnings[] = sprintf(
-                "Average worker rating (%s) is below target (%s)",
+                'Average worker rating (%s) is below target (%s)',
                 $metrics['average_worker_rating'],
                 self::TARGET_AVERAGE_RATING
             );
@@ -289,7 +296,7 @@ class AgencyPerformanceService
 
         if ($metrics['complaint_rate'] > self::TARGET_COMPLAINT_RATE) {
             $warnings[] = sprintf(
-                "Complaint rate (%s%%) exceeds target (%s%%)",
+                'Complaint rate (%s%%) exceeds target (%s%%)',
                 $metrics['complaint_rate'],
                 self::TARGET_COMPLAINT_RATE
             );
@@ -301,7 +308,7 @@ class AgencyPerformanceService
     /**
      * Generate flags for metrics requiring attention.
      *
-     * @param array $metrics
+     * @param  array  $metrics
      * @return array
      */
     protected function generateFlags($metrics)
@@ -330,19 +337,19 @@ class AgencyPerformanceService
     /**
      * Apply automated actions based on scorecard status.
      *
-     * @param AgencyPerformanceScorecard $scorecard
+     * @param  AgencyPerformanceScorecard  $scorecard
      * @return void
      */
     protected function applyAutomatedActions($scorecard)
     {
         // Yellow status: Send warning
-        if ($scorecard->status === 'yellow' && !$scorecard->warning_sent) {
+        if ($scorecard->status === 'yellow' && ! $scorecard->warning_sent) {
             $this->sendPerformanceWarning($scorecard);
             $scorecard->sendWarning();
         }
 
         // Red status: Apply sanction
-        if ($scorecard->status === 'red' && !$scorecard->sanction_applied) {
+        if ($scorecard->status === 'red' && ! $scorecard->sanction_applied) {
             // Check consecutive red scorecards
             $consecutiveRed = $this->getConsecutiveRedCount($scorecard->agency_id, $scorecard->period_end);
 
@@ -362,8 +369,8 @@ class AgencyPerformanceService
     /**
      * Get count of consecutive red scorecards.
      *
-     * @param int $agencyId
-     * @param \Carbon\Carbon $beforeDate
+     * @param  int  $agencyId
+     * @param  \Carbon\Carbon  $beforeDate
      * @return int
      */
     protected function getConsecutiveRedCount($agencyId, $beforeDate)
@@ -389,7 +396,7 @@ class AgencyPerformanceService
     /**
      * Send performance warning notification.
      *
-     * @param AgencyPerformanceScorecard $scorecard
+     * @param  AgencyPerformanceScorecard  $scorecard
      * @return void
      */
     protected function sendPerformanceWarning($scorecard)
@@ -397,10 +404,25 @@ class AgencyPerformanceService
         $agency = $scorecard->agency;
 
         if ($agency) {
-            // TODO: Implement notification
-            // Notification::send($agency, new \App\Notifications\AgencyPerformanceWarning($scorecard));
+            // Send performance warning notification based on status
+            $performanceNotification = $scorecard->notifications()->latest()->first();
+            if ($performanceNotification) {
+                if ($scorecard->status === 'yellow') {
+                    $agency->notify(new \App\Notifications\Agency\PerformanceYellowWarningNotification(
+                        $performanceNotification,
+                        $scorecard,
+                        $scorecard->action_plan ?? []
+                    ));
+                } elseif ($scorecard->status === 'red') {
+                    $agency->notify(new \App\Notifications\Agency\PerformanceRedAlertNotification(
+                        $performanceNotification,
+                        $scorecard,
+                        $scorecard->action_plan ?? []
+                    ));
+                }
+            }
 
-            Log::info("Performance warning sent", [
+            Log::info('Performance warning sent', [
                 'agency_id' => $scorecard->agency_id,
                 'scorecard_id' => $scorecard->id,
                 'status' => $scorecard->status,
@@ -411,14 +433,14 @@ class AgencyPerformanceService
     /**
      * Send critical performance warning.
      *
-     * @param AgencyPerformanceScorecard $scorecard
+     * @param  AgencyPerformanceScorecard  $scorecard
      * @return void
      */
     protected function sendCriticalWarning($scorecard)
     {
         $scorecard->applySanction('warning', 'Critical performance issues detected');
 
-        Log::warning("Critical performance warning issued", [
+        Log::warning('Critical performance warning issued', [
             'agency_id' => $scorecard->agency_id,
             'scorecard_id' => $scorecard->id,
         ]);
@@ -427,7 +449,7 @@ class AgencyPerformanceService
     /**
      * Increase agency fees as sanction.
      *
-     * @param AgencyPerformanceScorecard $scorecard
+     * @param  AgencyPerformanceScorecard  $scorecard
      * @return void
      */
     protected function increaseFees($scorecard)
@@ -444,7 +466,7 @@ class AgencyPerformanceService
                 sprintf('Commission rate increased to %s%% due to poor performance', $newRate)
             );
 
-            Log::warning("Agency fees increased", [
+            Log::warning('Agency fees increased', [
                 'agency_id' => $scorecard->agency_id,
                 'new_rate' => $newRate,
             ]);
@@ -454,7 +476,7 @@ class AgencyPerformanceService
     /**
      * Suspend agency as final sanction.
      *
-     * @param AgencyPerformanceScorecard $scorecard
+     * @param  AgencyPerformanceScorecard  $scorecard
      * @return void
      */
     protected function applySuspension($scorecard)
@@ -474,10 +496,88 @@ class AgencyPerformanceService
                 'Agency suspended due to sustained poor performance (3+ consecutive red scorecards)'
             );
 
-            Log::critical("Agency suspended", [
+            Log::critical('Agency suspended', [
                 'agency_id' => $scorecard->agency_id,
                 'scorecard_id' => $scorecard->id,
             ]);
         }
+    }
+
+    /**
+     * Get complaints count from workers assigned through this agency.
+     *
+     * Counts complaints from multiple sources:
+     * - Disputes filed against agency workers
+     * - Failed quality audits (complaint-driven)
+     * - Low ratings with complaint-type review text
+     * - Direct business complaints/reports
+     *
+     * @param  \Carbon\Carbon|string  $startDate
+     * @param  \Carbon\Carbon|string  $endDate
+     */
+    protected function getComplaintsCount(User $agency, $startDate, $endDate): int
+    {
+        $complaintsCount = 0;
+
+        // Get all workers managed by this agency
+        $agencyWorkerIds = AgencyWorker::where('agency_id', $agency->id)
+            ->where('status', 'active')
+            ->pluck('worker_id')
+            ->toArray();
+
+        if (empty($agencyWorkerIds)) {
+            return 0;
+        }
+
+        // 1. Count disputes filed against agency workers
+        $disputeComplaints = Dispute::whereIn('worker_id', $agencyWorkerIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereIn('status', [
+                Dispute::STATUS_OPEN,
+                Dispute::STATUS_INVESTIGATING,
+                Dispute::STATUS_RESOLVED,
+            ])
+            ->count();
+        $complaintsCount += $disputeComplaints;
+
+        // 2. Count failed complaint-driven audits against agency workers
+        try {
+            $auditComplaints = ShiftAudit::whereHas('shiftAssignment', function ($query) use ($agencyWorkerIds) {
+                $query->whereIn('worker_id', $agencyWorkerIds);
+            })
+                ->where('audit_type', ShiftAudit::TYPE_COMPLAINT)
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+            $complaintsCount += $auditComplaints;
+        } catch (\Exception $e) {
+            // ShiftAudit model/table may not exist, skip this count
+        }
+
+        // 3. Count low ratings (<=2) that likely indicate complaints
+        // These are ratings where the business gave a very poor score
+        $lowRatingComplaints = Rating::whereIn('rated_id', $agencyWorkerIds)
+            ->where('rater_type', 'business')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('rating', '<=', 2)
+                    ->orWhere('is_flagged', true);
+            })
+            ->count();
+        $complaintsCount += $lowRatingComplaints;
+
+        // 4. Count shift assignments with issue flags
+        $assignmentIssues = ShiftAssignment::whereIn('worker_id', $agencyWorkerIds)
+            ->where('agency_id', $agency->id)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('status', 'no_show')
+                    ->orWhere('status', 'cancelled_by_worker')
+                    ->orWhere('has_complaint', true)
+                    ->orWhere('was_reported', true);
+            })
+            ->count();
+        $complaintsCount += $assignmentIssues;
+
+        return $complaintsCount;
     }
 }

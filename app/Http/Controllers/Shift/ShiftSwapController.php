@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Shift;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ShiftSwap\RejectShiftSwapRequest;
 use App\Http\Requests\ShiftSwap\StoreShiftSwapRequest;
-use App\Models\ShiftSwap;
 use App\Models\ShiftAssignment;
+use App\Models\ShiftSwap;
 use App\Services\ShiftSwapService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +27,7 @@ class ShiftSwapController extends Controller
     public function index(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can browse shift swaps.');
         }
 
@@ -36,20 +36,20 @@ class ShiftSwapController extends Controller
 
         // Filter by industry if specified
         if ($request->has('industry') && $request->industry != 'all') {
-            $swaps = $swaps->filter(function($swap) use ($request) {
+            $swaps = $swaps->filter(function ($swap) use ($request) {
                 return $swap->offeringAssignment->shift->industry === $request->industry;
             });
         }
 
         // Filter by date range
         if ($request->has('date_from')) {
-            $swaps = $swaps->filter(function($swap) use ($request) {
+            $swaps = $swaps->filter(function ($swap) use ($request) {
                 return $swap->offeringAssignment->shift->shift_date >= $request->date_from;
             });
         }
 
         if ($request->has('date_to')) {
-            $swaps = $swaps->filter(function($swap) use ($request) {
+            $swaps = $swaps->filter(function ($swap) use ($request) {
                 return $swap->offeringAssignment->shift->shift_date <= $request->date_to;
             });
         }
@@ -84,7 +84,7 @@ class ShiftSwapController extends Controller
         // Validate eligibility
         $eligibility = $this->swapService->validateSwapEligibility(Auth::user(), $assignment);
 
-        if (!$eligibility['eligible']) {
+        if (! $eligibility['eligible']) {
             return redirect()->back()
                 ->with('error', $eligibility['reason']);
         }
@@ -102,7 +102,7 @@ class ShiftSwapController extends Controller
         // Validate eligibility
         $eligibility = $this->swapService->validateSwapEligibility(Auth::user(), $assignment);
 
-        if (!$eligibility['eligible']) {
+        if (! $eligibility['eligible']) {
             return redirect()->back()
                 ->with('error', $eligibility['reason']);
         }
@@ -128,7 +128,7 @@ class ShiftSwapController extends Controller
         $swap = ShiftSwap::with(['offeringAssignment.shift'])->findOrFail($swapId);
 
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can accept shift swaps.');
         }
 
@@ -141,7 +141,7 @@ class ShiftSwapController extends Controller
         // Validate acceptance eligibility
         $eligibility = $this->swapService->validateSwapAcceptance(Auth::user(), $swap);
 
-        if (!$eligibility['eligible']) {
+        if (! $eligibility['eligible']) {
             return redirect()->back()
                 ->with('error', $eligibility['reason']);
         }
@@ -153,8 +153,12 @@ class ShiftSwapController extends Controller
             'accepted_at' => now(),
         ]);
 
-        // TODO: Notify business for approval
-        // event(new ShiftSwapAccepted($swap));
+        // Notify business for approval
+        $swap->load(['offeringAssignment.shift.business', 'offeringWorker', 'receivingWorker']);
+        $business = $swap->offeringAssignment?->shift?->business;
+        if ($business) {
+            $business->notify(new \App\Notifications\ShiftSwapPendingApprovalNotification($swap));
+        }
 
         return redirect()->back()
             ->with('success', 'Swap request sent! Waiting for business approval.');
@@ -224,7 +228,7 @@ class ShiftSwapController extends Controller
         }
 
         // Can only cancel pending swaps
-        if (!in_array($swap->status, ['pending', 'accepted'])) {
+        if (! in_array($swap->status, ['pending', 'accepted'])) {
             return redirect()->back()
                 ->with('error', 'This swap cannot be cancelled.');
         }
@@ -272,7 +276,7 @@ class ShiftSwapController extends Controller
         $swap = ShiftSwap::with([
             'offeringAssignment.shift.business',
             'offeringAssignment.worker.workerProfile',
-            'receivingWorker.workerProfile'
+            'receivingWorker.workerProfile',
         ])->findOrFail($swapId);
 
         // Check authorization
@@ -288,13 +292,13 @@ class ShiftSwapController extends Controller
             $canView = $swap->offeringAssignment->shift->business_id === Auth::id();
         }
 
-        if (!$canView) {
+        if (! $canView) {
             abort(403, 'You do not have permission to view this swap.');
         }
 
         // Calculate match score if viewing worker hasn't accepted yet
         $matchScore = null;
-        if (Auth::user()->isWorker() && !$swap->receiving_worker_id) {
+        if (Auth::user()->isWorker() && ! $swap->receiving_worker_id) {
             $matchingService = app(\App\Services\ShiftMatchingService::class);
             $matchScore = $matchingService->calculateWorkerShiftMatch(
                 Auth::user(),
@@ -311,7 +315,7 @@ class ShiftSwapController extends Controller
     public function businessSwaps(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isBusiness() && !Auth::user()->isAgency()) {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
             abort(403, 'Only businesses can access this page.');
         }
 
@@ -320,8 +324,8 @@ class ShiftSwapController extends Controller
         $query = ShiftSwap::with([
             'offeringAssignment.shift',
             'offeringAssignment.worker',
-            'receivingWorker'
-        ])->whereHas('offeringAssignment.shift', function($q) {
+            'receivingWorker',
+        ])->whereHas('offeringAssignment.shift', function ($q) {
             $q->where('business_id', Auth::id());
         });
 
@@ -340,7 +344,7 @@ class ShiftSwapController extends Controller
     public function mySwaps(Request $request)
     {
         // Check authorization
-        if (!Auth::user()->isWorker()) {
+        if (! Auth::user()->isWorker()) {
             abort(403, 'Only workers can access this page.');
         }
 
@@ -348,10 +352,10 @@ class ShiftSwapController extends Controller
 
         $query = ShiftSwap::with([
             'offeringAssignment.shift.business',
-            'receivingWorker'
-        ])->where(function($q) {
+            'receivingWorker',
+        ])->where(function ($q) {
             $q->where('offering_worker_id', Auth::id())
-              ->orWhere('receiving_worker_id', Auth::id());
+                ->orWhere('receiving_worker_id', Auth::id());
         });
 
         switch ($filter) {

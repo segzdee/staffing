@@ -92,7 +92,7 @@ class DashboardController extends Controller
                     ->where('agency_workers.agency_id', $agency->id)
                     ->whereMonth('shift_assignments.created_at', now()->month)
                     ->count(),
-                'avg_worker_rating' => 0, // TODO: Calculate from worker ratings
+                'avg_worker_rating' => $this->calculateAverageWorkerRating($agency->id),
             ];
 
             // Calculate profile completeness for onboarding progress
@@ -241,8 +241,16 @@ class DashboardController extends Controller
 
     public function shiftsBrowse()
     {
-        // Reuse the main shifts index view, potentially passing a flag if needed
-        return view('shifts.index');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Get shifts available to agency workers
+        $shifts = Shift::query()
+            ->where('status', 'open')
+            ->orderBy('start_time', 'asc')
+            ->paginate(20);
+
+        return view('shifts.index', compact('shifts'));
     }
 
     public function shiftsView($id)
@@ -255,10 +263,18 @@ class DashboardController extends Controller
 
     public function workersIndex()
     {
-        // Fetch agency workers
-        $workers = AgencyWorker::where('agency_id', Auth::id())->with('user')->paginate(20);
+        $status = request('status', 'active');
 
-        return view('agency.workers.index', compact('workers'));
+        // Fetch agency workers
+        $query = AgencyWorker::where('agency_id', Auth::id())->with('user');
+
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        $workers = $query->paginate(20);
+
+        return view('agency.workers.index', compact('workers', 'status'));
     }
 
     public function commissions()
@@ -746,5 +762,50 @@ class DashboardController extends Controller
     public function workersGroups(): \Illuminate\View\View
     {
         return view('agency.workers.groups');
+    }
+
+    /**
+     * Calculate average rating of all workers managed by this agency.
+     *
+     * Calculates the weighted average of all ratings received by agency workers
+     * from businesses. Uses the ratings table where rater_type is 'business'
+     * and the rated worker belongs to the agency.
+     */
+    protected function calculateAverageWorkerRating(int $agencyId): float
+    {
+        // Get all worker IDs managed by this agency
+        $workerIds = AgencyWorker::where('agency_id', $agencyId)
+            ->where('status', 'active')
+            ->pluck('worker_id')
+            ->toArray();
+
+        if (empty($workerIds)) {
+            return 0.0;
+        }
+
+        // Calculate average rating from the ratings table
+        // Ratings from businesses (rater_type = 'business') rating workers
+        $avgRating = DB::table('ratings')
+            ->whereIn('rated_id', $workerIds)
+            ->where('rater_type', 'business')
+            ->avg('rating');
+
+        // If no weighted_score available, fall back to simple rating average
+        if ($avgRating === null) {
+            // Try weighted_score if available (more accurate)
+            $avgWeighted = DB::table('ratings')
+                ->whereIn('rated_id', $workerIds)
+                ->where('rater_type', 'business')
+                ->whereNotNull('weighted_score')
+                ->avg('weighted_score');
+
+            if ($avgWeighted !== null) {
+                return round((float) $avgWeighted, 2);
+            }
+
+            return 0.0;
+        }
+
+        return round((float) $avgRating, 2);
     }
 }

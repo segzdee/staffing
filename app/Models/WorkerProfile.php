@@ -405,20 +405,22 @@ class WorkerProfile extends Model
 
     /**
      * Get the worker's skills.
+     * Note: worker_skills.worker_id references users.id, so we use user_id as the parent key
      */
     public function skills()
     {
-        return $this->belongsToMany(Skill::class, 'worker_skills', 'worker_id', 'skill_id')
+        return $this->belongsToMany(Skill::class, 'worker_skills', 'worker_id', 'skill_id', 'user_id')
             ->withPivot('proficiency_level', 'years_experience', 'verified')
             ->withTimestamps();
     }
 
     /**
      * Get the worker's certifications.
+     * Note: worker_certifications.worker_id references users.id, so we use user_id as the parent key
      */
     public function certifications()
     {
-        return $this->belongsToMany(Certification::class, 'worker_certifications', 'worker_id', 'certification_id')
+        return $this->belongsToMany(Certification::class, 'worker_certifications', 'worker_id', 'certification_id', 'user_id')
             ->withPivot('certification_number', 'issue_date', 'expiry_date', 'document_url', 'verified', 'verified_at')
             ->withTimestamps();
     }

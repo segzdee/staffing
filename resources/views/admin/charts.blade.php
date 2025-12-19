@@ -28,7 +28,7 @@ new Morris.Area({
     for ( $i=0; $i < 30; ++$i) {
 
     $date = date('Y-m-d', strtotime('today - '.$i.' days'));
-    // TODO: Replace with relevant OvertimeStaff metric (e.g., shifts completed)
+    // OvertimeStaff metric: Daily shifts created
     $_subscriptions = \App\Models\Shift::whereDate('created_at', '=', $date)->count();
     ?>
 
@@ -42,7 +42,7 @@ new Morris.Area({
   ykeys: ['value'],
   // Labels for the ykeys -- will be displayed when you hover over the
   // chart.
-  labels: ['{{ trans("admin.subscriptions") }}'],
+  labels: ['{{ trans("admin.shifts_created") }}'],
   pointFillColors: ['#03b0da'],
   lineColors: ['#ddd'],
   hideHover: 'auto',
@@ -117,7 +117,7 @@ new Morris.Area({
   for ($i=1; $i <= $daysMonth; ++$i) {
 
     $date = date('Y-m-d', strtotime($dateFormat.$i));
-    // TODO: Replace with OvertimeStaff platform revenue
+    // OvertimeStaff metric: Daily platform revenue from shift payments
     $_subscriptions = \App\Models\ShiftPayment::whereDate('created_at', '=', $date)->sum('platform_fee');
 
     $monthsData[] =  "'$monthFormat $i'";

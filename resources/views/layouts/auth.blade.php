@@ -62,13 +62,13 @@
         {{-- Right Panel - Form --}}
         <div class="w-full lg:w-1/2 flex flex-col min-h-screen bg-background relative">
             {{-- Mobile Logo (Visible only on small screens) --}}
-            <div class="lg:hidden absolute top-6 left-6 z-20">
+            <div class="lg:hidden pt-6 px-6">
                 <a href="{{ url('/') }}" class="flex items-center gap-2">
                     <x-logo class="h-8 w-auto" />
                 </a>
             </div>
-            <div class="flex-1 flex items-center justify-center p-8">
-                <div class="w-full max-w-md space-y-8">
+            <div class="flex-1 flex items-center justify-center p-6 lg:p-8">
+                <div class="w-full max-w-md space-y-6">
                     @yield('form')
                 </div>
             </div>

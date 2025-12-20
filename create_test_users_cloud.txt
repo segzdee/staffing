@@ -1,0 +1,55 @@
+# Laravel Cloud Console Command
+# Copy and paste this entire command into Laravel Cloud's command console:
+
+php artisan tinker --execute="
+use App\Models\User;
+use App\Models\WorkerProfile;
+use App\Models\BusinessProfile;
+use Illuminate\Support\Facades\Hash;
+
+// Worker
+\$worker = User::firstOrCreate(
+    ['email' => 'worker@test.com'],
+    ['name' => 'Test Worker', 'password' => Hash::make('password'), 'user_type' => 'worker', 'role' => 'worker', 'email_verified_at' => now(), 'status' => 'active']
+);
+if (!\$worker->wasRecentlyCreated) {
+    \$worker->update(['name' => 'Test Worker', 'password' => Hash::make('password'), 'user_type' => 'worker', 'role' => 'worker', 'status' => 'active']);
+}
+WorkerProfile::firstOrCreate(
+    ['user_id' => \$worker->id],
+    ['first_name' => 'Test', 'last_name' => 'Worker', 'phone' => '555-0001', 'onboarding_completed' => true, 'is_complete' => true]
+);
+
+// Business
+\$business = User::firstOrCreate(
+    ['email' => 'business@test.com'],
+    ['name' => 'Test Business', 'password' => Hash::make('password'), 'user_type' => 'business', 'role' => 'business', 'email_verified_at' => now(), 'status' => 'active']
+);
+if (!\$business->wasRecentlyCreated) {
+    \$business->update(['name' => 'Test Business', 'password' => Hash::make('password'), 'user_type' => 'business', 'role' => 'business', 'status' => 'active']);
+}
+BusinessProfile::firstOrCreate(
+    ['user_id' => \$business->id],
+    ['business_name' => 'Test Company', 'business_type' => 'restaurant', 'phone' => '555-0002', 'onboarding_completed' => true, 'is_complete' => true, 'is_verified' => true]
+);
+
+// Agency
+\$agency = User::firstOrCreate(
+    ['email' => 'agency@test.com'],
+    ['name' => 'Test Agency', 'password' => Hash::make('password'), 'user_type' => 'agency', 'role' => 'agency', 'email_verified_at' => now(), 'status' => 'active']
+);
+if (!\$agency->wasRecentlyCreated) {
+    \$agency->update(['name' => 'Test Agency', 'password' => Hash::make('password'), 'user_type' => 'agency', 'role' => 'agency', 'status' => 'active']);
+}
+
+// Admin
+\$admin = User::firstOrCreate(
+    ['email' => 'admin@test.com'],
+    ['name' => 'Test Admin', 'password' => Hash::make('password'), 'user_type' => 'admin', 'role' => 'admin', 'email_verified_at' => now(), 'status' => 'active']
+);
+if (!\$admin->wasRecentlyCreated) {
+    \$admin->update(['name' => 'Test Admin', 'password' => Hash::make('password'), 'user_type' => 'admin', 'role' => 'admin', 'status' => 'active']);
+}
+
+echo 'Test users created! Worker ID: ' . \$worker->id . ', Business ID: ' . \$business->id . ', Agency ID: ' . \$agency->id . ', Admin ID: ' . \$admin->id;
+"

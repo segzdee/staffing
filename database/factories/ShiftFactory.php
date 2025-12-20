@@ -74,7 +74,7 @@ class ShiftFactory extends Factory
             'final_rate' => null,
             'minimum_wage' => 1500, // $15.00
             'base_worker_pay' => null,
-            'platform_fee_rate' => 35.00,
+            'platform_fee_rate' => 20.00,
             'platform_fee_amount' => null,
             'vat_rate' => 18.00,
             'vat_amount' => null,

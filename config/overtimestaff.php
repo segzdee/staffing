@@ -10,7 +10,7 @@ return [
     |
     */
     'financial' => [
-        'platform_fee_rate' => 35.00, // Percentage
+        'platform_fee_rate' => 20.00, // Percentage
         'vat_rate' => 18.00, // Percentage (Malta)
         'contingency_buffer_rate' => 5.00, // Percentage
         'currency' => 'EUR',

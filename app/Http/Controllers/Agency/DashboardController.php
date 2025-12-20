@@ -613,8 +613,13 @@ class DashboardController extends Controller
 
         $avgCommissionPerShift = $shiftsFilledThisMonth > 0 ? $monthlyEarnings / $shiftsFilledThisMonth : 0;
 
+        // Defensive check for Stripe onboarding method
+        $stripeConnected = method_exists($agencyProfile, 'hasCompletedStripeOnboarding')
+            ? $agencyProfile->hasCompletedStripeOnboarding()
+            : ($agencyProfile->stripe_account_id && $agencyProfile->stripe_onboarding_complete);
+
         return view('agency.finance.overview', [
-            'stripeConnected' => $agencyProfile->hasCompletedStripeOnboarding(),
+            'stripeConnected' => $stripeConnected,
             'totalEarnings' => $totalEarnings,
             'pendingCommission' => $pendingCommission,
             'monthlyEarnings' => $monthlyEarnings,
@@ -659,37 +664,24 @@ class DashboardController extends Controller
 
         $commissions = $query->orderBy('shift_payments.created_at', 'desc')->paginate(15);
 
-        // Calculate summary totals
-        $paidCommissions = DB::table('shift_payments')
+        // Calculate all summary totals in a single query (optimized from 4 queries)
+        $commissionSummary = DB::table('shift_payments')
             ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
             ->whereIn('shift_assignments.worker_id', $workerIds)
-            ->where('shift_payments.status', 'paid_out')
-            ->sum('shift_payments.agency_commission');
-
-        $pendingCommissions = DB::table('shift_payments')
-            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
-            ->whereIn('shift_assignments.worker_id', $workerIds)
-            ->where('shift_payments.status', 'released')
-            ->sum('shift_payments.agency_commission');
-
-        $escrowCommissions = DB::table('shift_payments')
-            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
-            ->whereIn('shift_assignments.worker_id', $workerIds)
-            ->where('shift_payments.status', 'in_escrow')
-            ->sum('shift_payments.agency_commission');
-
-        $thisMonthCommissions = DB::table('shift_payments')
-            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
-            ->whereIn('shift_assignments.worker_id', $workerIds)
-            ->whereMonth('shift_payments.created_at', now()->month)
-            ->sum('shift_payments.agency_commission');
+            ->selectRaw("
+                SUM(CASE WHEN shift_payments.status = 'paid_out' THEN shift_payments.agency_commission ELSE 0 END) as paid,
+                SUM(CASE WHEN shift_payments.status = 'released' THEN shift_payments.agency_commission ELSE 0 END) as pending,
+                SUM(CASE WHEN shift_payments.status = 'in_escrow' THEN shift_payments.agency_commission ELSE 0 END) as escrow,
+                SUM(CASE WHEN MONTH(shift_payments.created_at) = ? AND YEAR(shift_payments.created_at) = ? THEN shift_payments.agency_commission ELSE 0 END) as this_month
+            ", [now()->month, now()->year])
+            ->first();
 
         return view('agency.finance.commissions', [
             'commissions' => $commissions,
-            'paidCommissions' => $paidCommissions,
-            'pendingCommissions' => $pendingCommissions,
-            'escrowCommissions' => $escrowCommissions,
-            'thisMonthCommissions' => $thisMonthCommissions,
+            'paidCommissions' => $commissionSummary->paid ?? 0,
+            'pendingCommissions' => $commissionSummary->pending ?? 0,
+            'escrowCommissions' => $commissionSummary->escrow ?? 0,
+            'thisMonthCommissions' => $commissionSummary->this_month ?? 0,
         ]);
     }
 
@@ -784,7 +776,10 @@ class DashboardController extends Controller
         $agencyProfile = $agency->agencyProfile;
         $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
 
-        $stripeConnected = $agencyProfile->hasCompletedStripeOnboarding();
+        // Defensive check for Stripe onboarding method
+        $stripeConnected = method_exists($agencyProfile, 'hasCompletedStripeOnboarding')
+            ? $agencyProfile->hasCompletedStripeOnboarding()
+            : ($agencyProfile->stripe_account_id && $agencyProfile->stripe_onboarding_complete);
 
         $totalSettled = $agencyProfile->total_payouts_amount ?? 0;
 

@@ -504,4 +504,156 @@ class ShiftManagementController extends Controller
 
         return $totalAssignments > 0 ? round(($noShows / $totalAssignments) * 100, 2) : 0;
     }
+
+    /**
+     * Show the form for editing a shift.
+     */
+    public function edit($shiftId)
+    {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
+            abort(403, 'Only businesses and agencies can edit shifts.');
+        }
+
+        $shift = Shift::with(['venue', 'assignments'])->findOrFail($shiftId);
+
+        if ($shift->business_id !== Auth::id()) {
+            abort(403, 'You can only edit your own shifts.');
+        }
+
+        // Can't edit if shift has started or completed
+        if (in_array($shift->status, ['in_progress', 'completed', 'cancelled'])) {
+            return redirect()->route('business.shifts.show', $shift->id)
+                ->with('error', 'Cannot edit a shift that has already started, completed, or been cancelled.');
+        }
+
+        $venues = Auth::user()->businessProfile?->venues ?? collect();
+
+        return view('business.shifts.edit', compact('shift', 'venues'));
+    }
+
+    /**
+     * Update the specified shift.
+     */
+    public function update(Request $request, $shiftId)
+    {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
+            abort(403, 'Only businesses and agencies can update shifts.');
+        }
+
+        $shift = Shift::findOrFail($shiftId);
+
+        if ($shift->business_id !== Auth::id()) {
+            abort(403, 'You can only update your own shifts.');
+        }
+
+        if (in_array($shift->status, ['in_progress', 'completed', 'cancelled'])) {
+            return redirect()->route('business.shifts.show', $shift->id)
+                ->with('error', 'Cannot update a shift that has already started, completed, or been cancelled.');
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'shift_date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required',
+            'end_time' => 'required|after:start_time',
+            'base_rate' => 'required|numeric|min:0',
+            'required_workers' => 'required|integer|min:1',
+            'venue_id' => 'nullable|exists:venues,id',
+        ]);
+
+        // Convert rate to cents if using MoneyCast
+        if (isset($validated['base_rate'])) {
+            $validated['base_rate'] = (int) ($validated['base_rate'] * 100);
+            $validated['final_rate'] = $validated['base_rate'];
+        }
+
+        $shift->update($validated);
+
+        return redirect()->route('business.shifts.show', $shift->id)
+            ->with('success', 'Shift updated successfully.');
+    }
+
+    /**
+     * Remove the specified shift.
+     */
+    public function destroy($shiftId)
+    {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
+            abort(403, 'Only businesses and agencies can delete shifts.');
+        }
+
+        $shift = Shift::findOrFail($shiftId);
+
+        if ($shift->business_id !== Auth::id()) {
+            abort(403, 'You can only delete your own shifts.');
+        }
+
+        // Can't delete if shift has assignments
+        if ($shift->assignments()->exists()) {
+            return redirect()->route('business.shifts.show', $shift->id)
+                ->with('error', 'Cannot delete a shift that has assigned workers. Cancel the shift instead.');
+        }
+
+        // Can't delete if shift is in progress or completed
+        if (in_array($shift->status, ['in_progress', 'completed'])) {
+            return redirect()->route('business.shifts.show', $shift->id)
+                ->with('error', 'Cannot delete a shift that is in progress or completed.');
+        }
+
+        $shift->delete();
+
+        return redirect()->route('business.shifts.index')
+            ->with('success', 'Shift deleted successfully.');
+    }
+
+    /**
+     * Cancel a shift.
+     */
+    public function cancelShift(Request $request, $shiftId)
+    {
+        if (! Auth::user()->isBusiness() && ! Auth::user()->isAgency()) {
+            abort(403, 'Only businesses and agencies can cancel shifts.');
+        }
+
+        $shift = Shift::with('assignments.worker')->findOrFail($shiftId);
+
+        if ($shift->business_id !== Auth::id()) {
+            abort(403, 'You can only cancel your own shifts.');
+        }
+
+        if (in_array($shift->status, ['completed', 'cancelled'])) {
+            return redirect()->route('business.shifts.show', $shift->id)
+                ->with('error', 'This shift cannot be cancelled.');
+        }
+
+        $reason = $request->input('cancellation_reason', 'Cancelled by business');
+
+        // Update shift status
+        $shift->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $reason,
+            'cancelled_at' => now(),
+            'cancelled_by' => Auth::id(),
+        ]);
+
+        // Notify assigned workers
+        foreach ($shift->assignments as $assignment) {
+            $assignment->update(['status' => 'cancelled']);
+
+            if ($assignment->worker) {
+                $notificationService = app(\App\Services\NotificationService::class);
+                $notificationService->notifyShiftCancelled($shift, $assignment->worker);
+            }
+        }
+
+        // Reject pending applications
+        $shift->applications()->where('status', 'pending')->update([
+            'status' => 'rejected',
+            'responded_at' => now(),
+        ]);
+
+        return redirect()->route('business.shifts.index')
+            ->with('success', 'Shift cancelled successfully. All assigned workers have been notified.');
+    }
 }

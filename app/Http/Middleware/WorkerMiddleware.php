@@ -11,13 +11,15 @@ class WorkerMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @return mixed
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+
             return redirect()->route('login')->with('error', 'Please login to continue.');
         }
 
@@ -28,16 +30,22 @@ class WorkerMiddleware
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Access denied. Worker access required.'], 403);
             }
+
             return redirect()->route('dashboard.index')->with('error', 'Access denied. Worker access required.');
         }
 
+        // For API requests, skip profile completion checks to allow basic operations
+        if ($request->expectsJson()) {
+            return $next($request);
+        }
+
         // Check if worker profile exists
-        if (!$user->workerProfile) {
+        if (! $user->workerProfile) {
             return redirect()->route('worker.profile')->with('warning', 'Please complete your worker profile.');
         }
 
         // Check if worker profile is complete (skip for dev accounts)
-        if (!$user->is_dev_account && isset($user->workerProfile->is_complete) && !$user->workerProfile->is_complete) {
+        if (! $user->is_dev_account && isset($user->workerProfile->is_complete) && ! $user->workerProfile->is_complete) {
             return redirect()->route('worker.profile')->with('warning', 'Please complete your worker profile.');
         }
 

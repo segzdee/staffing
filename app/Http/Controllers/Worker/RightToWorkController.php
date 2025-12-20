@@ -32,6 +32,45 @@ class RightToWorkController extends Controller
     }
 
     /**
+     * Show the right-to-work verification status page.
+     *
+     * GET /worker/right-to-work
+     */
+    public function index()
+    {
+        $user = Auth::user();
+        $workerProfile = $user->workerProfile;
+
+        // Get latest RTW verification
+        $latestVerification = RightToWorkVerification::where('worker_id', $user->id)
+            ->latest()
+            ->first();
+
+        // Get verification history
+        $verificationHistory = RightToWorkVerification::where('worker_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Get submitted documents
+        $documents = RTWDocument::where('worker_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Determine jurisdiction requirements
+        $jurisdiction = $workerProfile?->country ?? 'GB';
+        $requirements = $this->rtwService->getRTWRequirements($jurisdiction);
+
+        return view('worker.verification.right-to-work', compact(
+            'latestVerification',
+            'verificationHistory',
+            'documents',
+            'requirements',
+            'workerProfile'
+        ));
+    }
+
+    /**
      * Get RTW requirements for a jurisdiction.
      *
      * GET /api/worker/rtw/requirements/{jurisdiction}
@@ -138,8 +177,9 @@ class RightToWorkController extends Controller
         foreach ($request->file('documents', []) as $index => $file) {
             $documentType = $validated['document_types'][$index] ?? null;
 
-            if (!$documentType) {
+            if (! $documentType) {
                 $errors[] = "Document type missing for file {$index}";
+
                 continue;
             }
 
@@ -166,7 +206,7 @@ class RightToWorkController extends Controller
                     'status' => $document->status,
                 ];
             } catch (\Exception $e) {
-                $errors[] = "Failed to upload document {$index}: " . $e->getMessage();
+                $errors[] = "Failed to upload document {$index}: ".$e->getMessage();
                 Log::error('RTW document upload failed', [
                     'verification_id' => $verification->id,
                     'document_type' => $documentType,
@@ -180,7 +220,7 @@ class RightToWorkController extends Controller
 
         return response()->json([
             'success' => count($uploadedDocuments) > 0,
-            'message' => count($uploadedDocuments) . ' document(s) uploaded successfully',
+            'message' => count($uploadedDocuments).' document(s) uploaded successfully',
             'data' => [
                 'uploaded_documents' => $uploadedDocuments,
                 'errors' => $errors,
@@ -242,7 +282,7 @@ class RightToWorkController extends Controller
                 'is_expiring_soon' => $verification->isExpiringSoon(),
                 'has_work_restrictions' => $verification->has_work_restrictions,
                 'work_restrictions' => $verification->work_restrictions,
-                'documents' => $verification->documents->map(fn($doc) => [
+                'documents' => $verification->documents->map(fn ($doc) => [
                     'id' => $doc->id,
                     'document_type' => $doc->document_type,
                     'document_type_name' => $doc->document_type_name,

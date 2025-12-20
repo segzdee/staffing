@@ -79,6 +79,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ShiftSwap> $swapRequests
  * @property-read int|null $swap_requests_count
  * @property-read \App\Models\User $worker
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftAssignment active()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftAssignment completed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftAssignment newModelQuery()
@@ -147,6 +148,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftAssignment whereWasLate($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftAssignment whereWorkerId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftAssignment whereWorkerPayAmount($value)
+ *
  * @mixin \Eloquent
  */
 class ShiftAssignment extends Model
@@ -167,6 +169,32 @@ class ShiftAssignment extends Model
         'hours_worked',
         'status',
         'payment_status',
+        // Time tracking fields
+        'actual_clock_in',
+        'actual_clock_out',
+        'clock_in_verified',
+        'late_minutes',
+        'was_late',
+        'lateness_flagged',
+        'gross_hours',
+        'break_deduction_hours',
+        'net_hours_worked',
+        'early_departure',
+        'early_departure_minutes',
+        'early_departure_reason',
+        'overtime_worked',
+        'overtime_hours',
+        'total_break_minutes',
+        'current_break_started_at',
+        // Business adjustment fields
+        'business_adjusted_hours',
+        'business_adjustment_reason',
+        'business_verified_at',
+        'business_verified_by',
+        // Auto clock-out fields
+        'auto_clocked_out',
+        'auto_clock_out_time',
+        'auto_clock_out_reason',
     ];
 
     /**
@@ -178,6 +206,25 @@ class ShiftAssignment extends Model
         'check_in_time' => 'datetime',
         'check_out_time' => 'datetime',
         'hours_worked' => 'decimal:2',
+        'actual_clock_in' => 'datetime',
+        'actual_clock_out' => 'datetime',
+        'clock_in_verified' => 'boolean',
+        'late_minutes' => 'integer',
+        'was_late' => 'boolean',
+        'lateness_flagged' => 'boolean',
+        'gross_hours' => 'decimal:2',
+        'break_deduction_hours' => 'decimal:2',
+        'net_hours_worked' => 'decimal:2',
+        'early_departure' => 'boolean',
+        'early_departure_minutes' => 'integer',
+        'overtime_worked' => 'boolean',
+        'overtime_hours' => 'decimal:2',
+        'total_break_minutes' => 'integer',
+        'current_break_started_at' => 'datetime',
+        'business_adjusted_hours' => 'decimal:2',
+        'business_verified_at' => 'datetime',
+        'auto_clocked_out' => 'boolean',
+        'auto_clock_out_time' => 'datetime',
     ];
 
     /**
@@ -252,7 +299,7 @@ class ShiftAssignment extends Model
     {
         $this->update([
             'check_in_time' => now(),
-            'status' => 'checked_in'
+            'status' => 'checked_in',
         ]);
     }
 
@@ -269,7 +316,7 @@ class ShiftAssignment extends Model
         $this->update([
             'check_out_time' => $checkOutTime,
             'hours_worked' => round($hoursWorked, 2),
-            'status' => 'checked_out'
+            'status' => 'checked_out',
         ]);
     }
 
@@ -335,12 +382,10 @@ class ShiftAssignment extends Model
 
     /**
      * Get hours worked since clock-in (real-time).
-     *
-     * @return float
      */
     public function getHoursWorkedSinceClockIn(): float
     {
-        if (!$this->check_in_time) {
+        if (! $this->check_in_time) {
             return 0;
         }
 
@@ -356,15 +401,13 @@ class ShiftAssignment extends Model
 
     /**
      * Check if worker needs to take a break based on shift requirements.
-     *
-     * @return array
      */
     public function checkBreakCompliance(): array
     {
         $shift = $this->shift;
 
         // If shift doesn't require break, always compliant
-        if (!$shift || !$shift->requiresBreak()) {
+        if (! $shift || ! $shift->requiresBreak()) {
             return [
                 'requires_break' => false,
                 'break_taken' => false,
@@ -383,15 +426,15 @@ class ShiftAssignment extends Model
         $needsBreak = $hoursWorked >= 6;
 
         // Compliance: break taken and meets minimum duration
-        $compliant = !$needsBreak || ($breakTaken && $breakMinutes >= $requiredMinutes);
+        $compliant = ! $needsBreak || ($breakTaken && $breakMinutes >= $requiredMinutes);
 
         // Needs reminder if:
         // 1. Working 6+ hours
         // 2. Haven't taken break yet or break was insufficient
         // 3. No reminder sent in last 30 minutes
         $needsReminder = $needsBreak
-            && (!$breakTaken || $breakMinutes < $requiredMinutes)
-            && !$this->hasRecentBreakWarning();
+            && (! $breakTaken || $breakMinutes < $requiredMinutes)
+            && ! $this->hasRecentBreakWarning();
 
         return [
             'requires_break' => $needsBreak,
@@ -406,16 +449,15 @@ class ShiftAssignment extends Model
 
     /**
      * Check if a break warning was sent recently (within 30 minutes).
-     *
-     * @return bool
      */
     protected function hasRecentBreakWarning(): bool
     {
-        if (!$this->break_warning_sent_at) {
+        if (! $this->break_warning_sent_at) {
             return false;
         }
 
         $warningSentAt = \Carbon\Carbon::parse($this->break_warning_sent_at);
+
         return $warningSentAt->diffInMinutes(now()) < 30;
     }
 
@@ -430,8 +472,6 @@ class ShiftAssignment extends Model
 
     /**
      * Start a break for this assignment.
-     *
-     * @return bool
      */
     public function startBreak(): bool
     {
@@ -439,7 +479,7 @@ class ShiftAssignment extends Model
 
         // Check if already on break
         foreach ($breaks as $break) {
-            if (!isset($break['end_time'])) {
+            if (! isset($break['end_time'])) {
                 return false; // Already on break
             }
         }
@@ -458,8 +498,6 @@ class ShiftAssignment extends Model
 
     /**
      * End the current break.
-     *
-     * @return bool
      */
     public function endBreak(): bool
     {
@@ -467,7 +505,7 @@ class ShiftAssignment extends Model
 
         // Find active break
         foreach ($breaks as $index => $break) {
-            if (!isset($break['end_time'])) {
+            if (! isset($break['end_time'])) {
                 $breaks[$index]['end_time'] = now()->toDateTimeString();
 
                 // Calculate break duration
@@ -492,6 +530,7 @@ class ShiftAssignment extends Model
                 }
 
                 $this->save();
+
                 return true;
             }
         }
@@ -501,12 +540,10 @@ class ShiftAssignment extends Model
 
     /**
      * Get all breaks taken during this assignment.
-     *
-     * @return array
      */
     public function getBreaks(): array
     {
-        if (!$this->breaks) {
+        if (! $this->breaks) {
             return [];
         }
 
@@ -515,12 +552,10 @@ class ShiftAssignment extends Model
 
     /**
      * Calculate net hours worked (gross hours - break hours).
-     *
-     * @return float
      */
     public function calculateNetHoursWorked(): float
     {
-        if (!$this->check_in_time || !$this->check_out_time) {
+        if (! $this->check_in_time || ! $this->check_out_time) {
             return 0;
         }
 

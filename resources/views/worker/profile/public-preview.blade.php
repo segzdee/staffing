@@ -7,26 +7,28 @@
 @section('content')
 <div class="space-y-6">
     <!-- Preview Notice -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-            <div>
-                <p class="font-medium text-blue-900">Preview Mode</p>
-                <p class="text-sm text-blue-700">This is a preview of your public profile. Changes you make will be reflected here.</p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-start sm:items-center gap-3">
+                <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                <div>
+                    <p class="font-medium text-blue-900">Preview Mode</p>
+                    <p class="text-sm text-blue-700">This is a preview of your public profile. Changes you make will be reflected here.</p>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center gap-2">
-            @if($profile['enabled'])
-                <a href="{{ route('profile.public', $profile['slug']) }}" target="_blank" class="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors">
-                    View Live Profile
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
+                @if($profile['enabled'])
+                    <a href="{{ route('profile.public', $profile['slug']) }}" target="_blank" class="flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors min-h-[44px]">
+                        View Live Profile
+                    </a>
+                @endif
+                <a href="{{ route('worker.portfolio.index') }}" class="flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors min-h-[44px]">
+                    Back to Portfolio
                 </a>
-            @endif
-            <a href="{{ route('worker.portfolio.index') }}" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors">
-                Back to Portfolio
-            </a>
+            </div>
         </div>
     </div>
 
@@ -147,7 +149,7 @@
                 @if(count($profile['portfolio']) > 0)
                     <div>
                         <h3 class="text-sm font-semibold text-gray-900 mb-2">Portfolio</h3>
-                        <div class="grid grid-cols-4 gap-2">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             @foreach($profile['portfolio']->take(4) as $item)
                                 <div class="aspect-square bg-gray-100 rounded overflow-hidden">
                                     <img src="{{ $item['thumbnail_url'] }}" alt="{{ $item['title'] }}" class="w-full h-full object-cover">

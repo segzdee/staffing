@@ -64,7 +64,7 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Hourly Rate</p>
-                        <p class="font-medium text-green-600 text-xl">${{ number_format($shift->final_rate ?? 0, 2) }}/hr</p>
+                        <p class="font-medium text-green-600 text-xl">@money($shift->final_rate)/hr</p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Your Commission</p>

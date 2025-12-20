@@ -182,20 +182,20 @@
                                 @foreach($template->buttons as $index => $button)
                                 <div class="row mb-2 button-row" data-index="{{ $index + 1 }}">
                                     <div class="col-md-4">
-                                        <select class="form-select form-select-sm button-type" name="buttons[{{ $index + 1 }}][type]">
+                                        <select class="form-select min-h-[40px] button-type" name="buttons[{{ $index + 1 }}][type]">
                                             <option value="QUICK_REPLY" {{ ($button['type'] ?? '') == 'QUICK_REPLY' ? 'selected' : '' }}>Quick Reply</option>
                                             <option value="URL" {{ ($button['type'] ?? '') == 'URL' ? 'selected' : '' }}>URL</option>
                                             <option value="PHONE_NUMBER" {{ ($button['type'] ?? '') == 'PHONE_NUMBER' ? 'selected' : '' }}>Phone Number</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6">
-                                        <input type="text" class="form-control form-control-sm button-text"
+                                        <input type="text" class="form-control min-h-[40px] button-text"
                                                name="buttons[{{ $index + 1 }}][text]"
                                                value="{{ $button['text'] ?? '' }}"
                                                placeholder="Button text" maxlength="25">
                                     </div>
                                     <div class="col-md-2">
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-button">
+                                        <button type="button" class="btn btn-outline-danger min-h-[40px] min-w-[40px] p-2 remove-button">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </div>
@@ -203,7 +203,7 @@
                                 @endforeach
                             @endif
                         </div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="addButton">
+                        <button type="button" class="btn btn-outline-secondary min-h-[40px] py-2 px-4" id="addButton">
                             <i class="fas fa-plus me-1"></i>Add Button
                         </button>
 
@@ -395,18 +395,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const buttonHtml = `
             <div class="row mb-2 button-row" data-index="${buttonCount}">
                 <div class="col-md-4">
-                    <select class="form-select form-select-sm button-type" name="buttons[${buttonCount}][type]">
+                    <select class="form-select min-h-[40px] button-type" name="buttons[${buttonCount}][type]">
                         <option value="QUICK_REPLY">Quick Reply</option>
                         <option value="URL">URL</option>
                         <option value="PHONE_NUMBER">Phone Number</option>
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <input type="text" class="form-control form-control-sm button-text"
+                    <input type="text" class="form-control min-h-[40px] button-text"
                            name="buttons[${buttonCount}][text]" placeholder="Button text" maxlength="25">
                 </div>
                 <div class="col-md-2">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-button">
+                    <button type="button" class="btn btn-outline-danger min-h-[40px] min-w-[40px] p-2 remove-button">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>

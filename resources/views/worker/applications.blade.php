@@ -161,7 +161,7 @@
                             </div>
                         </div>
                         <div class="text-right ml-4">
-                            <p class="text-2xl font-bold text-gray-900 mb-2">${{ number_format($application->shift->final_rate ?? 0, 2) }}/hr</p>
+                            <p class="text-2xl font-bold text-gray-900 mb-2">@money($application->shift->final_rate)/hr</p>
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                 {{ $application->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                                 {{ $application->status === 'accepted' ? 'bg-green-100 text-green-800' : '' }}

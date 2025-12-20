@@ -170,7 +170,18 @@ class BadgeService
                 if (! $assignment->shift || ! $assignment->check_in_time) {
                     return false;
                 }
-                $shiftStart = Carbon::parse($assignment->shift->shift_date.' '.$assignment->shift->start_time);
+                // Use start_datetime if available, otherwise combine date + time
+                if ($assignment->shift->start_datetime) {
+                    $shiftStart = Carbon::parse($assignment->shift->start_datetime);
+                } else {
+                    $shiftDate = $assignment->shift->shift_date instanceof Carbon
+                        ? $assignment->shift->shift_date->format('Y-m-d')
+                        : $assignment->shift->shift_date;
+                    $startTime = $assignment->shift->start_time instanceof Carbon
+                        ? $assignment->shift->start_time->format('H:i:s')
+                        : $assignment->shift->start_time;
+                    $shiftStart = Carbon::parse($shiftDate.' '.$startTime);
+                }
                 $checkIn = Carbon::parse($assignment->check_in_time);
 
                 return $checkIn->diffInMinutes($shiftStart) >= 10;

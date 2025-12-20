@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SystemSettings;
 use App\Models\SystemSettingAudit;
+use App\Models\SystemSettings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 
 /**
  * ADM-003: Platform Configuration Management Controller
@@ -20,7 +19,6 @@ class ConfigurationController extends Controller
     /**
      * Display the configuration dashboard with all settings grouped by category.
      *
-     * @param Request $request
      * @return \Illuminate\View\View
      */
     public function index(Request $request)
@@ -28,7 +26,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return view('admin.unauthorized');
         }
 
@@ -78,7 +76,6 @@ class ConfigurationController extends Controller
     /**
      * Update settings (batch update).
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request)
@@ -86,7 +83,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return redirect()->back()->with('error', 'Access denied. You do not have permission to manage settings.');
         }
 
@@ -99,7 +96,7 @@ class ConfigurationController extends Controller
         $validatedSettings = [];
 
         foreach ($settingsToUpdate as $key => $value) {
-            if (!$existingSettings->has($key)) {
+            if (! $existingSettings->has($key)) {
                 continue;
             }
 
@@ -115,7 +112,7 @@ class ConfigurationController extends Controller
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             return redirect()->back()
                 ->withErrors($errors)
                 ->withInput();
@@ -133,7 +130,7 @@ class ConfigurationController extends Controller
             ]);
 
             return redirect()->route('admin.configuration.index')
-                ->with('success', count($updated) . ' setting(s) updated successfully.');
+                ->with('success', count($updated).' setting(s) updated successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to update system settings', [
                 'error' => $e->getMessage(),
@@ -141,7 +138,7 @@ class ConfigurationController extends Controller
             ]);
 
             return redirect()->back()
-                ->with('error', 'Failed to update settings: ' . $e->getMessage())
+                ->with('error', 'Failed to update settings: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -149,8 +146,6 @@ class ConfigurationController extends Controller
     /**
      * Update a single setting via AJAX.
      *
-     * @param Request $request
-     * @param string $key
      * @return \Illuminate\Http\JsonResponse
      */
     public function updateSingle(Request $request, string $key)
@@ -158,13 +153,13 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return response()->json(['error' => 'Access denied'], 403);
         }
 
         $setting = SystemSettings::where('key', $key)->first();
 
-        if (!$setting) {
+        if (! $setting) {
             return response()->json(['error' => 'Setting not found'], 404);
         }
 
@@ -199,7 +194,6 @@ class ConfigurationController extends Controller
     /**
      * Display audit history for all settings or a specific setting.
      *
-     * @param Request $request
      * @return \Illuminate\View\View
      */
     public function history(Request $request)
@@ -207,7 +201,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return view('admin.unauthorized');
         }
 
@@ -245,7 +239,6 @@ class ConfigurationController extends Controller
     /**
      * Get history for a specific setting via AJAX.
      *
-     * @param string $key
      * @return \Illuminate\Http\JsonResponse
      */
     public function settingHistory(string $key)
@@ -253,7 +246,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return response()->json(['error' => 'Access denied'], 403);
         }
 
@@ -278,8 +271,6 @@ class ConfigurationController extends Controller
     /**
      * Reset a setting to its default value.
      *
-     * @param Request $request
-     * @param string $key
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
      */
     public function reset(Request $request, string $key)
@@ -287,19 +278,21 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Access denied'], 403);
             }
+
             return redirect()->back()->with('error', 'Access denied.');
         }
 
         $result = SystemSettings::resetToDefault($key, $user->id);
 
-        if (!$result) {
+        if (! $result) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Setting not found or has no default'], 404);
             }
+
             return redirect()->back()->with('error', 'Setting not found or has no default value.');
         }
 
@@ -323,7 +316,6 @@ class ConfigurationController extends Controller
     /**
      * Reset all settings to defaults.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function resetAll(Request $request)
@@ -331,12 +323,12 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return redirect()->back()->with('error', 'Access denied.');
         }
 
         // Require confirmation
-        if (!$request->has('confirm') || $request->input('confirm') !== 'RESET') {
+        if (! $request->has('confirm') || $request->input('confirm') !== 'RESET') {
             return redirect()->back()
                 ->with('error', 'Please type RESET to confirm resetting all settings.');
         }
@@ -357,7 +349,6 @@ class ConfigurationController extends Controller
     /**
      * Export settings to JSON.
      *
-     * @param Request $request
      * @return \Illuminate\Http\Response
      */
     public function export(Request $request)
@@ -365,7 +356,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return redirect()->back()->with('error', 'Access denied.');
         }
 
@@ -379,7 +370,7 @@ class ConfigurationController extends Controller
             ];
         });
 
-        $filename = 'system_settings_' . now()->format('Y-m-d_His') . '.json';
+        $filename = 'system_settings_'.now()->format('Y-m-d_His').'.json';
 
         Log::channel('admin')->info('System settings exported', [
             'admin_id' => $user->id,
@@ -394,7 +385,6 @@ class ConfigurationController extends Controller
     /**
      * Import settings from JSON.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function import(Request $request)
@@ -402,7 +392,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return redirect()->back()->with('error', 'Access denied.');
         }
 
@@ -414,13 +404,13 @@ class ConfigurationController extends Controller
             $content = file_get_contents($request->file('import_file')->path());
             $settings = json_decode($content, true);
 
-            if (!is_array($settings)) {
+            if (! is_array($settings)) {
                 throw new \InvalidArgumentException('Invalid JSON format');
             }
 
             $imported = 0;
             foreach ($settings as $data) {
-                if (!isset($data['key'], $data['value'])) {
+                if (! isset($data['key'], $data['value'])) {
                     continue;
                 }
 
@@ -441,14 +431,13 @@ class ConfigurationController extends Controller
                 ->with('success', "{$imported} setting(s) imported successfully.");
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to import settings: ' . $e->getMessage());
+                ->with('error', 'Failed to import settings: '.$e->getMessage());
         }
     }
 
     /**
      * Clear the settings cache.
      *
-     * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function clearCache(Request $request)
@@ -456,7 +445,7 @@ class ConfigurationController extends Controller
         $user = Auth::user();
 
         // Check permission (skip for dev accounts)
-        if (!$user->is_dev_account && !$user->hasPermission('manage_settings')) {
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
             return redirect()->back()->with('error', 'Access denied.');
         }
 
@@ -473,29 +462,27 @@ class ConfigurationController extends Controller
     /**
      * Validate a setting value based on its data type.
      *
-     * @param string $key
-     * @param mixed $value
-     * @param SystemSettings $setting
+     * @param  mixed  $value
      * @return bool|string True if valid, error message if invalid
      */
     protected function validateSettingValue(string $key, $value, SystemSettings $setting)
     {
         switch ($setting->data_type) {
             case SystemSettings::DATA_TYPE_INTEGER:
-                if (!is_numeric($value) || (int) $value != $value) {
+                if (! is_numeric($value) || (int) $value != $value) {
                     return "The {$key} must be an integer.";
                 }
                 break;
 
             case SystemSettings::DATA_TYPE_DECIMAL:
-                if (!is_numeric($value)) {
+                if (! is_numeric($value)) {
                     return "The {$key} must be a number.";
                 }
                 break;
 
             case SystemSettings::DATA_TYPE_BOOLEAN:
                 // Accept 1, 0, true, false, "true", "false", "1", "0"
-                if (!in_array($value, [1, 0, true, false, '1', '0', 'true', 'false'], true)) {
+                if (! in_array($value, [1, 0, true, false, '1', '0', 'true', 'false'], true)) {
                     return "The {$key} must be a boolean value.";
                 }
                 break;
@@ -506,7 +493,7 @@ class ConfigurationController extends Controller
                     if (json_last_error() !== JSON_ERROR_NONE) {
                         return "The {$key} must be valid JSON.";
                     }
-                } elseif (!is_array($value)) {
+                } elseif (! is_array($value)) {
                     return "The {$key} must be valid JSON.";
                 }
                 break;
@@ -518,5 +505,112 @@ class ConfigurationController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * Get all settings grouped by category.
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
+     */
+    public function allGrouped(Request $request)
+    {
+        $user = Auth::user();
+
+        // Check permission (skip for dev accounts)
+        if (! $user->is_dev_account && ! $user->hasPermission('view_settings')) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Access denied.'], 403);
+            }
+
+            return redirect()->back()->with('error', 'Access denied.');
+        }
+
+        $settings = SystemSettings::allGrouped();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $settings,
+            ]);
+        }
+
+        return view('admin.configuration.grouped', compact('settings'));
+    }
+
+    /**
+     * Batch update multiple settings at once.
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     */
+    public function batchUpdate(Request $request)
+    {
+        $user = Auth::user();
+
+        // Check permission (skip for dev accounts)
+        if (! $user->is_dev_account && ! $user->hasPermission('manage_settings')) {
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Access denied.'], 403);
+            }
+
+            return redirect()->back()->with('error', 'Access denied.');
+        }
+
+        $request->validate([
+            'settings' => 'required|array',
+            'settings.*.key' => 'required|string',
+            'settings.*.value' => 'present',
+        ]);
+
+        $settings = $request->input('settings');
+        $errors = [];
+        $updated = [];
+
+        foreach ($settings as $settingData) {
+            $key = $settingData['key'];
+            $value = $settingData['value'];
+
+            $setting = SystemSettings::where('key', $key)->first();
+
+            if (! $setting) {
+                $errors[] = "Setting '{$key}' not found.";
+
+                continue;
+            }
+
+            // Validate the value
+            $validation = $this->validateSettingValue($key, $value, $setting);
+            if ($validation !== true) {
+                $errors[] = $validation;
+
+                continue;
+            }
+
+            // Update using the static method
+            SystemSettings::set($key, $value, $user->id);
+            $updated[] = $key;
+        }
+
+        Log::channel('admin')->info('Batch settings update', [
+            'admin_id' => $user->id,
+            'updated' => $updated,
+            'errors' => $errors,
+            'ip' => $request->ip(),
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => count($errors) === 0,
+                'updated' => $updated,
+                'errors' => $errors,
+            ]);
+        }
+
+        if (count($errors) > 0) {
+            return redirect()->back()
+                ->with('warning', 'Some settings were not updated: '.implode(', ', $errors))
+                ->with('success', count($updated).' settings updated successfully.');
+        }
+
+        return redirect()->back()->with('success', count($updated).' settings updated successfully.');
     }
 }

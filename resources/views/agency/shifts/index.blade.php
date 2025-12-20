@@ -55,7 +55,7 @@
     </div>
 
     <!-- Quick Stats -->
-    <div class="grid md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-white border border-gray-200 rounded-xl p-4">
             <div class="flex items-center justify-between">
                 <div>
@@ -117,12 +117,12 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($assignedShifts ?? [] as $shift)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">{{ $shift->title }}</div>
-                            <div class="text-sm text-gray-500">{{ $shift->location_city ?? 'N/A' }}</div>
+                        <td class="px-4 py-4 whitespace-nowrap max-w-[200px]">
+                            <div class="text-sm font-medium text-gray-900 truncate" title="{{ $shift->title }}">{{ $shift->title }}</div>
+                            <div class="text-sm text-gray-500 truncate" title="{{ $shift->location_city ?? 'N/A' }}">{{ $shift->location_city ?? 'N/A' }}</div>
                         </td>
-                        <td class="px-4 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $shift->business->name ?? 'N/A' }}</div>
+                        <td class="px-4 py-4 whitespace-nowrap max-w-[180px]">
+                            <div class="text-sm text-gray-900 truncate" title="{{ $shift->business->name ?? 'N/A' }}">{{ $shift->business->name ?? 'N/A' }}</div>
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap">
                             <div class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($shift->shift_date)->format('M d, Y') }}</div>

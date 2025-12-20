@@ -484,6 +484,35 @@ Route::prefix('worker')->name('api.worker.')->middleware(['auth:sanctum', 'worke
         Route::get('/callback', [App\Http\Controllers\Worker\PaymentSetupController::class, 'handleCallback'])
             ->name('callback');
     });
+
+    // ========================================
+    // Time Tracking API Routes
+    // ========================================
+    Route::prefix('shifts')->name('shifts.')->group(function () {
+        // Get worker's active shift assignment
+        Route::get('/active', [App\Http\Controllers\Api\TimeTrackingController::class, 'getActiveShift'])
+            ->name('active');
+
+        // Clock in to a shift
+        Route::post('/{assignment}/clock-in', [App\Http\Controllers\Api\TimeTrackingController::class, 'clockIn'])
+            ->name('clock-in');
+
+        // Clock out from a shift
+        Route::post('/{assignment}/clock-out', [App\Http\Controllers\Api\TimeTrackingController::class, 'clockOut'])
+            ->name('clock-out');
+
+        // Start a break
+        Route::post('/{assignment}/break/start', [App\Http\Controllers\Api\TimeTrackingController::class, 'startBreak'])
+            ->name('break.start');
+
+        // End a break
+        Route::post('/{assignment}/break/end', [App\Http\Controllers\Api\TimeTrackingController::class, 'endBreak'])
+            ->name('break.end');
+
+        // Get tracking status for a specific assignment
+        Route::get('/{assignment}/status', [App\Http\Controllers\Api\TimeTrackingController::class, 'getTrackingStatus'])
+            ->name('status');
+    });
 });
 
 // ============================================================================

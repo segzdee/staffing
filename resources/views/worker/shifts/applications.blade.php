@@ -191,7 +191,7 @@
                             </a>
                         @endif
 
-                        <a href="{{ route('messages.business', $application->shift->business_id) }}" class="btn btn-outline-secondary btn-block btn-sm mt-2">
+                        <a href="{{ route('messages.business', $application->shift->business_id) }}" class="btn btn-outline-secondary btn-block min-h-[40px] py-2 mt-2">
                             <i class="fa fa-envelope"></i> Message Business
                         </a>
                     </div>

@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Jobs\AutoClockOutJob;
 use App\Jobs\CheckExpiringDocuments;
 use App\Jobs\CheckWorkerViolations;
 use App\Jobs\DeleteMedia;
@@ -108,6 +109,11 @@ class Kernel extends ConsoleKernel
 
         // SL-006: Enforce break compliance for active shifts (every 5 minutes)
         $schedule->job(new EnforceBreakCompliance)->everyFiveMinutes()->withoutOverlapping();
+
+        // SL-007: Auto clock-out workers who forgot to clock out (every 5 minutes)
+        // - Checks for workers still clocked in after shift ended + 30 min grace
+        // - Automatically clocks them out at shift end time
+        $schedule->job(new AutoClockOutJob)->everyFiveMinutes()->withoutOverlapping()->onOneServer();
 
         // ============================================================================
         // FINANCIAL AUTOMATION JOBS (GROUP 3)

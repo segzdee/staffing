@@ -5,68 +5,41 @@
 @section('css')
 <style>
 .applicant-card {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 15px;
-    border: 1px solid #e1e8ed;
-    transition: all 0.3s ease;
+    @apply bg-white rounded-lg p-4 md:p-5 mb-4 border border-gray-200 transition-all duration-300 ease-in-out;
 }
 .applicant-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    @apply shadow-lg;
 }
 .applicant-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    margin-bottom: 15px;
+    @apply flex justify-between items-start mb-4;
 }
 .worker-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
+    @apply w-14 h-14 md:w-16 md:h-16 rounded-full object-cover;
 }
 .match-score {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 14px;
+    @apply text-white py-2 px-4 rounded-full font-semibold text-sm;
 }
 .skill-badge {
-    display: inline-block;
-    background: #e1e8ed;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    margin: 3px;
+    @apply inline-block bg-gray-200 py-1 px-2.5 rounded-xl text-xs m-0.5;
 }
 .skill-badge.verified {
-    background: #d4edda;
-    color: #155724;
+    @apply bg-green-100 text-green-800;
 }
 .badge-display {
-    display: inline-block;
-    margin-right: 5px;
+    @apply inline-block mr-1;
 }
 .stat-item {
-    text-align: center;
-    padding: 10px;
-    border-right: 1px solid #e1e8ed;
+    @apply text-center p-2 md:p-2.5 border-r border-gray-200;
 }
 .stat-item:last-child {
-    border-right: none;
+    @apply border-r-0;
 }
 .stat-value {
-    font-size: 20px;
-    font-weight: bold;
-    color: #667eea;
+    @apply text-lg md:text-xl font-bold text-indigo-500;
 }
 .stat-label {
-    font-size: 12px;
-    color: #657786;
+    @apply text-xs text-gray-500;
 }
 </style>
 @endsection
@@ -84,7 +57,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <div class="row align-items-center">
-                <div class="col-md-8">
+                <div class="col-12 col-md-8">
                     <h3 class="mb-2">{{ $shift->title }}</h3>
                     <div class="text-muted">
                         <i class="fa fa-calendar"></i> {{ \Carbon\Carbon::parse($shift->shift_date)->format('l, F j, Y') }}
@@ -94,11 +67,11 @@
                         <i class="fa fa-map-marker"></i> {{ $shift->location_city }}, {{ $shift->location_state }}
                     </div>
                 </div>
-                <div class="col-md-4 text-right">
+                <div class="col-12 col-md-4 text-md-right mt-3 mt-md-0">
                     <div class="mb-2">
                         <strong>Workers:</strong> {{ $shift->filled_workers }}/{{ $shift->required_workers }}
                     </div>
-                    <div class="progress" style="height: 8px;">
+                    <div class="progress h-2">
                         <div class="progress-bar {{ $shift->filled_workers >= $shift->required_workers ? 'bg-success' : 'bg-warning' }}"
                              style="width: {{ ($shift->filled_workers / $shift->required_workers) * 100 }}%">
                         </div>
@@ -161,14 +134,14 @@
                      alt="{{ $application->worker->name }}"
                      class="worker-avatar mr-3">
 
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-2">
-                        <h5 class="mb-0 mr-2">{{ $application->worker->name }}</h5>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center mb-2 flex-wrap gap-1">
+                        <h5 class="mb-0 mr-2 truncate max-w-[200px]" title="{{ $application->worker->name }}">{{ $application->worker->name }}</h5>
                         @if($application->worker->is_verified_worker)
-                            <i class="fa fa-check-circle text-success" title="Verified Worker"></i>
+                            <i class="fa fa-check-circle text-success flex-shrink-0" title="Verified Worker"></i>
                         @endif
                         @if(isset($application->match_score))
-                            <span class="match-score ml-2">{{ $application->match_score }}% Match</span>
+                            <span class="match-score ml-2 flex-shrink-0">{{ $application->match_score }}% Match</span>
                         @endif
                     </div>
 
@@ -230,7 +203,7 @@
                     @if($application->message)
                     <div class="mt-2">
                         <small class="text-muted">Application message:</small>
-                        <p class="mb-0">{{ $application->message }}</p>
+                        <p class="mb-0 line-clamp-2" title="{{ $application->message }}">{{ $application->message }}</p>
                     </div>
                     @endif
 
@@ -241,7 +214,7 @@
             </div>
 
             <!-- Actions -->
-            <div class="text-right" style="min-width: 200px;">
+            <div class="text-right min-w-[200px]">
                 @if($activeTab == 'pending')
                     @if($shift->filled_workers < $shift->required_workers)
                         <form action="{{ route('business.shifts.assignWorker', $application->id) }}" method="POST" class="mb-2">

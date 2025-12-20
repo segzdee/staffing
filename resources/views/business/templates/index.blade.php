@@ -191,17 +191,24 @@
     </div>
 </div>
 
-<!-- Create Template Modal -->
-<div class="modal fade" id="createTemplateModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create Shift Template</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+<!-- Create Template Modal - Mobile Optimized -->
+<div class="modal fade" id="createTemplateModal" tabindex="-1" role="dialog" aria-labelledby="createTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content max-h-[100vh] sm:max-h-[90vh] flex flex-col rounded-none sm:rounded-lg overflow-hidden">
+            <div class="modal-header flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 bg-white">
+                <h5 class="modal-title text-lg font-semibold text-gray-900 m-0" id="createTemplateModalLabel">Create Shift Template</h5>
+                <button
+                    type="button"
+                    class="close min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 active:text-gray-600 touch-manipulation rounded-lg hover:bg-gray-100 -mr-2 transition-colors"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                >
+                    <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
+                </button>
             </div>
             <form action="{{ route('business.templates.store') }}" method="POST">
                 @csrf
-                <div class="modal-body">
+                <div class="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 bg-white">
                     <div class="form-group">
                         <label>Template Name <span class="text-danger">*</span></label>
                         <input type="text" name="template_name" class="form-control" placeholder="e.g., Weekend Server Shift" required>
@@ -319,42 +326,49 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Template</button>
+                <div class="modal-footer flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4">
+                    <button type="button" class="btn btn-secondary w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation">Create Template</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Bulk Create Modal -->
-<div class="modal fade" id="bulkCreateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Create Shifts from Template</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+<!-- Bulk Create Modal - Mobile Optimized -->
+<div class="modal fade" id="bulkCreateModal" tabindex="-1" role="dialog" aria-labelledby="bulkCreateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content max-h-[100vh] sm:max-h-[90vh] flex flex-col rounded-none sm:rounded-lg overflow-hidden">
+            <div class="modal-header flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 bg-white">
+                <h5 class="modal-title text-lg font-semibold text-gray-900 m-0" id="bulkCreateModalLabel">Create Shifts from Template</h5>
+                <button
+                    type="button"
+                    class="close min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 active:text-gray-600 touch-manipulation rounded-lg hover:bg-gray-100 -mr-2 transition-colors"
+                    data-dismiss="modal"
+                    aria-label="Close"
+                >
+                    <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
+                </button>
             </div>
             <form id="bulkCreateForm" method="POST">
                 @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Start Date</label>
-                        <input type="date" name="start_date" class="form-control" required>
+                <div class="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 bg-white">
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" name="start_date" class="form-control min-h-[44px] sm:min-h-[40px] touch-manipulation" required>
                     </div>
-                    <div class="form-group">
-                        <label>End Date</label>
-                        <input type="date" name="end_date" class="form-control" required>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input type="date" name="end_date" class="form-control min-h-[44px] sm:min-h-[40px] touch-manipulation" required>
                     </div>
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i>
-                        Shifts will be created based on the template's recurrence pattern within this date range.
+                    <div class="alert alert-info flex items-start gap-2">
+                        <i class="fa fa-info-circle mt-0.5 flex-shrink-0"></i>
+                        <span>Shifts will be created based on the template's recurrence pattern within this date range.</span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Create Shifts</button>
+                <div class="modal-footer flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4">
+                    <button type="button" class="btn btn-secondary w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation">Create Shifts</button>
                 </div>
             </form>
         </div>

@@ -34,11 +34,11 @@
         >
             {{-- Header --}}
             <div class="px-4 py-4 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between gap-3">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">New Conversation</h3>
                     <button
                         wire:click="close"
-                        class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+                        class="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 active:text-gray-600 touch-manipulation -mr-2"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -52,17 +52,17 @@
                 {{-- Conversation Type (if not direct) --}}
                 @if($type !== 'direct')
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
                         <div class="flex gap-2">
                             <button
                                 wire:click="$set('type', 'direct')"
-                                class="px-3 py-1 text-sm rounded-full {{ $type === 'direct' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}"
+                                class="min-h-[40px] px-4 py-2 text-sm rounded-full touch-manipulation transition-colors {{ $type === 'direct' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600' }}"
                             >
                                 Direct
                             </button>
                             <button
                                 wire:click="$set('type', 'shift')"
-                                class="px-3 py-1 text-sm rounded-full {{ $type === 'shift' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}"
+                                class="min-h-[40px] px-4 py-2 text-sm rounded-full touch-manipulation transition-colors {{ $type === 'shift' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300 active:bg-gray-200 dark:active:bg-gray-600' }}"
                             >
                                 Shift
                             </button>
@@ -94,28 +94,30 @@
 
                 {{-- User Search --}}
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         {{ count($selectedUsers) > 0 ? 'Add more recipients' : 'Search users' }}
                     </label>
                     <div class="relative">
                         <input
-                            type="text"
+                            type="search"
                             wire:model.live.debounce.300ms="search"
                             placeholder="Search by name or email..."
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            inputmode="search"
+                            autocomplete="off"
+                            class="w-full min-h-[44px] sm:min-h-[40px] px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white touch-manipulation"
                         >
 
                         {{-- Search Results --}}
                         @if(strlen($search) >= 2)
-                            <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            <div class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto overscroll-contain">
                                 @forelse($this->searchResults as $user)
                                     <button
                                         wire:click="selectUser({{ $user->id }})"
                                         wire:key="search-user-{{ $user->id }}"
-                                        class="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 text-left"
+                                        class="w-full flex items-center gap-3 px-4 py-3 sm:py-2 min-h-[52px] sm:min-h-[44px] hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 text-left touch-manipulation transition-colors"
                                         @if(isset($selectedUsers[$user->id])) disabled @endif
                                     >
-                                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                                        <div class="w-10 h-10 sm:w-8 sm:h-8 flex-shrink-0 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
                                             {{ strtoupper(substr($user->name, 0, 1)) }}
                                         </div>
                                         <div class="flex-1 min-w-0">
@@ -127,13 +129,13 @@
                                             </p>
                                         </div>
                                         @if(isset($selectedUsers[$user->id]))
-                                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <svg class="w-5 h-5 flex-shrink-0 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                             </svg>
                                         @endif
                                     </button>
                                 @empty
-                                    <div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                    <div class="px-4 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
                                         No users found
                                     </div>
                                 @endforelse
@@ -144,27 +146,30 @@
 
                 {{-- Subject (optional) --}}
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Subject (optional)
                     </label>
                     <input
                         type="text"
                         wire:model="subject"
                         placeholder="Conversation subject..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        autocomplete="off"
+                        class="w-full min-h-[44px] sm:min-h-[40px] px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white touch-manipulation"
                     >
                 </div>
 
                 {{-- Initial Message --}}
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Message <span class="text-red-500">*</span>
                     </label>
                     <textarea
                         wire:model="initialMessage"
                         rows="4"
                         placeholder="Type your message..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        autocomplete="off"
+                        autocorrect="on"
+                        class="w-full px-4 py-3 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white touch-manipulation"
                     ></textarea>
                     @error('initialMessage')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
@@ -173,17 +178,17 @@
             </div>
 
             {{-- Footer --}}
-            <div class="px-4 py-3 sm:px-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+            <div class="px-4 py-3 sm:px-6 pb-[calc(0.75rem+env(safe-area-inset-bottom))] border-t border-gray-200 dark:border-gray-700 flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3">
                 <button
                     wire:click="close"
-                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600"
+                    class="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 touch-manipulation transition-colors"
                 >
                     Cancel
                 </button>
                 <button
                     wire:click="startConversation"
                     wire:loading.attr="disabled"
-                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] px-4 py-2.5 sm:py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:bg-blue-800 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation transition-colors"
                     @if(count($selectedUsers) === 0 || !$initialMessage) disabled @endif
                 >
                     <span wire:loading.remove>Start Conversation</span>

@@ -24,7 +24,7 @@
         </div>
 
         <div class="text-right">
-            <div class="shift-rate">${{ number_format($shift->final_rate, 2) }}/hr</div>
+            <div class="shift-rate">@money($shift->final_rate)/hr</div>
             <span class="urgency-badge urgency-{{ $shift->urgency_level }}">
                 @if($shift->urgency_level == 'critical')
                     <i class="fa fa-bolt"></i> CRITICAL
@@ -86,7 +86,7 @@
         <div>
             <small class="text-muted">
                 <i class="fa fa-money"></i> Est. Earnings:
-                <strong class="text-success">${{ number_format($shift->final_rate * $shift->duration_hours, 2) }}</strong>
+                <strong class="text-success">${{ number_format(($shift->final_rate?->getAmount() ?? 0) / 100 * $shift->duration_hours, 2) }}</strong>
             </small>
         </div>
 

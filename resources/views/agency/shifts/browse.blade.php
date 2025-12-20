@@ -133,7 +133,7 @@
 
             <div class="flex items-center justify-between border-t border-gray-100 pt-3">
                 <div>
-                    <p class="text-lg font-bold text-green-600">${{ number_format($shift->final_rate ?? 0, 2) }}/hr</p>
+                    <p class="text-lg font-bold text-green-600">@money($shift->final_rate)/hr</p>
                     @if($shift->commission_rate ?? false)
                     <p class="text-xs text-gray-500">{{ $shift->commission_rate }}% commission</p>
                     @endif

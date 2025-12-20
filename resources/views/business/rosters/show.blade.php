@@ -197,48 +197,67 @@
     </div>
 </div>
 
-<!-- Edit Member Modal -->
-<div id="editMemberModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-        <div class="relative bg-white rounded-lg max-w-lg w-full p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Member</h3>
+<!-- Edit Member Modal - Mobile Optimized -->
+<div id="editMemberModal" class="fixed inset-0 z-50 hidden overflow-y-auto" role="dialog" aria-labelledby="editMemberModalLabel" aria-modal="true">
+    {{-- Backdrop --}}
+    <div class="fixed inset-0 bg-gray-500/75 backdrop-blur-sm transition-opacity" onclick="closeEditModal()"></div>
+
+    {{-- Modal Container --}}
+    <div class="fixed inset-0 sm:inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-lg md:w-full bg-white rounded-none sm:rounded-xl flex flex-col max-h-full sm:max-h-[90vh] shadow-xl">
+        {{-- Header --}}
+        <div class="flex-shrink-0 px-4 py-4 sm:px-6 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900" id="editMemberModalLabel">Edit Member</h3>
+            <button
+                type="button"
+                onclick="closeEditModal()"
+                class="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 active:text-gray-600 touch-manipulation rounded-lg hover:bg-gray-100 -mr-2 transition-colors"
+                aria-label="Close"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        {{-- Body --}}
+        <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
             <form id="editMemberForm" method="POST">
                 @csrf
                 @method('PUT')
 
                 <div class="space-y-4">
                     <div>
-                        <label for="edit_status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select name="status" id="edit_status" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 sm:text-sm">
+                        <label for="edit_status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select name="status" id="edit_status" class="block w-full min-h-[44px] sm:min-h-[40px] rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 text-base sm:text-sm touch-manipulation">
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                             <option value="pending">Pending</option>
                         </select>
                     </div>
                     <div>
-                        <label for="edit_priority" class="block text-sm font-medium text-gray-700">Priority (0-100)</label>
-                        <input type="number" name="priority" id="edit_priority" min="0" max="100" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 sm:text-sm">
+                        <label for="edit_priority" class="block text-sm font-medium text-gray-700 mb-1">Priority (0-100)</label>
+                        <input type="number" name="priority" id="edit_priority" min="0" max="100" inputmode="numeric" class="block w-full min-h-[44px] sm:min-h-[40px] rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 text-base sm:text-sm touch-manipulation">
                     </div>
                     <div>
-                        <label for="edit_custom_rate" class="block text-sm font-medium text-gray-700">Custom Rate ($/hr)</label>
-                        <input type="number" name="custom_rate" id="edit_custom_rate" step="0.01" min="0" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 sm:text-sm">
+                        <label for="edit_custom_rate" class="block text-sm font-medium text-gray-700 mb-1">Custom Rate ($/hr)</label>
+                        <input type="number" name="custom_rate" id="edit_custom_rate" step="0.01" min="0" inputmode="decimal" class="block w-full min-h-[44px] sm:min-h-[40px] rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 text-base sm:text-sm touch-manipulation">
                     </div>
                     <div>
-                        <label for="edit_notes" class="block text-sm font-medium text-gray-700">Notes</label>
-                        <textarea name="notes" id="edit_notes" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 sm:text-sm"></textarea>
+                        <label for="edit_notes" class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" id="edit_notes" rows="3" class="block w-full min-h-[88px] rounded-lg border-gray-300 shadow-sm focus:ring-gray-900 focus:border-gray-900 text-base sm:text-sm touch-manipulation resize-none"></textarea>
                     </div>
-                </div>
-
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
-                        Save Changes
-                    </button>
                 </div>
             </form>
+        </div>
+
+        {{-- Footer --}}
+        <div class="flex-shrink-0 px-4 py-4 sm:px-6 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
+            <button type="button" onclick="closeEditModal()" class="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 active:bg-gray-100 touch-manipulation transition-colors">
+                Cancel
+            </button>
+            <button type="submit" form="editMemberForm" class="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 active:bg-gray-700 touch-manipulation transition-colors">
+                Save Changes
+            </button>
         </div>
     </div>
 </div>

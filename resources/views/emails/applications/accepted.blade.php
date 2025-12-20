@@ -10,7 +10,7 @@ Great news! Your application has been accepted for:
 **Location:** {{ $shift->location_address }}, {{ $shift->location_city }}  
 **Date:** {{ \Carbon\Carbon::parse($shift->shift_date)->format('l, F j, Y') }}  
 **Time:** {{ \Carbon\Carbon::parse($shift->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($shift->end_time)->format('g:i A') }}  
-**Rate:** ${{ number_format($shift->final_rate, 2) }}/hour
+**Rate:** @money($shift->final_rate)/hour
 
 @component('mail::button', ['url' => $url])
 View Assignment Details

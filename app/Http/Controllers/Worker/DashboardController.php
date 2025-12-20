@@ -107,26 +107,23 @@ class DashboardController extends Controller
             $startOfWeek = Carbon::now()->startOfWeek();
             $endOfWeek = Carbon::now()->endOfWeek();
 
+            // Optimized: Single query for all week statistics
+            $weekStatsRaw = DB::table('shift_assignments as sa')
+                ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+                ->where('sa.worker_id', $user->id)
+                ->whereIn('sa.status', ['assigned', 'in_progress'])
+                ->whereBetween('s.shift_date', [$startOfWeek, $endOfWeek])
+                ->selectRaw('
+                    COUNT(*) as scheduled,
+                    COALESCE(SUM(s.duration_hours), 0) as hours,
+                    COALESCE(SUM(s.duration_hours * s.final_rate), 0) as earnings
+                ')
+                ->first();
+
             $weekStats = [
-                'scheduled' => ShiftAssignment::where('worker_id', $user->id)
-                    ->whereIn('shift_assignments.status', ['assigned', 'in_progress'])
-                    ->whereHas('shift', function ($query) use ($startOfWeek, $endOfWeek) {
-                        $query->whereBetween('shift_date', [$startOfWeek, $endOfWeek]);
-                    })
-                    ->count(),
-                'hours' => ShiftAssignment::where('shift_assignments.worker_id', $user->id)
-                    ->whereIn('shift_assignments.status', ['assigned', 'in_progress'])
-                    ->whereHas('shift', function ($query) use ($startOfWeek, $endOfWeek) {
-                        $query->whereBetween('shift_date', [$startOfWeek, $endOfWeek]);
-                    })
-                    ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
-                    ->sum('shifts.duration_hours'),
-                'earnings' => DB::table('shift_assignments as sa')
-                    ->join('shifts as s', 'sa.shift_id', '=', 's.id')
-                    ->where('sa.worker_id', $user->id)
-                    ->whereIn('sa.status', ['assigned', 'in_progress'])
-                    ->whereBetween('s.shift_date', [$startOfWeek, $endOfWeek])
-                    ->sum(DB::raw('s.duration_hours * s.final_rate')),
+                'scheduled' => (int) ($weekStatsRaw->scheduled ?? 0),
+                'hours' => (float) ($weekStatsRaw->hours ?? 0),
+                'earnings' => (int) ($weekStatsRaw->earnings ?? 0), // Still in cents
             ];
 
             // Get badges/achievements

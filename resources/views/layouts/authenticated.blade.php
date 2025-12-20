@@ -1,5 +1,24 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ sidebarOpen: false, darkMode: false }"
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+    x-data="{
+        sidebarOpen: false,
+        darkMode: false,
+        openSidebar() {
+            this.sidebarOpen = true;
+            document.body.classList.add('overflow-hidden', 'lg:overflow-auto');
+        },
+        closeSidebar() {
+            this.sidebarOpen = false;
+            document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+        },
+        toggleSidebar() {
+            this.sidebarOpen ? this.closeSidebar() : this.openSidebar();
+        }
+    }"
+    x-init="$watch('sidebarOpen', value => {
+        if (!value) document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
+    })"
+    @keydown.escape.window="closeSidebar()"
     :class="{ 'dark': darkMode }">
 
 <head>
@@ -169,6 +188,45 @@
             background: hsl(240 4.8% 95.9%);
             color: hsl(240 5.9% 10%);
         }
+
+        /* Mobile touch target improvements */
+        @media (max-width: 1023px) {
+            .sidebar-link {
+                min-height: 44px;
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+        }
+
+        /* Prevent horizontal scroll on mobile */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        /* Safe area insets for notched devices */
+        @supports (padding: max(0px)) {
+            .fixed.bottom-0 {
+                padding-bottom: max(0px, env(safe-area-inset-bottom));
+            }
+            .fixed.top-0 {
+                padding-top: max(0px, env(safe-area-inset-top));
+            }
+        }
+
+        /* Smooth scrolling for sidebar on mobile */
+        @media (max-width: 1023px) {
+            aside nav {
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+            }
+        }
+
+        /* Hardware acceleration for sidebar transform */
+        aside {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
     </style>
 
     @stack('styles')
@@ -177,16 +235,30 @@
 <body class="bg-background text-foreground font-sans antialiased min-h-screen">
     <div class="min-h-screen flex">
         <!-- Sidebar -->
-        <aside x-cloak :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-            class="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0">
+        <aside
+            x-cloak
+            x-show="sidebarOpen || window.innerWidth >= 1024"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="-translate-x-full"
+            x-transition:enter-end="translate-x-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="translate-x-0"
+            x-transition:leave-end="-translate-x-full"
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+            class="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border transform lg:translate-x-0 lg:static lg:inset-0 will-change-transform"
+            role="navigation"
+            aria-label="Main navigation"
+            x-trap.inert.noscroll="sidebarOpen && window.innerWidth < 1024">
             <div class="h-full flex flex-col">
                 <!-- Logo -->
                 <div class="flex items-center justify-between h-16 px-6 border-b border-border">
                     <a href="{{ route('dashboard.index') }}" class="flex items-center">
                         <x-logo class="h-8 w-auto" />
                     </a>
-                    <button @click="sidebarOpen = false"
-                        class="lg:hidden text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-accent transition-colors">
+                    <button
+                        @click="closeSidebar()"
+                        class="lg:hidden flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] -mr-2 text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        aria-label="Close sidebar">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
@@ -236,8 +308,11 @@
             <header
                 class="h-16 bg-background border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
                 <div class="flex items-center space-x-4">
-                    <button @click="sidebarOpen = !sidebarOpen"
-                        class="lg:hidden text-muted-foreground hover:text-foreground p-2 rounded-md hover:bg-accent transition-colors">
+                    <button
+                        @click="toggleSidebar()"
+                        class="lg:hidden flex items-center justify-center w-10 h-10 min-w-[44px] min-h-[44px] text-muted-foreground hover:text-foreground rounded-md hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                        aria-label="Toggle sidebar"
+                        :aria-expanded="sidebarOpen">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6h16M4 12h16M4 18h16" />
@@ -412,11 +487,18 @@
     </div>
 
     <!-- Mobile Sidebar Overlay -->
-    <div x-show="sidebarOpen" @click="sidebarOpen = false" x-cloak
-        x-transition:enter="transition-opacity ease-out duration-300" x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-in duration-200"
-        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-        class="fixed inset-0 z-40 bg-black/80 lg:hidden"></div>
+    <div
+        x-show="sidebarOpen"
+        @click="closeSidebar()"
+        x-cloak
+        x-transition:enter="transition-opacity ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition-opacity ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm lg:hidden"
+        aria-hidden="true"></div>
 
     <!-- Dev Account Badge (Development Only) -->
     @if(auth()->check() && auth()->user()->is_dev_account)

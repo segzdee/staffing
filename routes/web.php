@@ -171,14 +171,14 @@ Route::prefix('dashboard')
             Route::view('/compliance', 'dashboard.company.compliance')->name('compliance');
         });
 
-        // AGENCY ROUTES
+        // AGENCY ROUTES - Use Agency\DashboardController for all agency-specific methods
         Route::prefix('agency')->name('agency.')->middleware('role:agency')->group(function () {
-            Route::get('/overview', [App\Http\Controllers\DashboardController::class, 'agencyDashboard'])->name('overview');
+            Route::get('/overview', [App\Http\Controllers\Agency\DashboardController::class, 'index'])->name('overview');
             Route::view('/clients', 'dashboard.agency.clients')->name('clients');
-            Route::get('/staff-pool', [App\Http\Controllers\DashboardController::class, 'agencyWorkersIndex'])->name('staff-pool');
-            Route::get('/placements', [App\Http\Controllers\DashboardController::class, 'agencyAssignments'])->name('placements');
-            Route::get('/shifts', [App\Http\Controllers\DashboardController::class, 'agencyShiftsBrowse'])->name('shifts');
-            Route::get('/commissions', [App\Http\Controllers\DashboardController::class, 'agencyCommissions'])->name('commissions');
+            Route::get('/staff-pool', [App\Http\Controllers\Agency\DashboardController::class, 'workersIndex'])->name('staff-pool');
+            Route::get('/placements', [App\Http\Controllers\Agency\DashboardController::class, 'assignments'])->name('placements');
+            Route::get('/shifts', [App\Http\Controllers\Agency\DashboardController::class, 'shiftsBrowse'])->name('shifts');
+            Route::get('/commissions', [App\Http\Controllers\Agency\DashboardController::class, 'financeCommissions'])->name('commissions');
             Route::view('/invoices', 'dashboard.agency.invoices')->name('invoices');
             Route::view('/analytics', 'dashboard.agency.analytics')->name('analytics');
             Route::view('/compliance', 'dashboard.agency.compliance')->name('compliance');

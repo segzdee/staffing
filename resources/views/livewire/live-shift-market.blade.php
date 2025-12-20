@@ -54,7 +54,7 @@
     </div>
 
     <!-- Shift Cards Grid -->
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         @forelse($shifts as $shift)
             <div
                 class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group border-l-4
@@ -88,23 +88,23 @@
                     </div>
 
                     <!-- Job Title -->
-                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-purple transition-colors">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-purple transition-colors truncate" title="{{ $shift['title'] }}">
                         {{ $shift['title'] }}
                     </h3>
 
                     <!-- Business Name -->
-                    <p class="text-sm text-gray-600 mb-4">
+                    <p class="text-sm text-gray-600 mb-4 truncate" title="{{ $shift['business_name'] }}">
                         {{ $shift['business_name'] }}
                     </p>
 
                     <!-- Location & Rate -->
                     <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center text-gray-700">
-                            <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="flex items-center text-gray-700 min-w-0 flex-1 mr-2">
+                            <svg class="w-5 h-5 mr-2 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
                             </svg>
-                            <span class="text-sm">{{ $shift['location'] }}</span>
+                            <span class="text-sm truncate" title="{{ $shift['location'] }}">{{ $shift['location'] }}</span>
                         </div>
                         <div class="flex items-center space-x-1">
                             <span class="text-2xl font-bold text-brand-green">${{ number_format($shift['hourly_rate'], 0) }}</span>

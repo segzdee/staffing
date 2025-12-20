@@ -15,13 +15,38 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'broadcasting/auth'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Origins
+    |--------------------------------------------------------------------------
+    |
+    | For production, we restrict CORS to specific domains.
+    | In development/local, we allow all origins.
+    |
+    */
+    'allowed_origins' => env('APP_ENV') === 'production'
+        ? [
+            'https://www.overtimestaff.com',
+            'https://overtimestaff.com',
+        ]
+        : ['*'],
 
-    'allowed_origins_patterns' => [],
+    /*
+    |--------------------------------------------------------------------------
+    | Allowed Origin Patterns
+    |--------------------------------------------------------------------------
+    |
+    | Regex patterns for matching allowed origins (e.g., agency subdomains).
+    |
+    */
+    'allowed_origins_patterns' => [
+        // Allow all agency subdomains (white-label)
+        '#^https://[a-z0-9-]+\.overtimestaff\.com$#',
+    ],
 
     'allowed_headers' => ['*'],
 
@@ -29,6 +54,15 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => false,
+    /*
+    |--------------------------------------------------------------------------
+    | Supports Credentials
+    |--------------------------------------------------------------------------
+    |
+    | Set to true to allow cookies/authentication headers in CORS requests.
+    | Required for Sanctum SPA authentication.
+    |
+    */
+    'supports_credentials' => true,
 
 ];

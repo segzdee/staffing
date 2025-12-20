@@ -51,7 +51,6 @@ class BulkShiftController extends Controller
     /**
      * Validate uploaded CSV file.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function validateUpload(Request $request)
@@ -77,7 +76,7 @@ class BulkShiftController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to validate CSV file: ' . $e->getMessage(),
+                'message' => 'Failed to validate CSV file: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -85,7 +84,6 @@ class BulkShiftController extends Controller
     /**
      * Process bulk shift upload.
      *
-     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function upload(Request $request)
@@ -102,7 +100,7 @@ class BulkShiftController extends Controller
             // Validate CSV
             $validation = $this->bulkShiftService->validateCsvFile($filePath);
 
-            if (!$validation['valid']) {
+            if (! $validation['valid']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'CSV validation failed',
@@ -132,15 +130,27 @@ class BulkShiftController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Upload processing failed: ' . $e->getMessage(),
+                'message' => 'Upload processing failed: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Get upload status and results.
+     * Alias: status() for route compatibility
      *
-     * @param string $batchId
+     * @param  string  $batchId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function status($batchId)
+    {
+        return $this->getStatus($batchId);
+    }
+
+    /**
+     * Get upload status and results (internal method).
+     *
+     * @param  string  $batchId
      * @return \Illuminate\Http\JsonResponse
      */
     public function getStatus($batchId)
@@ -161,7 +171,7 @@ class BulkShiftController extends Controller
     /**
      * Show results page for completed upload.
      *
-     * @param string $batchId
+     * @param  string  $batchId
      * @return \Illuminate\View\View
      */
     public function showResults($batchId)

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Worker;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Worker\InitiateBackgroundCheckRequest;
-use App\Http\Requests\Worker\SubmitConsentRequest;
 use App\Http\Requests\Worker\RespondToAdjudicationRequest;
+use App\Http\Requests\Worker\SubmitConsentRequest;
 use App\Models\AdjudicationCase;
 use App\Models\BackgroundCheck;
 use App\Models\BackgroundCheckConsent;
@@ -29,6 +29,39 @@ class BackgroundCheckController extends Controller
     {
         $this->middleware(['auth', 'worker']);
         $this->bgCheckService = $bgCheckService;
+    }
+
+    /**
+     * Show the background check status page.
+     *
+     * GET /worker/background-check
+     */
+    public function index()
+    {
+        $user = Auth::user();
+        $workerProfile = $user->workerProfile;
+
+        // Get latest background check
+        $latestCheck = BackgroundCheck::where('worker_id', $user->id)
+            ->latest()
+            ->first();
+
+        // Get check history
+        $checkHistory = BackgroundCheck::where('worker_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Determine what checks are required based on worker's region
+        $jurisdiction = $workerProfile?->state ?? 'US';
+        $requirements = $this->bgCheckService->getCheckRequirements($jurisdiction);
+
+        return view('worker.verification.background-check', compact(
+            'latestCheck',
+            'checkHistory',
+            'requirements',
+            'workerProfile'
+        ));
     }
 
     /**
@@ -311,7 +344,7 @@ class BackgroundCheckController extends Controller
                 'expires_at' => $check->expires_at?->toDateTimeString(),
                 'is_expired' => $check->isExpired(),
                 'consent_status' => $this->getConsentDetails($check),
-                'adjudication_cases' => $check->adjudicationCases->map(fn($case) => [
+                'adjudication_cases' => $check->adjudicationCases->map(fn ($case) => [
                     'id' => $case->id,
                     'case_number' => $case->case_number,
                     'case_type' => $case->case_type_name,
@@ -343,7 +376,7 @@ class BackgroundCheckController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $cases->map(fn($case) => [
+            'data' => $cases->map(fn ($case) => [
                 'id' => $case->id,
                 'case_number' => $case->case_number,
                 'case_type' => $case->case_type_name,
@@ -399,7 +432,7 @@ class BackgroundCheckController extends Controller
 
             $case->recordWorkerResponse(
                 $validated['response'],
-                !empty($documentRefs) ? $documentRefs : null
+                ! empty($documentRefs) ? $documentRefs : null
             );
 
             return response()->json([
@@ -458,8 +491,8 @@ class BackgroundCheckController extends Controller
         return [
             'required' => $consents->count(),
             'received' => $consents->where('consented', true)->count(),
-            'complete' => $consents->every(fn($c) => $c->consented),
-            'pending' => $consents->where('consented', false)->map(fn($c) => [
+            'complete' => $consents->every(fn ($c) => $c->consented),
+            'pending' => $consents->where('consented', false)->map(fn ($c) => [
                 'id' => $c->id,
                 'type' => $c->consent_type,
                 'type_name' => $c->consent_type_name,

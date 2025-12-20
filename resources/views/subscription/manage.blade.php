@@ -228,50 +228,68 @@
     </div>
 </div>
 
-{{-- Cancel Modal --}}
+{{-- Cancel Modal - Mobile Optimized --}}
 @if($subscription && !$subscription->willCancelAtPeriodEnd() && !$subscription->isCanceled())
-<div id="cancel-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('cancel-modal').classList.add('hidden')"></div>
+<div id="cancel-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-labelledby="cancel-modal-title" aria-modal="true">
+    {{-- Backdrop --}}
+    <div class="fixed inset-0 bg-gray-500/75 backdrop-blur-sm transition-opacity" onclick="document.getElementById('cancel-modal').classList.add('hidden')"></div>
 
-        <div class="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-auto overflow-hidden">
-            <div class="p-6">
-                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    {{-- Modal Container --}}
+    <div class="fixed inset-0 sm:inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:max-w-md md:w-full bg-white rounded-none sm:rounded-2xl flex flex-col max-h-full sm:max-h-[90vh] shadow-xl">
+        {{-- Header --}}
+        <div class="flex-shrink-0 px-4 py-4 sm:px-6 border-b border-gray-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-10 h-10 bg-red-100 rounded-full flex-shrink-0">
+                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                     </svg>
                 </div>
-
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Subscription?</h3>
-                <p class="text-sm text-gray-600 mb-6">
-                    Your subscription will remain active until <strong>{{ $subscription->current_period_end?->format('M j, Y') }}</strong>.
-                    After that, you'll lose access to premium features.
-                </p>
-
-                <form action="{{ route('subscription.cancel') }}" method="POST">
-                    @csrf
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1 text-left">
-                            Reason for canceling (optional)
-                        </label>
-                        <textarea name="reason" rows="3"
-                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                  placeholder="Tell us why you're leaving..."></textarea>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button type="button"
-                                onclick="document.getElementById('cancel-modal').classList.add('hidden')"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                            Keep Subscription
-                        </button>
-                        <button type="submit"
-                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
-                            Cancel Subscription
-                        </button>
-                    </div>
-                </form>
+                <h3 class="text-lg font-semibold text-gray-900" id="cancel-modal-title">Cancel Subscription?</h3>
             </div>
+            <button
+                type="button"
+                onclick="document.getElementById('cancel-modal').classList.add('hidden')"
+                class="min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 active:text-gray-600 touch-manipulation rounded-lg hover:bg-gray-100 -mr-2 transition-colors"
+                aria-label="Close"
+            >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        {{-- Body --}}
+        <div class="flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+            <p class="text-sm text-gray-600 mb-4">
+                Your subscription will remain active until <strong class="text-gray-900">{{ $subscription->current_period_end?->format('M j, Y') }}</strong>.
+                After that, you'll lose access to premium features.
+            </p>
+
+            <form action="{{ route('subscription.cancel') }}" method="POST" id="cancel-subscription-form">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Reason for canceling (optional)
+                    </label>
+                    <textarea name="reason" rows="3"
+                              class="w-full min-h-[88px] border border-gray-300 rounded-lg px-3 py-3 text-base sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 touch-manipulation resize-none"
+                              placeholder="Tell us why you're leaving..."></textarea>
+                </div>
+            </form>
+        </div>
+
+        {{-- Footer --}}
+        <div class="flex-shrink-0 px-4 py-4 sm:px-6 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4">
+            <button type="button"
+                    onclick="document.getElementById('cancel-modal').classList.add('hidden')"
+                    class="w-full sm:w-auto sm:flex-1 min-h-[44px] sm:min-h-[40px] px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 touch-manipulation transition-colors">
+                Keep Subscription
+            </button>
+            <button type="submit"
+                    form="cancel-subscription-form"
+                    class="w-full sm:w-auto sm:flex-1 min-h-[44px] sm:min-h-[40px] px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 active:bg-red-800 touch-manipulation transition-colors">
+                Cancel Subscription
+            </button>
         </div>
     </div>
 </div>

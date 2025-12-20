@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use App\Models\AdminSettings;
 use App\Models\Shift;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -39,14 +38,13 @@ class HomeController extends Controller
         return view('welcome');
     }
 
-
-
     // Marketing Page Methods
 
     public function terms()
     {
         return view('public.terms');
     }
+
     public function privacy()
     {
         return view('public.privacy');
@@ -62,12 +60,18 @@ class HomeController extends Controller
         return view('public.about');
     }
 
-
-
     // Business Marketing Pages
     public function businessPricing()
     {
         return view('public.business.pricing');
     }
 
+    /**
+     * Access Denied Page
+     * Shown when user doesn't have permission to access a resource
+     */
+    public function accessDenied()
+    {
+        return view('errors.access-denied');
+    }
 }

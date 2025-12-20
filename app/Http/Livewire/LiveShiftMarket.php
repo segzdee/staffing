@@ -101,9 +101,39 @@ class LiveShiftMarket extends Component
         $this->loadShifts();
     }
 
-    private function getRateTrend($rate)
+    /**
+     * Calculate rate trend by comparing to average market rate.
+     * Returns 'up' if rate is above average, 'down' if below, 'stable' if within 5%.
+     */
+    private function getRateTrend($rate): string
     {
-        return rand(0, 1) ? 'up' : 'stable';
+        if (! $rate || $rate <= 0) {
+            return 'stable';
+        }
+
+        // Cache the average rate calculation to avoid repeated queries
+        static $avgRate = null;
+        if ($avgRate === null) {
+            $avgRate = Shift::where('status', 'open')
+                ->where('shift_date', '>=', now()->subDays(30)->toDateString())
+                ->where('hourly_rate', '>', 0)
+                ->avg('hourly_rate') ?? 0;
+        }
+
+        if ($avgRate <= 0) {
+            return 'stable';
+        }
+
+        $percentDiff = (($rate - $avgRate) / $avgRate) * 100;
+
+        if ($percentDiff > 5) {
+            return 'up';
+        }
+        if ($percentDiff < -5) {
+            return 'down';
+        }
+
+        return 'stable';
     }
 
     private function calculateDuration($start, $end)

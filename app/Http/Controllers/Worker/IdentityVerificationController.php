@@ -10,7 +10,6 @@ use App\Services\LivenessCheckService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -21,6 +20,7 @@ use Illuminate\Support\Facades\Validator;
 class IdentityVerificationController extends Controller
 {
     protected IdentityVerificationService $verificationService;
+
     protected LivenessCheckService $livenessService;
 
     public function __construct(
@@ -32,16 +32,55 @@ class IdentityVerificationController extends Controller
     }
 
     /**
-     * Get the current verification status.
+     * Show the identity verification status page.
      *
-     * @param Request $request
-     * @return JsonResponse
+     * GET /worker/identity
+     */
+    public function index()
+    {
+        $user = Auth::user();
+
+        if (! $user->isWorker()) {
+            abort(403, 'Only workers can access identity verification.');
+        }
+
+        // Get current verification status
+        $status = $this->verificationService->getVerificationStatus($user);
+
+        // Get verification history
+        $verifications = IdentityVerification::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Get liveness check status
+        $latestLiveness = LivenessCheck::where('user_id', $user->id)
+            ->latest()
+            ->first();
+
+        return view('worker.verification.identity', compact(
+            'status',
+            'verifications',
+            'latestLiveness'
+        ));
+    }
+
+    /**
+     * Alias for initiate() to match route definition.
+     */
+    public function initiateVerification(Request $request): JsonResponse
+    {
+        return $this->initiate($request);
+    }
+
+    /**
+     * Get the current verification status.
      */
     public function status(Request $request): JsonResponse
     {
         $user = Auth::user();
 
-        if (!$user->isWorker()) {
+        if (! $user->isWorker()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can access identity verification.',
@@ -58,15 +97,12 @@ class IdentityVerificationController extends Controller
 
     /**
      * Initiate a new identity verification.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function initiate(Request $request): JsonResponse
     {
         $user = Auth::user();
 
-        if (!$user->isWorker()) {
+        if (! $user->isWorker()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can initiate identity verification.',
@@ -90,7 +126,7 @@ class IdentityVerificationController extends Controller
 
         $result = $this->verificationService->initiateVerification($user, $level);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -111,15 +147,12 @@ class IdentityVerificationController extends Controller
 
     /**
      * Retry a failed verification.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function retry(Request $request): JsonResponse
     {
         $user = Auth::user();
 
-        if (!$user->isWorker()) {
+        if (! $user->isWorker()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Only workers can retry identity verification.',
@@ -128,7 +161,7 @@ class IdentityVerificationController extends Controller
 
         $result = $this->verificationService->retryVerification($user);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -148,10 +181,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Get verification details.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(Request $request, int $id): JsonResponse
     {
@@ -161,7 +190,7 @@ class IdentityVerificationController extends Controller
             ->where('id', $id)
             ->first();
 
-        if (!$verification) {
+        if (! $verification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Verification not found.',
@@ -176,10 +205,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Cancel a pending verification.
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function cancel(Request $request, int $id): JsonResponse
     {
@@ -193,7 +218,7 @@ class IdentityVerificationController extends Controller
             ])
             ->first();
 
-        if (!$verification) {
+        if (! $verification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Verification not found or cannot be cancelled.',
@@ -215,9 +240,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Get available document types for the user's jurisdiction.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function getDocumentTypes(Request $request): JsonResponse
     {
@@ -245,10 +267,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Create a verification check (after documents are submitted).
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function createCheck(Request $request, int $id): JsonResponse
     {
@@ -262,7 +280,7 @@ class IdentityVerificationController extends Controller
             ])
             ->first();
 
-        if (!$verification) {
+        if (! $verification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Verification not found or not in correct state.',
@@ -271,7 +289,7 @@ class IdentityVerificationController extends Controller
 
         $result = $this->verificationService->createVerificationCheck($verification);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -290,10 +308,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Start a liveness check.
-     *
-     * @param Request $request
-     * @param int $verificationId
-     * @return JsonResponse
      */
     public function startLiveness(Request $request, int $verificationId): JsonResponse
     {
@@ -303,7 +317,7 @@ class IdentityVerificationController extends Controller
             ->where('id', $verificationId)
             ->first();
 
-        if (!$verification) {
+        if (! $verification) {
             return response()->json([
                 'success' => false,
                 'message' => 'Verification not found.',
@@ -317,7 +331,7 @@ class IdentityVerificationController extends Controller
 
         $result = $this->livenessService->createLivenessCheck($verification, $type);
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -338,11 +352,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Submit liveness check data.
-     *
-     * @param Request $request
-     * @param int $verificationId
-     * @param int $livenessCheckId
-     * @return JsonResponse
      */
     public function submitLiveness(Request $request, int $verificationId, int $livenessCheckId): JsonResponse
     {
@@ -353,7 +362,7 @@ class IdentityVerificationController extends Controller
             ->where('identity_verification_id', $verificationId)
             ->first();
 
-        if (!$livenessCheck) {
+        if (! $livenessCheck) {
             return response()->json([
                 'success' => false,
                 'message' => 'Liveness check not found.',
@@ -381,7 +390,7 @@ class IdentityVerificationController extends Controller
 
         $result = $this->livenessService->performLivenessCheck($livenessCheck, $request->all());
 
-        if (!$result['success']) {
+        if (! $result['success']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['error'],
@@ -402,11 +411,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Get liveness check status.
-     *
-     * @param Request $request
-     * @param int $verificationId
-     * @param int $livenessCheckId
-     * @return JsonResponse
      */
     public function getLivenessStatus(Request $request, int $verificationId, int $livenessCheckId): JsonResponse
     {
@@ -417,7 +421,7 @@ class IdentityVerificationController extends Controller
             ->where('identity_verification_id', $verificationId)
             ->first();
 
-        if (!$livenessCheck) {
+        if (! $livenessCheck) {
             return response()->json([
                 'success' => false,
                 'message' => 'Liveness check not found.',
@@ -432,9 +436,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Get verification history for the user.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function history(Request $request): JsonResponse
     {
@@ -455,9 +456,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Format verification for API response.
-     *
-     * @param IdentityVerification $verification
-     * @return array
      */
     protected function formatVerificationResponse(IdentityVerification $verification): array
     {
@@ -494,9 +492,6 @@ class IdentityVerificationController extends Controller
 
     /**
      * Get human-readable status label.
-     *
-     * @param string $status
-     * @return string
      */
     protected function getStatusLabel(string $status): string
     {

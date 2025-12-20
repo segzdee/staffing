@@ -156,6 +156,37 @@
             background: hsl(240 4.8% 95.9%);
             color: hsl(240 5.9% 10%);
         }
+
+        /* Prevent horizontal scroll on mobile */
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
+        /* Safe area insets for notched devices (iPhone X+, etc.) */
+        @supports (padding: max(0px)) {
+            .fixed.bottom-0 {
+                padding-bottom: max(0px, env(safe-area-inset-bottom));
+            }
+            .fixed.top-0 {
+                padding-top: max(0px, env(safe-area-inset-top));
+            }
+        }
+
+        /* Mobile touch target minimum size (44px as per WCAG) */
+        @media (max-width: 1023px) {
+            a, button {
+                min-height: 44px;
+            }
+        }
+
+        /* Smooth scrolling for mobile */
+        @media (max-width: 1023px) {
+            html {
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
     </style>
 
     @stack('styles')

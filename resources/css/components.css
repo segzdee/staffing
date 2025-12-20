@@ -565,6 +565,166 @@
 }
 
 /* ============================================
+   MOBILE-OPTIMIZED MODAL STYLES
+   ============================================ */
+
+/* Mobile-first modal optimizations for Bootstrap modals */
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .modal-dialog .modal-content {
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0 !important;
+  }
+
+  .modal-dialog-centered .modal-content {
+    min-height: auto;
+  }
+
+  .modal-dialog-scrollable .modal-body {
+    max-height: calc(100vh - 140px);
+    max-height: calc(100dvh - 140px);
+  }
+
+  /* Safe area insets for notched devices */
+  .modal-header {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+
+  .modal-footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch-friendly targets for modals */
+.modal .btn,
+.modal button[type="button"],
+.modal button[type="submit"],
+.modal .form-control,
+.modal .form-select,
+.modal select.form-control,
+.modal input[type="text"],
+.modal input[type="email"],
+.modal input[type="password"],
+.modal input[type="number"],
+.modal input[type="search"],
+.modal input[type="tel"],
+.modal input[type="url"],
+.modal input[type="date"],
+.modal input[type="time"],
+.modal textarea {
+  min-height: 44px;
+}
+
+@media (min-width: 576px) {
+  .modal .btn,
+  .modal button[type="button"],
+  .modal button[type="submit"],
+  .modal .form-control,
+  .modal .form-select,
+  .modal select.form-control,
+  .modal input[type="text"],
+  .modal input[type="email"],
+  .modal input[type="password"],
+  .modal input[type="number"],
+  .modal input[type="search"],
+  .modal input[type="tel"],
+  .modal input[type="url"],
+  .modal input[type="date"],
+  .modal input[type="time"],
+  .modal textarea {
+    min-height: 40px;
+  }
+}
+
+/* Close button touch target */
+.modal .close {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: -0.5rem -0.5rem -0.5rem auto;
+  border-radius: 0.5rem;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.modal .close:hover,
+.modal .close:focus {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 576px) {
+  .modal .close {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* Ensure modal backdrop covers notch area */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+}
+
+/* Better scrolling on mobile */
+.modal-body {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Touch manipulation for better tap response */
+.modal .touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Active states for touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .modal .btn:active,
+  .modal button:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+/* Stacked footer buttons on mobile */
+.modal-footer.flex-col-reverse {
+  flex-direction: column-reverse;
+}
+
+@media (min-width: 576px) {
+  .modal-footer.flex-col-reverse {
+    flex-direction: row;
+  }
+}
+
+/* Full-width buttons on mobile */
+.modal-footer .btn {
+  width: 100%;
+}
+
+@media (min-width: 576px) {
+  .modal-footer .btn {
+    width: auto;
+  }
+}
+
+/* ============================================
    TABLE
    ============================================ */
 

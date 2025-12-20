@@ -151,7 +151,7 @@
                     </div>
                     <h4>Find Shifts</h4>
                     <p>Browse thousands of available shifts in your area</p>
-                    <a href="{{ url('shifts') }}" class="btn btn-primary btn-sm" style="margin-top: 10px;">Browse Shifts</a>
+                    <a href="{{ url('shifts') }}" class="btn btn-primary min-h-[40px] py-2 px-4" style="margin-top: 10px;">Browse Shifts</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -161,7 +161,7 @@
                     </div>
                     <h4>Edit Profile</h4>
                     <p>Complete your profile to attract more opportunities</p>
-                    <a href="{{ url('settings/page') }}" class="btn btn-default btn-sm" style="margin-top: 10px;">Edit Profile</a>
+                    <a href="{{ url('settings/page') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-top: 10px;">Edit Profile</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -171,7 +171,7 @@
                     </div>
                     <h4>Payment Setup</h4>
                     <p>Set up instant payouts to get paid faster</p>
-                    <a href="{{ url('settings/payments') }}" class="btn btn-default btn-sm" style="margin-top: 10px;">Setup Payments</a>
+                    <a href="{{ url('settings/payments') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-top: 10px;">Setup Payments</a>
                 </div>
             </div>
         </div>
@@ -221,7 +221,7 @@
                     </div>
                     <h4>Post a Shift</h4>
                     <p>Create your first shift posting and find workers</p>
-                    <a href="{{ url('shifts/create') }}" class="btn btn-primary btn-sm" style="margin-top: 10px;">Post Shift</a>
+                    <a href="{{ url('shifts/create') }}" class="btn btn-primary min-h-[40px] py-2 px-4" style="margin-top: 10px;">Post Shift</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -231,7 +231,7 @@
                     </div>
                     <h4>Find Workers</h4>
                     <p>Browse worker profiles and invite them to shifts</p>
-                    <a href="{{ url('workers/browse') }}" class="btn btn-default btn-sm" style="margin-top: 10px;">Browse Workers</a>
+                    <a href="{{ url('workers/browse') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-top: 10px;">Browse Workers</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -241,7 +241,7 @@
                     </div>
                     <h4>Payment Setup</h4>
                     <p>Add payment method to post shifts</p>
-                    <a href="{{ url('settings/payments') }}" class="btn btn-default btn-sm" style="margin-top: 10px;">Setup Payments</a>
+                    <a href="{{ url('settings/payments') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-top: 10px;">Setup Payments</a>
                 </div>
             </div>
         </div>
@@ -291,7 +291,7 @@
                     </div>
                     <h4>Add Workers</h4>
                     <p>Import and manage your worker pool</p>
-                    <a href="{{ url('agency/workers') }}" class="btn btn-primary btn-sm" style="margin-top: 10px;">Manage Workers</a>
+                    <a href="{{ url('agency/workers') }}" class="btn btn-primary min-h-[40px] py-2 px-4" style="margin-top: 10px;">Manage Workers</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -301,7 +301,7 @@
                     </div>
                     <h4>Browse Shifts</h4>
                     <p>Find opportunities for your workers</p>
-                    <a href="{{ url('shifts') }}" class="btn btn-default btn-sm" style="margin-top: 10px;">Browse Shifts</a>
+                    <a href="{{ url('shifts') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-top: 10px;">Browse Shifts</a>
                 </div>
             </div>
             <div class="col-md-4">
@@ -311,7 +311,7 @@
                     </div>
                     <h4>Analytics</h4>
                     <p>Track performance and earnings</p>
-                    <a href="{{ url('agency/analytics') }}" class="btn btn-default btn-sm" style="margin-top: 10px;">View Analytics</a>
+                    <a href="{{ url('agency/analytics') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-top: 10px;">View Analytics</a>
                 </div>
             </div>
         </div>
@@ -327,12 +327,12 @@
                 <div class="col-md-6">
                     <h4><i class="fa fa-book"></i> Knowledge Base</h4>
                     <p>Browse our comprehensive guides and tutorials to get the most out of OvertimeStaff.</p>
-                    <a href="{{ url('help') }}" class="btn btn-default btn-sm">View Guides</a>
+                    <a href="{{ url('help') }}" class="btn btn-default min-h-[40px] py-2 px-4">View Guides</a>
                 </div>
                 <div class="col-md-6">
                     <h4><i class="fa fa-question-circle"></i> Contact Support</h4>
                     <p>Have questions? Our support team is here to help you every step of the way.</p>
-                    <a href="{{ url('contact') }}" class="btn btn-default btn-sm">Contact Us</a>
+                    <a href="{{ url('contact') }}" class="btn btn-default min-h-[40px] py-2 px-4">Contact Us</a>
                 </div>
             </div>
         </div>

@@ -27,7 +27,7 @@ class VolumeDiscountTierSeeder extends Seeder
                 'slug' => 'starter',
                 'min_shifts_monthly' => 0,
                 'max_shifts_monthly' => 10,
-                'platform_fee_percent' => 25.00,
+                'platform_fee_percent' => 35.00,
                 'min_monthly_spend' => null,
                 'max_monthly_spend' => null,
                 'benefits' => [
@@ -47,7 +47,7 @@ class VolumeDiscountTierSeeder extends Seeder
                 'slug' => 'growth',
                 'min_shifts_monthly' => 11,
                 'max_shifts_monthly' => 50,
-                'platform_fee_percent' => 22.00,
+                'platform_fee_percent' => 30.00,
                 'min_monthly_spend' => null,
                 'max_monthly_spend' => null,
                 'benefits' => [
@@ -69,7 +69,7 @@ class VolumeDiscountTierSeeder extends Seeder
                 'slug' => 'scale',
                 'min_shifts_monthly' => 51,
                 'max_shifts_monthly' => 200,
-                'platform_fee_percent' => 18.00,
+                'platform_fee_percent' => 25.00,
                 'min_monthly_spend' => null,
                 'max_monthly_spend' => null,
                 'benefits' => [
@@ -94,7 +94,7 @@ class VolumeDiscountTierSeeder extends Seeder
                 'slug' => 'enterprise',
                 'min_shifts_monthly' => 201,
                 'max_shifts_monthly' => null, // Unlimited
-                'platform_fee_percent' => 15.00,
+                'platform_fee_percent' => 20.00,
                 'min_monthly_spend' => null,
                 'max_monthly_spend' => null,
                 'benefits' => [

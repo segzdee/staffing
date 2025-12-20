@@ -173,7 +173,7 @@
             <form method="GET" action="{{ route('worker.recommended') }}" class="form-inline">
                 <div class="form-group" style="margin-right: 15px;">
                     <label style="margin-right: 5px;">Industry:</label>
-                    <select name="industry" class="form-control form-control-sm">
+                    <select name="industry" class="form-control min-h-[40px]">
                         <option value="">All Industries</option>
                         <option value="hospitality" {{ request('industry') == 'hospitality' ? 'selected' : '' }}>Hospitality</option>
                         <option value="healthcare" {{ request('industry') == 'healthcare' ? 'selected' : '' }}>Healthcare</option>
@@ -186,7 +186,7 @@
 
                 <div class="form-group" style="margin-right: 15px;">
                     <label style="margin-right: 5px;">Min Match:</label>
-                    <select name="min_match" class="form-control form-control-sm">
+                    <select name="min_match" class="form-control min-h-[40px]">
                         <option value="0">Any Match</option>
                         <option value="50" {{ request('min_match') == '50' ? 'selected' : '' }}>50%+</option>
                         <option value="70" {{ request('min_match') == '70' ? 'selected' : '' }}>70%+</option>
@@ -197,17 +197,17 @@
 
                 <div class="form-group" style="margin-right: 15px;">
                     <label style="margin-right: 5px;">
-                        <input type="checkbox" name="urgent" value="1" {{ request('urgent') ? 'checked' : '' }}>
+                        <input type="checkbox" name="urgent" value="1" class="h-5 w-5" {{ request('urgent') ? 'checked' : '' }}>
                         Urgent Only
                     </label>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-sm">
+                <button type="submit" class="btn btn-primary min-h-[40px] py-2 px-4">
                     <i class="bi bi-funnel"></i> Apply Filters
                 </button>
 
                 @if(request()->hasAny(['industry', 'min_match', 'urgent']))
-                    <a href="{{ route('worker.recommended') }}" class="btn btn-default btn-sm" style="margin-left: 10px;">
+                    <a href="{{ route('worker.recommended') }}" class="btn btn-default min-h-[40px] py-2 px-4" style="margin-left: 10px;">
                         <i class="bi bi-x"></i> Clear
                     </a>
                 @endif

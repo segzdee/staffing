@@ -57,6 +57,9 @@ class AppServiceProvider extends ServiceProvider
 
         // ADM-007: Feature Flags Blade Directives
         $this->registerFeatureFlagDirectives();
+
+        // Register money formatting Blade directives
+        $this->registerMoneyDirectives();
     }
 
     /**
@@ -94,6 +97,69 @@ class AppServiceProvider extends ServiceProvider
         // @featureDisabled('key') ... @endfeatureDisabled
         Blade::if('featureDisabled', function (string $key) {
             return ! feature($key);
+        });
+    }
+
+    /**
+     * Register money formatting Blade directives.
+     *
+     * Usage in Blade templates:
+     *
+     *   @money($shift->final_rate)           // Formats Money object: $25.00
+     *   @money($cents, true)                 // Formats cents integer: $25.00
+     *
+     *   @moneyDecimal($shift->final_rate)    // Returns decimal: 25.00
+     *
+     * Handles null values gracefully, returning $0.00
+     */
+    protected function registerMoneyDirectives(): void
+    {
+        // @money($value) - Format Money object or cents to currency string
+        Blade::directive('money', function ($expression) {
+            return "<?php
+                \$__moneyValue = {$expression};
+                if (\$__moneyValue === null) {
+                    echo '\$0.00';
+                } elseif (\$__moneyValue instanceof \Money\Money) {
+                    echo '\$' . number_format(\$__moneyValue->getAmount() / 100, 2);
+                } elseif (is_numeric(\$__moneyValue)) {
+                    echo '\$' . number_format(\$__moneyValue / 100, 2);
+                } else {
+                    echo '\$0.00';
+                }
+            ?>";
+        });
+
+        // @moneyDecimal($value) - Get decimal value from Money object or cents
+        Blade::directive('moneyDecimal', function ($expression) {
+            return "<?php
+                \$__moneyValue = {$expression};
+                if (\$__moneyValue === null) {
+                    echo '0.00';
+                } elseif (\$__moneyValue instanceof \Money\Money) {
+                    echo number_format(\$__moneyValue->getAmount() / 100, 2);
+                } elseif (is_numeric(\$__moneyValue)) {
+                    echo number_format(\$__moneyValue / 100, 2);
+                } else {
+                    echo '0.00';
+                }
+            ?>";
+        });
+
+        // @moneyRaw($value) - Get raw decimal value (no formatting) for calculations
+        Blade::directive('moneyRaw', function ($expression) {
+            return "<?php
+                \$__moneyValue = {$expression};
+                if (\$__moneyValue === null) {
+                    echo 0;
+                } elseif (\$__moneyValue instanceof \Money\Money) {
+                    echo \$__moneyValue->getAmount() / 100;
+                } elseif (is_numeric(\$__moneyValue)) {
+                    echo \$__moneyValue / 100;
+                } else {
+                    echo 0;
+                }
+            ?>";
         });
     }
 }

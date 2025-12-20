@@ -6,7 +6,7 @@
             <div class="flex items-center gap-3">
                 {{-- Back button (mobile) --}}
                 <button
-                    class="lg:hidden p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    class="lg:hidden min-h-[40px] min-w-[40px] p-2 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     wire:click="$dispatch('close-thread')"
                 >
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,16 +23,16 @@
                     {{ $initials }}
                 </div>
 
-                <div>
-                    <h3 class="font-medium text-gray-900 dark:text-white">{{ $displayName }}</h3>
+                <div class="min-w-0 flex-1">
+                    <h3 class="font-medium text-gray-900 dark:text-white truncate" title="{{ $displayName }}">{{ $displayName }}</h3>
                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         @if($conversation->type !== 'direct')
-                            <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700">
+                            <span class="inline-flex items-center px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 flex-shrink-0">
                                 {{ ucfirst($conversation->type) }}
                             </span>
                         @endif
                         @if($conversation->shift)
-                            <span>{{ $conversation->shift->title }}</span>
+                            <span class="truncate max-w-[150px]" title="{{ $conversation->shift->title }}">{{ $conversation->shift->title }}</span>
                         @endif
                         @if(count($typingUsers) > 0)
                             <span class="text-blue-500 italic">
@@ -53,7 +53,7 @@
 
         {{-- Messages --}}
         <div
-            class="flex-1 overflow-y-auto p-4 space-y-4"
+            class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain"
             x-data="{ scrollToBottom() { this.$el.scrollTop = this.$el.scrollHeight; } }"
             x-init="scrollToBottom()"
             @message-sent.window="scrollToBottom()"
@@ -72,16 +72,16 @@
                         </div>
                     @else
                         {{-- User Message --}}
-                        <div class="max-w-[75%] {{ $message->from_user_id === auth()->id() ? 'order-1' : '' }}">
+                        <div class="max-w-[95%] sm:max-w-[85%] md:max-w-[75%] {{ $message->from_user_id === auth()->id() ? 'order-1' : '' }}">
                             {{-- Sender name (for group conversations) --}}
                             @if($message->from_user_id !== auth()->id() && $conversation->type !== 'direct')
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1 {{ $message->from_user_id === auth()->id() ? 'text-right' : '' }}">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1 truncate max-w-full {{ $message->from_user_id === auth()->id() ? 'text-right' : '' }}" title="{{ $message->sender?->name ?? 'Unknown' }}">
                                     {{ $message->sender?->name ?? 'Unknown' }}
                                 </p>
                             @endif
 
                             <div class="group relative">
-                                <div class="px-4 py-2 rounded-2xl {{ $message->from_user_id === auth()->id() ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm' }}">
+                                <div class="px-3 sm:px-4 py-2 rounded-2xl {{ $message->from_user_id === auth()->id() ? 'bg-blue-600 text-white rounded-br-sm' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-sm' }}">
                                     {{-- Message content --}}
                                     <p class="whitespace-pre-wrap break-words">{{ $message->message }}</p>
 
@@ -130,10 +130,10 @@
                                     <div class="absolute {{ $message->from_user_id === auth()->id() ? 'left-0 -translate-x-full pr-2' : 'right-0 translate-x-full pl-2' }} top-0 hidden group-hover:flex items-center gap-1">
                                         <button
                                             wire:click="deleteMessage({{ $message->id }})"
-                                            class="p-1 text-gray-400 hover:text-red-500 rounded"
+                                            class="min-h-[40px] min-w-[40px] p-2 flex items-center justify-center text-gray-400 hover:text-red-500 rounded"
                                             title="Delete"
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                             </svg>
                                         </button>
@@ -157,7 +157,7 @@
         </div>
 
         {{-- Input Area --}}
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div class="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-[calc(1rem+env(safe-area-inset-bottom))]">
             <form wire:submit="sendMessage" class="flex flex-col gap-2">
                 {{-- Attachment Preview --}}
                 @if(count($attachments) > 0)
@@ -176,7 +176,7 @@
                                 <button
                                     type="button"
                                     wire:click="$set('attachments.{{ $index }}', null)"
-                                    class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    class="absolute -top-2 -right-2 min-h-[24px] min-w-[24px] w-6 h-6 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                     &times;
                                 </button>
@@ -187,7 +187,7 @@
 
                 <div class="flex items-end gap-2">
                     {{-- Attachment Button --}}
-                    <label class="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer">
+                    <label class="flex-shrink-0 min-h-[44px] min-w-[44px] sm:min-h-[40px] sm:min-w-[40px] p-2.5 sm:p-2 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer touch-manipulation">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                         </svg>
@@ -201,7 +201,7 @@
                     </label>
 
                     {{-- Message Input --}}
-                    <div class="flex-1">
+                    <div class="flex-1 min-w-0">
                         <textarea
                             wire:model="messageBody"
                             wire:keydown.enter.prevent="sendMessage"
@@ -209,17 +209,21 @@
                             wire:keyup.debounce.2s="stoppedTyping"
                             placeholder="Type a message..."
                             rows="1"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-2xl resize-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            enterkeyhint="send"
+                            inputmode="text"
+                            autocomplete="off"
+                            autocorrect="on"
+                            class="w-full px-3 sm:px-4 py-2.5 sm:py-2 text-base sm:text-sm border border-gray-300 rounded-2xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white touch-manipulation"
                             style="max-height: 120px;"
                             x-data
-                            x-on:input="$el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px';"
+                            x-on:input="$el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 120) + 'px';"
                         ></textarea>
                     </div>
 
                     {{-- Send Button --}}
                     <button
                         type="submit"
-                        class="flex-shrink-0 p-2 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="flex-shrink-0 min-h-[44px] min-w-[44px] sm:min-h-[40px] sm:min-w-[40px] p-2.5 sm:p-2 flex items-center justify-center text-white bg-blue-600 rounded-full hover:bg-blue-700 active:bg-blue-800 focus:ring-4 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation transition-colors"
                         wire:loading.attr="disabled"
                         :disabled="!$wire.messageBody.trim()"
                     >
@@ -244,9 +248,9 @@
             <p class="text-gray-500 dark:text-gray-400 mb-6">Choose from your existing conversations or start a new one</p>
             <button
                 wire:click="$dispatch('open-new-conversation')"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300"
+                class="inline-flex items-center min-h-[40px] px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300"
             >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 New Conversation

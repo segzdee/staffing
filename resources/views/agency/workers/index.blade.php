@@ -116,14 +116,14 @@
                              alt="{{ $worker->name }}"
                              class="worker-avatar">
                     </div>
-                    <div class="col-md-7">
-                        <h4 style="margin-top: 0;">
-                            <a href="{{ url($worker->username) }}">{{ $worker->name }}</a>
+                    <div class="col-md-7 overflow-hidden">
+                        <h4 style="margin-top: 0;" class="flex flex-wrap items-center gap-1">
+                            <a href="{{ url($worker->username) }}" class="truncate max-w-[200px]" title="{{ $worker->name }}">{{ $worker->name }}</a>
                             @if($worker->is_verified_worker)
-                                <span class="label label-success"><i class="fa fa-check-circle"></i> Verified</span>
+                                <span class="label label-success flex-shrink-0"><i class="fa fa-check-circle"></i> Verified</span>
                             @endif
                             @if($agencyWorker->status !== 'active')
-                                <span class="label label-default">{{ ucfirst($agencyWorker->status) }}</span>
+                                <span class="label label-default flex-shrink-0">{{ ucfirst($agencyWorker->status) }}</span>
                             @endif
                         </h4>
 
@@ -156,7 +156,7 @@
                         @endif
 
                         @if($agencyWorker->notes)
-                            <p style="margin: 10px 0 0 0; color: #666;">
+                            <p style="margin: 10px 0 0 0; color: #666;" class="truncate max-w-full" title="{{ $agencyWorker->notes }}">
                                 <small><i class="fa fa-sticky-note"></i> {{ $agencyWorker->notes }}</small>
                             </p>
                         @endif
@@ -222,42 +222,51 @@
     @endif
 </div>
 
-<!-- Add Worker Modal -->
-<div class="modal fade" id="addWorkerModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+<!-- Add Worker Modal - Mobile Optimized -->
+<div class="modal fade" id="addWorkerModal" tabindex="-1" role="dialog" aria-labelledby="addWorkerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content max-h-[100vh] sm:max-h-[90vh] flex flex-col rounded-none sm:rounded-lg overflow-hidden">
             <form action="{{ url('agency/workers/add') }}" method="POST">
                 @csrf
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title"><i class="fa fa-plus"></i> Add Worker</h4>
+                <div class="modal-header flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 bg-white flex items-center justify-between">
+                    <h4 class="modal-title text-lg font-semibold text-gray-900 m-0 flex items-center gap-2" id="addWorkerModalLabel">
+                        <i class="fa fa-plus"></i> Add Worker
+                    </h4>
+                    <button
+                        type="button"
+                        class="close min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 active:text-gray-600 touch-manipulation rounded-lg hover:bg-gray-100 -mr-2 transition-colors"
+                        data-dismiss="modal"
+                        aria-label="Close"
+                    >
+                        <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
+                    </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Worker Email or Username <span class="text-danger">*</span></label>
-                        <input type="text" name="worker_identifier" class="form-control" required placeholder="Enter worker's email or username">
-                        <small class="help-block">The worker must already have an account on OvertimeStaff</small>
+                <div class="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 bg-white">
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Worker Email or Username <span class="text-danger">*</span></label>
+                        <input type="text" name="worker_identifier" class="form-control min-h-[44px] sm:min-h-[40px] text-base sm:text-sm touch-manipulation" required placeholder="Enter worker's email or username" autocomplete="off">
+                        <small class="help-block text-gray-500 mt-1 block">The worker must already have an account on OvertimeStaff</small>
                     </div>
 
-                    <div class="form-group">
-                        <label>Commission Rate (%) <span class="text-danger">*</span></label>
-                        <input type="number" name="commission_rate" class="form-control" required min="0" max="100" step="0.1" value="15">
-                        <small class="help-block">Percentage of earnings you'll receive as commission</small>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%) <span class="text-danger">*</span></label>
+                        <input type="number" name="commission_rate" class="form-control min-h-[44px] sm:min-h-[40px] text-base sm:text-sm touch-manipulation" required min="0" max="100" step="0.1" value="15" inputmode="decimal">
+                        <small class="help-block text-gray-500 mt-1 block">Percentage of earnings you'll receive as commission</small>
                     </div>
 
-                    <div class="form-group">
-                        <label>Notes</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Any notes about this worker..."></textarea>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" class="form-control min-h-[88px] text-base sm:text-sm touch-manipulation resize-none" rows="3" placeholder="Any notes about this worker..."></textarea>
                     </div>
 
-                    <div class="alert alert-info">
-                        <i class="fa fa-info-circle"></i>
-                        <strong>Note:</strong> The worker will be notified and must accept your invitation before being added to your agency.
+                    <div class="alert alert-info flex items-start gap-2">
+                        <i class="fa fa-info-circle mt-0.5 flex-shrink-0"></i>
+                        <span><strong>Note:</strong> The worker will be notified and must accept your invitation before being added to your agency.</span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                <div class="modal-footer flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4">
+                    <button type="button" class="btn btn-default w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation flex items-center justify-center gap-2">
                         <i class="fa fa-plus"></i> Add Worker
                     </button>
                 </div>
@@ -266,31 +275,40 @@
     </div>
 </div>
 
-<!-- Edit Worker Modal -->
-<div class="modal fade" id="editWorkerModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
+<!-- Edit Worker Modal - Mobile Optimized -->
+<div class="modal fade" id="editWorkerModal" tabindex="-1" role="dialog" aria-labelledby="editWorkerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+        <div class="modal-content max-h-[100vh] sm:max-h-[90vh] flex flex-col rounded-none sm:rounded-lg overflow-hidden">
             <form action="" method="POST" id="editWorkerForm">
                 @csrf
                 @method('PUT')
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                    <h4 class="modal-title"><i class="fa fa-edit"></i> Edit Worker</h4>
+                <div class="modal-header flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 bg-white flex items-center justify-between">
+                    <h4 class="modal-title text-lg font-semibold text-gray-900 m-0 flex items-center gap-2" id="editWorkerModalLabel">
+                        <i class="fa fa-edit"></i> Edit Worker
+                    </h4>
+                    <button
+                        type="button"
+                        class="close min-h-[44px] min-w-[44px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center text-gray-400 hover:text-gray-500 active:text-gray-600 touch-manipulation rounded-lg hover:bg-gray-100 -mr-2 transition-colors"
+                        data-dismiss="modal"
+                        aria-label="Close"
+                    >
+                        <span aria-hidden="true" class="text-2xl leading-none">&times;</span>
+                    </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Commission Rate (%) <span class="text-danger">*</span></label>
-                        <input type="number" name="commission_rate" id="editCommissionRate" class="form-control" required min="0" max="100" step="0.1">
+                <div class="modal-body flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 bg-white">
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Commission Rate (%) <span class="text-danger">*</span></label>
+                        <input type="number" name="commission_rate" id="editCommissionRate" class="form-control min-h-[44px] sm:min-h-[40px] text-base sm:text-sm touch-manipulation" required min="0" max="100" step="0.1" inputmode="decimal">
                     </div>
 
-                    <div class="form-group">
-                        <label>Notes</label>
-                        <textarea name="notes" id="editNotes" class="form-control" rows="3"></textarea>
+                    <div class="form-group mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea name="notes" id="editNotes" class="form-control min-h-[88px] text-base sm:text-sm touch-manipulation resize-none" rows="3"></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
+                <div class="modal-footer flex-shrink-0 px-4 py-3 sm:px-5 sm:py-4 border-t border-gray-200 bg-gray-50 flex flex-col-reverse sm:flex-row gap-2 sm:gap-3 justify-end pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4">
+                    <button type="button" class="btn btn-default w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary w-full sm:w-auto min-h-[44px] sm:min-h-[40px] touch-manipulation flex items-center justify-center gap-2">
                         <i class="fa fa-save"></i> Save Changes
                     </button>
                 </div>

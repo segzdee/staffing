@@ -293,19 +293,19 @@
                             <!-- Actions -->
                             <div style="margin-top: 15px;">
                                 @if ($shift)
-                                    <a href="{{ url('shifts/'.$shift->id) }}" class="btn btn-default btn-sm btn-block">
+                                    <a href="{{ url('shifts/'.$shift->id) }}" class="btn btn-default btn-block min-h-[40px] py-2">
                                         <i class="bi bi-eye"></i> View Shift
                                     </a>
                                 @endif
 
                                 @if ($transaction->assignment)
-                                    <a href="{{ url('worker/assignments') }}" class="btn btn-default btn-sm btn-block">
+                                    <a href="{{ url('worker/assignments') }}" class="btn btn-default btn-block min-h-[40px] py-2">
                                         <i class="bi bi-calendar-check"></i> View Assignment
                                     </a>
                                 @endif
 
                                 @if (!$transaction->disputed && in_array($transaction->status, ['in_escrow', 'released']))
-                                    <button type="button" class="btn btn-warning btn-sm btn-block"
+                                    <button type="button" class="btn btn-warning btn-block min-h-[40px] py-2"
                                             onclick="openDisputeModal({{ $transaction->id }})">
                                         <i class="bi bi-flag"></i> File Dispute
                                     </button>
@@ -345,7 +345,7 @@
             <form action="" method="POST" id="disputeForm">
                 @csrf
                 <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <button type="button" class="close min-h-[40px] min-w-[40px] p-2 flex items-center justify-center" data-dismiss="modal">&times;</button>
                     <h4 class="modal-title"><i class="bi bi-flag"></i> File Dispute</h4>
                 </div>
                 <div class="modal-body">
@@ -372,8 +372,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="button" class="btn btn-default min-h-[40px] py-2 px-4" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning min-h-[40px] py-2 px-4">
                         <i class="bi bi-flag"></i> Submit Dispute
                     </button>
                 </div>

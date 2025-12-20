@@ -174,7 +174,7 @@
                             </div>
                         </div>
                         <div class="text-right ml-4">
-                            <p class="text-2xl font-bold text-gray-900 mb-2">${{ number_format($shift->final_rate, 2) }}/hr</p>
+                            <p class="text-2xl font-bold text-gray-900 mb-2">@money($shift->final_rate)/hr</p>
                             <div class="space-y-2">
                                 <a href="{{ route('business.shifts.show', $shift->id) }}" class="block text-center px-4 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
                                     View Details

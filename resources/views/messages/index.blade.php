@@ -32,17 +32,84 @@
 @endpush
 
 @section('content')
-<div class="h-[calc(100vh-140px)] p-4 md:p-6">
-    <div class="h-full max-w-7xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 h-full">
-            {{-- Conversation List (3 cols on large screens) --}}
-            <div class="lg:col-span-4 xl:col-span-3 h-full overflow-hidden" id="conversation-list-container">
-                <livewire:messaging.conversation-list :conversation-id="$selectedConversationId ?? null" />
-            </div>
+<div
+    class="h-[calc(100vh-140px)] md:h-[calc(100vh-160px)] flex flex-col"
+    x-data="{
+        activeTab: '{{ $selectedConversationId ? 'thread' : 'list' }}',
+        hasConversation: {{ $selectedConversationId ? 'true' : 'false' }}
+    }"
+    x-on:conversation-selected.window="activeTab = 'thread'; hasConversation = true"
+    x-on:close-thread.window="activeTab = 'list'"
+>
+    {{-- Mobile Tab Navigation --}}
+    <div class="flex lg:hidden border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4">
+        <button
+            @click="activeTab = 'list'"
+            :class="activeTab === 'list'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+            class="flex-1 py-3 px-4 text-center text-sm font-medium border-b-2 transition-colors duration-200"
+        >
+            <span class="flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+                </svg>
+                Conversations
+            </span>
+        </button>
+        <button
+            @click="activeTab = 'thread'"
+            :class="activeTab === 'thread'
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+            class="flex-1 py-3 px-4 text-center text-sm font-medium border-b-2 transition-colors duration-200"
+            :disabled="!hasConversation"
+            :class="{ 'opacity-50 cursor-not-allowed': !hasConversation }"
+        >
+            <span class="flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+                Messages
+            </span>
+        </button>
+    </div>
 
-            {{-- Message Thread (9 cols on large screens) --}}
-            <div class="lg:col-span-8 xl:col-span-9 h-full overflow-hidden hidden lg:block" id="message-thread-container">
-                <livewire:messaging.message-thread :conversation-id="$selectedConversationId ?? null" />
+    {{-- Main Content Area --}}
+    <div class="flex-1 overflow-hidden p-4 md:p-6">
+        <div class="h-full max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 h-full">
+                {{-- Conversation List (4 cols on large screens) --}}
+                <div
+                    class="lg:col-span-4 xl:col-span-3 h-full overflow-hidden"
+                    :class="{ 'hidden': activeTab !== 'list' }"
+                    x-bind:class="{ 'lg:block': true }"
+                    id="conversation-list-container"
+                >
+                    <livewire:messaging.conversation-list :conversation-id="$selectedConversationId ?? null" />
+                </div>
+
+                {{-- Message Thread (8 cols on large screens) --}}
+                <div
+                    class="lg:col-span-8 xl:col-span-9 h-full overflow-hidden"
+                    :class="{ 'hidden': activeTab !== 'thread' }"
+                    x-bind:class="{ 'lg:block': true }"
+                    id="message-thread-container"
+                >
+                    {{-- Mobile Back Button --}}
+                    <div class="lg:hidden mb-3">
+                        <button
+                            @click="activeTab = 'list'"
+                            class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                            Back to Conversations
+                        </button>
+                    </div>
+                    <livewire:messaging.message-thread :conversation-id="$selectedConversationId ?? null" />
+                </div>
             </div>
         </div>
     </div>
@@ -88,41 +155,19 @@
         font-size: 0.75rem;
         color: #6b7280;
     }
-
-    /* Responsive mobile layout */
-    @media (max-width: 1023px) {
-        #conversation-list-container {
-            display: block;
-        }
-        #message-thread-container {
-            display: none;
-        }
-        #message-thread-container.active {
-            display: block;
-            position: fixed;
-            inset: 0;
-            z-index: 40;
-            background: white;
-        }
-        .dark #message-thread-container.active {
-            background: #1f2937;
-        }
-    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
     document.addEventListener('livewire:init', () => {
-        // Handle mobile navigation between list and thread
+        // Handle mobile navigation between list and thread via Alpine.js events
         Livewire.on('conversation-selected', (event) => {
-            if (window.innerWidth < 1024) {
-                document.getElementById('message-thread-container').classList.add('active');
-            }
+            window.dispatchEvent(new CustomEvent('conversation-selected', { detail: event }));
         });
 
         Livewire.on('close-thread', () => {
-            document.getElementById('message-thread-container').classList.remove('active');
+            window.dispatchEvent(new CustomEvent('close-thread'));
         });
 
         // Real-time Echo setup for conversation updates

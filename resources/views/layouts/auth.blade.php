@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="OvertimeStaff - Enterprise-grade shift marketplace platform">
 
@@ -42,6 +42,13 @@
     <style nonce="{{ $cspNonce ?? '' }}">
         [x-cloak] {
             display: none !important;
+        }
+        /* Safe area insets for notched devices (iPhone X+, etc.) */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .pt-safe {
+            padding-top: env(safe-area-inset-top, 0px);
         }
     </style>
 

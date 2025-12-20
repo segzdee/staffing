@@ -14,7 +14,7 @@
                 {{ $activeCount }} active, {{ $pendingCount }} pending invitations
             </p>
         </div>
-        <a href="{{ route('business.team.create') }}" class="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
+        <a href="{{ route('business.team.create') }}" class="inline-flex items-center min-h-[40px] px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
             </svg>
@@ -55,11 +55,11 @@
                                         {{ $member->user ? substr($member->user->name, 0, 1) : 'P' }}
                                     </span>
                                 </div>
-                                <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">
+                                <div class="ml-4 min-w-0 max-w-[200px]">
+                                    <div class="text-sm font-medium text-gray-900 truncate" title="{{ $member->user->name ?? 'Pending' }}">
                                         {{ $member->user->name ?? 'Pending' }}
                                     </div>
-                                    <div class="text-sm text-gray-500">
+                                    <div class="text-sm text-gray-500 truncate" title="{{ $member->user->email ?? 'Invitation sent' }}">
                                         {{ $member->user->email ?? 'Invitation sent' }}
                                     </div>
                                 </div>
@@ -90,18 +90,18 @@
                             @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex items-center justify-end space-x-2">
-                                <a href="{{ route('business.team.show', $member->id) }}" class="text-gray-600 hover:text-gray-900">
+                            <div class="flex items-center justify-end gap-1">
+                                <a href="{{ route('business.team.show', $member->id) }}" class="min-h-[40px] px-3 py-2 inline-flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
                                     View
                                 </a>
                                 @if($member->role !== 'owner')
-                                <a href="{{ route('business.team.edit', $member->id) }}" class="text-gray-600 hover:text-gray-900">
+                                <a href="{{ route('business.team.edit', $member->id) }}" class="min-h-[40px] px-3 py-2 inline-flex items-center text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
                                     Edit
                                 </a>
                                 @if($member->status === 'pending')
                                 <form action="{{ route('business.team.resend', $member->id) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="text-gray-600 hover:text-gray-900">
+                                    <button type="submit" class="min-h-[40px] px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
                                         Resend
                                     </button>
                                 </form>
@@ -109,7 +109,7 @@
                                 @if($member->status === 'active')
                                 <form action="{{ route('business.team.suspend', $member->id) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="text-orange-600 hover:text-orange-900" onclick="return confirm('Are you sure you want to suspend this team member?')">
+                                    <button type="submit" class="min-h-[40px] px-3 py-2 text-orange-600 hover:text-orange-900 hover:bg-orange-50 rounded-lg" onclick="return confirm('Are you sure you want to suspend this team member?')">
                                         Suspend
                                     </button>
                                 </form>
@@ -117,7 +117,7 @@
                                 @if($member->status === 'suspended')
                                 <form action="{{ route('business.team.reactivate', $member->id) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="text-green-600 hover:text-green-900">
+                                    <button type="submit" class="min-h-[40px] px-3 py-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg">
                                         Reactivate
                                     </button>
                                 </form>
@@ -125,7 +125,7 @@
                                 <form action="{{ route('business.team.destroy', $member->id) }}" method="POST" class="inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure you want to remove this team member? This action cannot be undone.')">
+                                    <button type="submit" class="min-h-[40px] px-3 py-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg" onclick="return confirm('Are you sure you want to remove this team member? This action cannot be undone.')">
                                         Remove
                                     </button>
                                 </form>
@@ -142,7 +142,7 @@
                             <h3 class="mt-2 text-sm font-medium text-gray-900">No team members</h3>
                             <p class="mt-1 text-sm text-gray-500">Get started by inviting a team member.</p>
                             <div class="mt-6">
-                                <a href="{{ route('business.team.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800">
+                                <a href="{{ route('business.team.create') }}" class="inline-flex items-center min-h-[40px] px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                     </svg>

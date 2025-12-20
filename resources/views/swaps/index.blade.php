@@ -87,7 +87,7 @@
                         </div>
                         <div class="text-right">
                             <p class="text-lg font-bold text-gray-900">
-                                ${{ number_format($swap->shift->final_rate ?? 0, 2) }}/hr
+                                @money($swap->shift->final_rate)/hr
                             </p>
                             <a href="{{ route('worker.swaps.show', $swap->id ?? 0) }}" class="mt-2 inline-block px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 text-sm">
                                 View Details

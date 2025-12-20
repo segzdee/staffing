@@ -73,31 +73,31 @@
 @endsection
 
 @section('content')
-<div class="container" style="margin-top: 30px;">
+<div class="container mt-6 md:mt-8">
     <!-- Header -->
     <div class="analytics-header">
         <h1><i class="fa fa-chart-line"></i> Analytics Dashboard</h1>
-        <p class="lead" style="margin: 0; opacity: 0.9;">Insights into your agency's performance</p>
+        <p class="lead m-0 opacity-90">Insights into your agency's performance</p>
     </div>
 
     <!-- Monthly Performance Chart -->
     <div class="chart-card">
         <h4><i class="fa fa-chart-bar"></i> 6-Month Performance</h4>
-        <div class="row" style="margin-top: 20px;">
+        <div class="row mt-4 md:mt-5">
             <div class="col-md-6">
                 <h5>Shifts Completed</h5>
                 @foreach($monthlyStats as $stat)
-                    <div style="margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
                             <span>{{ $stat['month'] }}</span>
                             <strong>{{ $stat['shifts'] }} shifts</strong>
                         </div>
-                        <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div class="bg-gray-300 h-2 rounded overflow-hidden">
                             @php
                                 $maxShifts = collect($monthlyStats)->max('shifts');
                                 $percentage = $maxShifts > 0 ? ($stat['shifts'] / $maxShifts * 100) : 0;
                             @endphp
-                            <div style="background: #667eea; width: {{ $percentage }}%; height: 100%;"></div>
+                            <div class="bg-indigo-500 h-full" style="width: {{ $percentage }}%;"></div>
                         </div>
                     </div>
                 @endforeach
@@ -106,17 +106,17 @@
             <div class="col-md-6">
                 <h5>Commission Earned</h5>
                 @foreach($monthlyStats as $stat)
-                    <div style="margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <div class="mb-4">
+                        <div class="flex justify-between mb-1">
                             <span>{{ $stat['month'] }}</span>
                             <strong>{{ Helper::amountFormatDecimal($stat['commission']) }}</strong>
                         </div>
-                        <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div class="bg-gray-300 h-2 rounded overflow-hidden">
                             @php
                                 $maxCommission = collect($monthlyStats)->max('commission');
                                 $percentage = $maxCommission > 0 ? ($stat['commission'] / $maxCommission * 100) : 0;
                             @endphp
-                            <div style="background: #28a745; width: {{ $percentage }}%; height: 100%;"></div>
+                            <div class="bg-green-500 h-full" style="width: {{ $percentage }}%;"></div>
                         </div>
                     </div>
                 @endforeach
@@ -129,7 +129,8 @@
         <h4><i class="fa fa-trophy"></i> Top Performing Workers</h4>
 
         @if($topWorkers->count() > 0)
-            <table class="performance-table">
+            <div class="overflow-x-auto">
+            <table class="performance-table min-w-full">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -144,7 +145,7 @@
                         <tr>
                             <td>
                                 @if($index < 3)
-                                    <i class="fa fa-medal" style="color: {{ $index == 0 ? '#FFD700' : ($index == 1 ? '#C0C0C0' : '#CD7F32') }};"></i>
+                                    <i class="fa fa-medal {{ $index == 0 ? 'text-yellow-400' : ($index == 1 ? 'text-gray-400' : 'text-amber-600') }}"></i>
                                 @endif
                                 #{{ $index + 1 }}
                             </td>
@@ -152,7 +153,7 @@
                             <td class="text-center">{{ $worker->shifts_completed }}</td>
                             <td class="text-center">
                                 @if($worker->avg_rating)
-                                    <i class="fa fa-star" style="color: #ffc107;"></i>
+                                    <i class="fa fa-star text-yellow-500"></i>
                                     {{ number_format($worker->avg_rating, 1) }}
                                 @else
                                     <span class="text-muted">N/A</span>
@@ -163,8 +164,8 @@
                                     $maxShifts = $topWorkers->max('shifts_completed');
                                     $percentage = $maxShifts > 0 ? ($worker->shifts_completed / $maxShifts * 100) : 0;
                                 @endphp
-                                <div style="background: #e0e0e0; height: 24px; border-radius: 4px; overflow: hidden;">
-                                    <div class="chart-bar" style="width: {{ $percentage }}%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white;">
+                                <div class="bg-gray-300 h-6 rounded overflow-hidden">
+                                    <div class="chart-bar flex items-center justify-center text-xs text-white" style="width: {{ $percentage }}%;">
                                         {{ round($percentage) }}%
                                     </div>
                                 </div>
@@ -173,10 +174,11 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
         @else
-            <div class="text-center" style="padding: 40px;">
+            <div class="text-center p-6 md:p-10">
                 <i class="fa fa-users fa-3x text-muted"></i>
-                <p style="margin-top: 15px; color: #999;">No performance data available yet</p>
+                <p class="mt-4 text-gray-400">No performance data available yet</p>
             </div>
         @endif
     </div>
@@ -235,14 +237,14 @@
                     $shiftGrowth = $firstMonth['shifts'] > 0 ?
                         round((($lastMonth['shifts'] - $firstMonth['shifts']) / $firstMonth['shifts']) * 100, 1) : 0;
                 @endphp
-                <div style="padding: 20px; background: {{ $shiftGrowth >= 0 ? '#d4edda' : '#f8d7da' }}; border-radius: 8px; text-align: center;">
-                    <h3 style="color: {{ $shiftGrowth >= 0 ? '#155724' : '#721c24' }}; margin: 0;">
+                <div class="p-4 md:p-5 {{ $shiftGrowth >= 0 ? 'bg-green-100' : 'bg-red-100' }} rounded-lg text-center">
+                    <h3 class="{{ $shiftGrowth >= 0 ? 'text-green-800' : 'text-red-800' }} m-0">
                         {{ $shiftGrowth > 0 ? '+' : '' }}{{ $shiftGrowth }}%
                     </h3>
-                    <p style="margin: 5px 0 0 0; color: #666;">
+                    <p class="mt-1 mb-0 text-gray-600">
                         <i class="fa fa-chart-line"></i> Shift Growth
                     </p>
-                    <small style="color: #999;">
+                    <small class="text-gray-400">
                         From {{ $firstMonth['month'] }} to {{ $lastMonth['month'] }}
                     </small>
                 </div>
@@ -252,14 +254,14 @@
                     $commissionGrowth = $firstMonth['commission'] > 0 ?
                         round((($lastMonth['commission'] - $firstMonth['commission']) / $firstMonth['commission']) * 100, 1) : 0;
                 @endphp
-                <div style="padding: 20px; background: {{ $commissionGrowth >= 0 ? '#d4edda' : '#f8d7da' }}; border-radius: 8px; text-align: center;">
-                    <h3 style="color: {{ $commissionGrowth >= 0 ? '#155724' : '#721c24' }}; margin: 0;">
+                <div class="p-4 md:p-5 {{ $commissionGrowth >= 0 ? 'bg-green-100' : 'bg-red-100' }} rounded-lg text-center">
+                    <h3 class="{{ $commissionGrowth >= 0 ? 'text-green-800' : 'text-red-800' }} m-0">
                         {{ $commissionGrowth > 0 ? '+' : '' }}{{ $commissionGrowth }}%
                     </h3>
-                    <p style="margin: 5px 0 0 0; color: #666;">
+                    <p class="mt-1 mb-0 text-gray-600">
                         <i class="fa fa-dollar-sign"></i> Commission Growth
                     </p>
-                    <small style="color: #999;">
+                    <small class="text-gray-400">
                         From {{ $firstMonth['month'] }} to {{ $lastMonth['month'] }}
                     </small>
                 </div>
@@ -268,7 +270,7 @@
     </div>
 
     <!-- Export Options -->
-    <div class="text-center" style="margin: 30px 0;">
+    <div class="text-center my-6 md:my-8">
         <a href="{{ url('agency/commissions') }}" class="btn btn-success btn-lg">
             <i class="fa fa-dollar-sign"></i> View Commission Report
         </a>

@@ -97,21 +97,14 @@ class DashboardController extends Controller
                     ->sum(DB::raw('s.duration_hours * s.final_rate')),
             ];
 
-            // Calculate average fill rate
-            $allShifts = Shift::where('business_id', $user->id)
+            // Calculate average fill rate using DB aggregates (optimized)
+            $fillRateData = Shift::where('business_id', $user->id)
                 ->where('shift_date', '>=', Carbon::now()->subDays(30))
-                ->get();
+                ->where('required_workers', '>', 0)
+                ->selectRaw('AVG((COALESCE(filled_workers, 0) / required_workers) * 100) as avg_fill_rate')
+                ->first();
 
-            $averageFillRate = 0;
-            if ($allShifts->count() > 0) {
-                $totalFillRate = 0;
-                foreach ($allShifts as $shift) {
-                    if ($shift->required_workers > 0) {
-                        $totalFillRate += ($shift->filled_workers / $shift->required_workers) * 100;
-                    }
-                }
-                $averageFillRate = round($totalFillRate / $allShifts->count());
-            }
+            $averageFillRate = round($fillRateData->avg_fill_rate ?? 0);
 
             // Calculate profile completeness for onboarding progress
             $onboardingProgress = $this->calculateProfileCompleteness($user);
@@ -291,19 +284,23 @@ class DashboardController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        // Get stats
+        // Get stats with single optimized query using conditional counts
+        $statsRaw = ShiftApplication::query()
+            ->join('shifts', 'shift_applications.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN shift_applications.status = "pending" THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN shift_applications.status = "approved" THEN 1 ELSE 0 END) as approved,
+                SUM(CASE WHEN shift_applications.status = "rejected" THEN 1 ELSE 0 END) as rejected
+            ')
+            ->first();
+
         $stats = [
-            'pending' => ShiftApplication::whereHas('shift', fn ($q) => $q->where('business_id', $user->id))
-                ->where('status', 'pending')
-                ->count(),
-            'approved' => ShiftApplication::whereHas('shift', fn ($q) => $q->where('business_id', $user->id))
-                ->where('status', 'approved')
-                ->count(),
-            'rejected' => ShiftApplication::whereHas('shift', fn ($q) => $q->where('business_id', $user->id))
-                ->where('status', 'rejected')
-                ->count(),
-            'total' => ShiftApplication::whereHas('shift', fn ($q) => $q->where('business_id', $user->id))
-                ->count(),
+            'pending' => (int) ($statsRaw->pending ?? 0),
+            'approved' => (int) ($statsRaw->approved ?? 0),
+            'rejected' => (int) ($statsRaw->rejected ?? 0),
+            'total' => (int) ($statsRaw->total ?? 0),
         ];
 
         // Get shifts with pending applications for filter dropdown
@@ -459,7 +456,7 @@ class DashboardController extends Controller
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->where('shift_payments.status', 'in_escrow')
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         // Get shifts with escrow funds
         $escrowShifts = \App\Models\ShiftPayment::with(['assignment.shift', 'assignment.worker'])
@@ -477,7 +474,7 @@ class DashboardController extends Controller
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->where('shift_payments.status', 'released')
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         // Recently released
         $recentlyReleased = DB::table('shift_payments')
@@ -486,7 +483,7 @@ class DashboardController extends Controller
             ->where('shifts.business_id', $user->id)
             ->where('shift_payments.status', 'paid_out')
             ->where('shift_payments.payout_completed_at', '>=', now()->subDays(7))
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         return view('business.payments.escrow', [
             'escrowBalance' => $escrowBalance ?? 0,
@@ -548,14 +545,14 @@ class DashboardController extends Controller
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->where('shift_payments.status', 'paid_out')
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         $thisMonthPaid = DB::table('shift_payments')
             ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->whereMonth('shift_payments.payout_completed_at', now()->month)
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         return view('business.payments.history', [
             'payments' => $payments,
@@ -581,7 +578,7 @@ class DashboardController extends Controller
             ->whereIn('shift_payments.status', ['paid_out', 'released'])
             ->select(
                 DB::raw('DATE_FORMAT(shift_payments.created_at, "%Y-%m") as period'),
-                DB::raw('SUM(shift_payments.total_amount) as total'),
+                DB::raw('SUM(shift_payments.amount_gross) as total'),
                 DB::raw('SUM(shift_payments.platform_fee) as fees'),
                 DB::raw('COUNT(*) as shifts_count')
             )
@@ -594,7 +591,7 @@ class DashboardController extends Controller
             ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         // Total fees paid
         $totalFees = DB::table('shift_payments')
@@ -637,7 +634,7 @@ class DashboardController extends Controller
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->where('shift_payments.status', 'in_escrow')
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         // Get pending release
         $pendingRelease = DB::table('shift_payments')
@@ -645,7 +642,7 @@ class DashboardController extends Controller
             ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->where('shift_payments.status', 'released')
-            ->sum('shift_payments.total_amount');
+            ->sum('shift_payments.amount_gross');
 
         // Upcoming shift payments list
         $pendingPayments = \App\Models\ShiftPayment::with(['assignment.shift', 'assignment.worker'])
@@ -696,25 +693,24 @@ class DashboardController extends Controller
             ];
         }
 
-        // Fill rate trends
+        // Fill rate trends using single DB aggregate query (optimized)
+        $sixMonthsAgo = Carbon::now()->subMonths(6)->startOfMonth();
+        $fillRateByMonth = Shift::where('business_id', $user->id)
+            ->where('shift_date', '>=', $sixMonthsAgo)
+            ->where('required_workers', '>', 0)
+            ->selectRaw('YEAR(shift_date) as year, MONTH(shift_date) as month')
+            ->selectRaw('AVG((COALESCE(filled_workers, 0) / required_workers) * 100) as avg_rate')
+            ->groupByRaw('YEAR(shift_date), MONTH(shift_date)')
+            ->get()
+            ->keyBy(fn ($item) => $item->year.'-'.str_pad($item->month, 2, '0', STR_PAD_LEFT));
+
         $fillRateTrend = [];
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
-            $monthShifts = Shift::where('business_id', $user->id)
-                ->whereMonth('shift_date', $month->month)
-                ->whereYear('shift_date', $month->year)
-                ->get();
-            $totalFillRate = 0;
-            $count = 0;
-            foreach ($monthShifts as $shift) {
-                if ($shift->required_workers > 0) {
-                    $totalFillRate += ($shift->filled_workers / $shift->required_workers) * 100;
-                    $count++;
-                }
-            }
+            $key = $month->format('Y-m');
             $fillRateTrend[] = [
                 'month' => $month->format('M'),
-                'rate' => $count > 0 ? round($totalFillRate / $count) : 0,
+                'rate' => isset($fillRateByMonth[$key]) ? round($fillRateByMonth[$key]->avg_rate) : 0,
             ];
         }
 
@@ -795,7 +791,7 @@ class DashboardController extends Controller
             ->join('shifts as s', 'sa.shift_id', '=', 's.id')
             ->join('users as u', 'sa.worker_id', '=', 'u.id')
             ->leftJoin('ratings as r', function ($join) use ($user) {
-                $join->on('sa.id', '=', 'r.assignment_id')
+                $join->on('sa.id', '=', 'r.shift_assignment_id')
                     ->where('r.rater_id', '=', $user->id);
             })
             ->where('s.business_id', $user->id)
@@ -840,7 +836,7 @@ class DashboardController extends Controller
         $onTimeStarts = ShiftAssignment::join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
             ->where('shifts.business_id', $user->id)
             ->where('shift_assignments.status', 'completed')
-            ->whereRaw('shift_assignments.clock_in_time <= shifts.start_datetime')
+            ->whereRaw('shift_assignments.actual_clock_in <= shifts.start_datetime')
             ->count();
         $onTimeRate = $totalAssignments > 0 ? round(($onTimeStarts / $completedShifts) * 100) : 0;
 
@@ -1261,5 +1257,53 @@ class DashboardController extends Controller
         ];
 
         return view('business.workers.reviews', compact('reviews', 'stats'));
+    }
+
+    /**
+     * Show a specific worker's profile (from business perspective)
+     */
+    public function showWorker($workerId): \Illuminate\View\View
+    {
+        $user = Auth::user();
+
+        $worker = User::where('user_type', 'worker')
+            ->with(['workerProfile', 'badges'])
+            ->findOrFail($workerId);
+
+        // Get work history with this business
+        $assignments = ShiftAssignment::where('worker_id', $workerId)
+            ->whereHas('shift', fn ($q) => $q->where('business_id', $user->id))
+            ->with(['shift', 'rating'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Get rating stats for this worker with this business
+        $ratingStats = [
+            'average' => \App\Models\Rating::where('rated_id', $workerId)
+                ->where('rater_id', $user->id)
+                ->avg('rating'),
+            'count' => \App\Models\Rating::where('rated_id', $workerId)
+                ->where('rater_id', $user->id)
+                ->count(),
+        ];
+
+        // Check if worker is in favourites
+        $isFavourite = \App\Models\FavouriteWorker::where('business_id', $user->id)
+            ->where('worker_id', $workerId)
+            ->exists();
+
+        // Check if worker is blocked
+        $isBlocked = \App\Models\BlockedWorker::where('business_id', $user->id)
+            ->where('worker_id', $workerId)
+            ->exists();
+
+        return view('business.workers.show', compact(
+            'worker',
+            'assignments',
+            'ratingStats',
+            'isFavourite',
+            'isBlocked'
+        ));
     }
 }

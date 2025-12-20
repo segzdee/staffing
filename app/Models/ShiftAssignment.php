@@ -169,10 +169,17 @@ class ShiftAssignment extends Model
         'hours_worked',
         'status',
         'payment_status',
+        // Agency fields
+        'agency_id',
+        'agency_commission_rate',
+        'assigned_at',
         // Time tracking fields
         'actual_clock_in',
         'actual_clock_out',
         'clock_in_verified',
+        'clock_in_lat',
+        'clock_in_lng',
+        'clock_in_accuracy',
         'late_minutes',
         'was_late',
         'lateness_flagged',
@@ -184,17 +191,31 @@ class ShiftAssignment extends Model
         'early_departure_reason',
         'overtime_worked',
         'overtime_hours',
+        'overtime_approved',
         'total_break_minutes',
         'current_break_started_at',
+        // Break tracking
+        'breaks',
+        'mandatory_break_taken',
+        'break_compliance_met',
+        // Clock-out GPS
+        'clock_out_lat',
+        'clock_out_lng',
+        'billable_hours',
         // Business adjustment fields
         'business_adjusted_hours',
         'business_adjustment_reason',
         'business_verified_at',
         'business_verified_by',
+        'business_rating',
+        'business_feedback',
         // Auto clock-out fields
         'auto_clocked_out',
         'auto_clock_out_time',
         'auto_clock_out_reason',
+        // Payment fields
+        'worker_pay_amount',
+        'paid_at',
     ];
 
     /**
@@ -225,6 +246,25 @@ class ShiftAssignment extends Model
         'business_verified_at' => 'datetime',
         'auto_clocked_out' => 'boolean',
         'auto_clock_out_time' => 'datetime',
+        // Agency casts
+        'agency_commission_rate' => 'decimal:2',
+        'assigned_at' => 'datetime',
+        // GPS coordinate casts (8 decimal precision for ~1mm accuracy)
+        'clock_in_lat' => 'decimal:8',
+        'clock_in_lng' => 'decimal:8',
+        'clock_out_lat' => 'decimal:8',
+        'clock_out_lng' => 'decimal:8',
+        'clock_in_accuracy' => 'integer',
+        // Break tracking casts
+        'breaks' => 'array',
+        'mandatory_break_taken' => 'boolean',
+        'break_compliance_met' => 'boolean',
+        'overtime_approved' => 'boolean',
+        // Hours and payment casts
+        'billable_hours' => 'decimal:2',
+        'business_rating' => 'decimal:2',
+        'worker_pay_amount' => 'integer',
+        'paid_at' => 'datetime',
     ];
 
     /**

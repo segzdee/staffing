@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Broadcast;
-use App\Models\User;
-use App\Models\Shift;
 use App\Models\Conversation;
+use App\Models\Shift;
+use App\Models\User;
+use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,33 +24,33 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 // Shift-specific channels
 Broadcast::channel('shift.{shiftId}', function (User $user, $shiftId) {
     $shift = Shift::find($shiftId);
-    if (!$shift) {
+    if (! $shift) {
         return false;
     }
-    
+
     // Business owner, assigned workers, or admin can listen
     if ($user->isAdmin()) {
         return true;
     }
-    
+
     if ($shift->business_id === $user->id) {
         return ['id' => $user->id, 'name' => $user->name, 'role' => 'business'];
     }
-    
+
     if ($shift->assignments()->where('worker_id', $user->id)->exists()) {
         return ['id' => $user->id, 'name' => $user->name, 'role' => 'worker'];
     }
-    
+
     return false;
 });
 
 // Conversation/messaging channels
 Broadcast::channel('conversation.{conversationId}', function (User $user, $conversationId) {
     $conversation = Conversation::find($conversationId);
-    if (!$conversation) {
+    if (! $conversation) {
         return false;
     }
-    
+
     // Check if user is a participant
     return $conversation->participants()->where('user_id', $user->id)->exists()
         ? ['id' => $user->id, 'name' => $user->name]
@@ -66,4 +66,14 @@ Broadcast::channel('availability-broadcasts', function (User $user) {
 // Presence channel for online users
 Broadcast::channel('online-users', function (User $user) {
     return ['id' => $user->id, 'name' => $user->name, 'user_type' => $user->user_type];
+});
+
+// Worker-specific private channel (legacy support)
+Broadcast::channel('worker.{workerId}', function ($user, $workerId) {
+    return (int) $user->id === (int) $workerId;
+});
+
+// User-specific private channel (legacy support for user.{id} pattern)
+Broadcast::channel('user.{id}', function ($user, $id) {
+    return (int) $user->id === (int) $id;
 });

@@ -3,8 +3,14 @@
 namespace App\Providers;
 
 use App\Models\AdminSettings;
+use App\Models\Shift;
+use App\Models\ShiftApplication;
 use App\Models\ShiftAssignment;
+use App\Models\ShiftPayment;
+use App\Observers\ShiftApplicationObserver;
 use App\Observers\ShiftAssignmentObserver;
+use App\Observers\ShiftObserver;
+use App\Observers\ShiftPaymentObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
@@ -53,7 +59,10 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Register model observers
+        Shift::observe(ShiftObserver::class);
+        ShiftApplication::observe(ShiftApplicationObserver::class);
         ShiftAssignment::observe(ShiftAssignmentObserver::class);
+        ShiftPayment::observe(ShiftPaymentObserver::class);
 
         // ADM-007: Feature Flags Blade Directives
         $this->registerFeatureFlagDirectives();

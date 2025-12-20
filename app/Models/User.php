@@ -207,6 +207,11 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         'is_suspended',
         'strike_count',
         'last_strike_at',
+        // Two-Factor Authentication fields
+        'mfa_enabled',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
     ];
 
     /**
@@ -241,6 +246,7 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         'two_factor_secret' => 'encrypted',
         'two_factor_recovery_codes' => 'encrypted:array',
         'two_factor_confirmed_at' => 'datetime',
+        'mfa_enabled' => 'boolean',
         // KYC casts
         'kyc_verified' => 'boolean',
         'kyc_verified_at' => 'datetime',
@@ -248,6 +254,17 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         'is_suspended' => 'boolean',
         'strike_count' => 'integer',
         'last_strike_at' => 'datetime',
+        // OvertimeStaff shift marketplace casts
+        'notification_preferences' => 'array',
+        'availability_schedule' => 'array',
+        'onboarding_completed' => 'boolean',
+        'is_verified_worker' => 'boolean',
+        'is_verified_business' => 'boolean',
+        'total_shifts_completed' => 'integer',
+        'total_shifts_posted' => 'integer',
+        'rating_as_worker' => 'decimal:2',
+        'rating_as_business' => 'decimal:2',
+        'suspension_count' => 'integer',
     ];
 
     /**

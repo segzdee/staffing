@@ -76,20 +76,20 @@ function initializeEcho() {
 
 // Listen for notifications if user is authenticated
 if (window.userId && window.Echo) {
-    window.Echo.private(`user.${window.userId}`)
-        .listen('NotificationCreated', (e) => {
+    window.Echo.private(`App.Models.User.${window.userId}`)
+        .listen('.notification.created', (e) => {
             if (typeof showToast === 'function') {
                 showToast({
-                    title: e.notification.title || 'New Notification',
-                    message: e.notification.message || '',
-                    type: e.notification.type || 'info'
+                    title: e.title || 'New Notification',
+                    message: e.message || '',
+                    type: e.type || 'info'
                 });
             }
             if (typeof updateNotificationBadge === 'function') {
                 updateNotificationBadge();
             }
         })
-        .listen('message.new', (e) => {
+        .listen('.message.new', (e) => {
             if (typeof showToast === 'function') {
                 showToast({
                     title: 'New Message',
@@ -98,7 +98,7 @@ if (window.userId && window.Echo) {
                 });
             }
         })
-        .listen('application.status.changed', (e) => {
+        .listen('.application.status.changed', (e) => {
             if (typeof showToast === 'function') {
                 const status = e.status === 'accepted' ? 'success' : 'info';
                 showToast({

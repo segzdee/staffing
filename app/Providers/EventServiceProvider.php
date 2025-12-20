@@ -45,6 +45,15 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\ShiftCancelled::class => [
             \App\Listeners\NotifyShiftCancelled::class,
         ],
+        \App\Events\ShiftUpdated::class => [
+            // Future: NotifyWorkersOfShiftUpdate listener
+        ],
+        \App\Events\InstantPayoutCompleted::class => [
+            // Future: NotifyWorkerOfInstantPayout listener
+        ],
+        \App\Events\PaymentDisputed::class => [
+            // Future: NotifyAdminOfDispute listener
+        ],
 
     ];
 

@@ -42,6 +42,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property-read \App\Models\Shift $shift
  * @property-read \App\Models\User $worker
  * @property-read \App\Models\WorkerProfile|null $workerProfile
+ *
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftApplication accepted()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftApplication byWorker($workerId)
  * @method static \Database\Factories\ShiftApplicationFactory factory($count = null, $state = [])
@@ -82,6 +83,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftApplication whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftApplication whereViewedByBusinessAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ShiftApplication whereWorkerId($value)
+ *
  * @mixin \Eloquent
  */
 class ShiftApplication extends Model
@@ -100,6 +102,27 @@ class ShiftApplication extends Model
         'application_note',
         'applied_at',
         'responded_at',
+        // AI-powered matching scores
+        'match_score',
+        'skill_score',
+        'proximity_score',
+        'reliability_score',
+        'rating_score',
+        'recency_score',
+        'rank_position',
+        'distance_km',
+        'priority_tier',
+        // Notification tracking
+        'notification_sent_at',
+        'notification_opened_at',
+        'acknowledged_at',
+        'acknowledgment_required_by',
+        // Business interaction tracking
+        'is_favorited',
+        'is_blocked',
+        'viewed_by_business_at',
+        'responded_by',
+        'rejection_reason',
     ];
 
     /**
@@ -110,6 +133,24 @@ class ShiftApplication extends Model
     protected $casts = [
         'applied_at' => 'datetime',
         'responded_at' => 'datetime',
+        // AI-powered matching score casts
+        'match_score' => 'decimal:4',
+        'skill_score' => 'decimal:4',
+        'proximity_score' => 'decimal:4',
+        'reliability_score' => 'decimal:4',
+        'rating_score' => 'decimal:4',
+        'recency_score' => 'decimal:4',
+        'distance_km' => 'decimal:2',
+        'rank_position' => 'integer',
+        // Boolean casts
+        'is_favorited' => 'boolean',
+        'is_blocked' => 'boolean',
+        // Datetime casts for tracking
+        'notification_sent_at' => 'datetime',
+        'notification_opened_at' => 'datetime',
+        'acknowledged_at' => 'datetime',
+        'acknowledgment_required_by' => 'datetime',
+        'viewed_by_business_at' => 'datetime',
     ];
 
     /**
@@ -175,7 +216,7 @@ class ShiftApplication extends Model
     {
         $this->update([
             'status' => 'accepted',
-            'responded_at' => now()
+            'responded_at' => now(),
         ]);
     }
 
@@ -186,7 +227,7 @@ class ShiftApplication extends Model
     {
         $this->update([
             'status' => 'rejected',
-            'responded_at' => now()
+            'responded_at' => now(),
         ]);
     }
 
@@ -197,7 +238,7 @@ class ShiftApplication extends Model
     {
         $this->update([
             'status' => 'withdrawn',
-            'responded_at' => now()
+            'responded_at' => now(),
         ]);
     }
 

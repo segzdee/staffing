@@ -3,7 +3,6 @@
 namespace App\Events;
 
 use App\Models\ShiftApplication;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -15,6 +14,7 @@ class ApplicationStatusChanged implements ShouldBroadcast
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $application;
+
     public $status; // 'accepted', 'rejected'
 
     public function __construct(ShiftApplication $application, $status)
@@ -26,7 +26,7 @@ class ApplicationStatusChanged implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('worker.' . $this->application->worker_id),
+            new PrivateChannel('App.Models.User.'.$this->application->worker_id),
         ];
     }
 

@@ -44,19 +44,25 @@ return [
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
-        'redirect' => env('APP_URL').'/oauth/facebook/callback',
+        'redirect' => env('APP_URL').'/auth/social/facebook/callback',
     ],
 
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('APP_URL').'/oauth/google/callback',
+        'redirect' => env('APP_URL').'/auth/social/google/callback',
     ],
 
     'twitter' => [
         'client_id' => env('TWITTER_CLIENT_ID'),
         'client_secret' => env('TWITTER_CLIENT_SECRET'),
-        'redirect' => env('APP_URL').'/oauth/twitter/callback',
+        'redirect' => env('APP_URL').'/auth/social/twitter/callback',
+    ],
+
+    'apple' => [
+        'client_id' => env('APPLE_CLIENT_ID'),
+        'client_secret' => env('APPLE_CLIENT_SECRET'),
+        'redirect' => env('APP_URL').'/auth/social/apple/callback',
     ],
 
     /*

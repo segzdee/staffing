@@ -317,22 +317,233 @@ class DashboardController extends Controller
     // Analytics routes
     public function analyticsDashboard(): \Illuminate\View\View
     {
-        return view('agency.analytics.dashboard');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Key metrics
+        $totalWorkers = AgencyWorker::where('agency_id', $agency->id)->where('status', 'active')->count();
+        $totalShiftsCompleted = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->where('shift_assignments.status', 'completed')
+            ->count();
+
+        $totalRevenue = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->sum('shift_payments.agency_commission');
+
+        // Monthly trends (last 6 months)
+        $monthlyTrends = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthlyTrends[] = [
+                'month' => $month->format('M'),
+                'placements' => ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+                    ->where('agency_workers.agency_id', $agency->id)
+                    ->whereMonth('shift_assignments.created_at', $month->month)
+                    ->whereYear('shift_assignments.created_at', $month->year)
+                    ->count(),
+                'revenue' => DB::table('shift_payments')
+                    ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+                    ->whereIn('shift_assignments.worker_id', $workerIds)
+                    ->whereMonth('shift_payments.created_at', $month->month)
+                    ->whereYear('shift_payments.created_at', $month->year)
+                    ->sum('shift_payments.agency_commission'),
+            ];
+        }
+
+        // Top performing workers
+        $topWorkers = DB::table('shift_assignments as sa')
+            ->join('agency_workers as aw', 'sa.worker_id', '=', 'aw.worker_id')
+            ->join('users as u', 'sa.worker_id', '=', 'u.id')
+            ->where('aw.agency_id', $agency->id)
+            ->where('sa.status', 'completed')
+            ->groupBy('u.id', 'u.name')
+            ->select('u.id', 'u.name', DB::raw('COUNT(*) as shifts_count'), DB::raw('SUM(sa.hours_worked) as total_hours'))
+            ->orderByDesc('shifts_count')
+            ->limit(5)
+            ->get();
+
+        // Utilization rate
+        $activeWorkers = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->whereIn('shift_assignments.status', ['assigned', 'in_progress'])
+            ->distinct('shift_assignments.worker_id')
+            ->count('shift_assignments.worker_id');
+        $utilizationRate = $totalWorkers > 0 ? round(($activeWorkers / $totalWorkers) * 100) : 0;
+
+        return view('agency.analytics.dashboard', [
+            'totalWorkers' => $totalWorkers,
+            'totalShiftsCompleted' => $totalShiftsCompleted,
+            'totalRevenue' => $totalRevenue,
+            'monthlyTrends' => $monthlyTrends,
+            'topWorkers' => $topWorkers,
+            'utilizationRate' => $utilizationRate,
+            'activeWorkers' => $activeWorkers,
+        ]);
     }
 
     public function analyticsReports(): \Illuminate\View\View
     {
-        return view('agency.analytics.reports');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Available report types
+        $reportTypes = [
+            ['id' => 'placements', 'name' => 'Placements Report', 'description' => 'Worker placement history and statistics'],
+            ['id' => 'revenue', 'name' => 'Revenue Report', 'description' => 'Commission earnings breakdown'],
+            ['id' => 'workers', 'name' => 'Workers Report', 'description' => 'Worker performance and availability'],
+            ['id' => 'clients', 'name' => 'Clients Report', 'description' => 'Business relationships and history'],
+        ];
+
+        // Summary stats
+        $totalPlacements = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->count();
+
+        $totalRevenue = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->sum('shift_payments.agency_commission');
+
+        return view('agency.analytics.reports', [
+            'reportTypes' => $reportTypes,
+            'totalPlacements' => $totalPlacements,
+            'totalRevenue' => $totalRevenue,
+        ]);
     }
 
     public function analyticsRevenue(): \Illuminate\View\View
     {
-        return view('agency.analytics.revenue');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Monthly revenue breakdown
+        $monthlyRevenue = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthlyRevenue[] = [
+                'month' => $month->format('M Y'),
+                'revenue' => DB::table('shift_payments')
+                    ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+                    ->whereIn('shift_assignments.worker_id', $workerIds)
+                    ->whereMonth('shift_payments.created_at', $month->month)
+                    ->whereYear('shift_payments.created_at', $month->year)
+                    ->sum('shift_payments.agency_commission'),
+            ];
+        }
+
+        // Revenue by worker
+        $revenueByWorker = DB::table('shift_payments as sp')
+            ->join('shift_assignments as sa', 'sp.shift_assignment_id', '=', 'sa.id')
+            ->join('users as u', 'sa.worker_id', '=', 'u.id')
+            ->whereIn('sa.worker_id', $workerIds)
+            ->groupBy('u.id', 'u.name')
+            ->select('u.name', DB::raw('SUM(sp.agency_commission) as total'))
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        // Total stats
+        $totalRevenue = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->sum('shift_payments.agency_commission');
+
+        $thisMonthRevenue = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereMonth('shift_payments.created_at', now()->month)
+            ->sum('shift_payments.agency_commission');
+
+        $lastMonthRevenue = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->whereIn('shift_assignments.worker_id', $workerIds)
+            ->whereMonth('shift_payments.created_at', now()->subMonth()->month)
+            ->sum('shift_payments.agency_commission');
+
+        $revenueChange = $lastMonthRevenue > 0
+            ? round((($thisMonthRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100)
+            : 0;
+
+        return view('agency.analytics.revenue', [
+            'monthlyRevenue' => $monthlyRevenue,
+            'revenueByWorker' => $revenueByWorker,
+            'totalRevenue' => $totalRevenue,
+            'thisMonthRevenue' => $thisMonthRevenue,
+            'lastMonthRevenue' => $lastMonthRevenue,
+            'revenueChange' => $revenueChange,
+        ]);
     }
 
     public function analyticsUtilization(): \Illuminate\View\View
     {
-        return view('agency.analytics.utilization');
+        $agency = Auth::user();
+        $workerIds = AgencyWorker::where('agency_id', $agency->id)->pluck('worker_id');
+
+        // Total and active workers
+        $totalWorkers = AgencyWorker::where('agency_id', $agency->id)->where('status', 'active')->count();
+        $activeWorkers = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+            ->where('agency_workers.agency_id', $agency->id)
+            ->whereIn('shift_assignments.status', ['assigned', 'in_progress'])
+            ->distinct('shift_assignments.worker_id')
+            ->count('shift_assignments.worker_id');
+
+        // Overall utilization
+        $utilizationRate = $totalWorkers > 0 ? round(($activeWorkers / $totalWorkers) * 100) : 0;
+
+        // Utilization trend (last 6 months)
+        $utilizationTrend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $monthActiveWorkers = ShiftAssignment::join('agency_workers', 'shift_assignments.worker_id', '=', 'agency_workers.worker_id')
+                ->where('agency_workers.agency_id', $agency->id)
+                ->whereMonth('shift_assignments.created_at', $month->month)
+                ->whereYear('shift_assignments.created_at', $month->year)
+                ->distinct('shift_assignments.worker_id')
+                ->count('shift_assignments.worker_id');
+            $utilizationTrend[] = [
+                'month' => $month->format('M'),
+                'rate' => $totalWorkers > 0 ? round(($monthActiveWorkers / $totalWorkers) * 100) : 0,
+            ];
+        }
+
+        // Worker status breakdown
+        $workersByStatus = [
+            'active' => AgencyWorker::where('agency_id', $agency->id)->where('status', 'active')->count(),
+            'inactive' => AgencyWorker::where('agency_id', $agency->id)->where('status', 'inactive')->count(),
+            'pending' => AgencyWorker::where('agency_id', $agency->id)->where('status', 'pending')->count(),
+        ];
+
+        // Top utilized workers
+        $topUtilized = DB::table('shift_assignments as sa')
+            ->join('agency_workers as aw', 'sa.worker_id', '=', 'aw.worker_id')
+            ->join('users as u', 'sa.worker_id', '=', 'u.id')
+            ->where('aw.agency_id', $agency->id)
+            ->whereMonth('sa.created_at', now()->month)
+            ->groupBy('u.id', 'u.name')
+            ->select('u.name', DB::raw('COUNT(*) as shifts_count'), DB::raw('SUM(sa.hours_worked) as total_hours'))
+            ->orderByDesc('shifts_count')
+            ->limit(10)
+            ->get();
+
+        // Avg hours per worker
+        $avgHoursPerWorker = $totalWorkers > 0
+            ? DB::table('shift_assignments')
+                ->whereIn('worker_id', $workerIds)
+                ->whereMonth('created_at', now()->month)
+                ->avg('hours_worked')
+            : 0;
+
+        return view('agency.analytics.utilization', [
+            'totalWorkers' => $totalWorkers,
+            'activeWorkers' => $activeWorkers,
+            'utilizationRate' => $utilizationRate,
+            'utilizationTrend' => $utilizationTrend,
+            'workersByStatus' => $workersByStatus,
+            'topUtilized' => $topUtilized,
+            'avgHoursPerWorker' => round($avgHoursPerWorker ?? 0, 1),
+        ]);
     }
 
     // Finance routes

@@ -451,7 +451,49 @@ class DashboardController extends Controller
      */
     public function paymentsEscrow(): \Illuminate\View\View
     {
-        return view('business.payments.escrow');
+        $user = Auth::user();
+
+        // Get current escrow balance
+        $escrowBalance = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'in_escrow')
+            ->sum('shift_payments.total_amount');
+
+        // Get shifts with escrow funds
+        $escrowShifts = \App\Models\ShiftPayment::with(['assignment.shift', 'assignment.worker'])
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'in_escrow')
+            ->select('shift_payments.*')
+            ->orderBy('shift_payments.created_at', 'desc')
+            ->paginate(15);
+
+        // Pending release (shifts completed, awaiting release)
+        $pendingRelease = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'released')
+            ->sum('shift_payments.total_amount');
+
+        // Recently released
+        $recentlyReleased = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'paid_out')
+            ->where('shift_payments.payout_completed_at', '>=', now()->subDays(7))
+            ->sum('shift_payments.total_amount');
+
+        return view('business.payments.escrow', [
+            'escrowBalance' => $escrowBalance ?? 0,
+            'escrowShifts' => $escrowShifts,
+            'pendingRelease' => $pendingRelease ?? 0,
+            'recentlyReleased' => $recentlyReleased ?? 0,
+        ]);
     }
 
     /**
@@ -459,7 +501,69 @@ class DashboardController extends Controller
      */
     public function paymentsHistory(): \Illuminate\View\View
     {
-        return view('business.payments.history');
+        $user = Auth::user();
+
+        // Get filter parameters
+        $status = request('status', 'all');
+        $period = request('period', 'all');
+
+        // Build query
+        $query = \App\Models\ShiftPayment::with(['assignment.shift', 'assignment.worker'])
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->select('shift_payments.*');
+
+        // Apply status filter
+        if ($status !== 'all') {
+            $query->where('shift_payments.status', $status);
+        }
+
+        // Apply period filter
+        if ($period !== 'all') {
+            $startDate = match ($period) {
+                'today' => Carbon::today(),
+                'this_week' => Carbon::now()->startOfWeek(),
+                'this_month' => Carbon::now()->startOfMonth(),
+                'last_month' => Carbon::now()->subMonth()->startOfMonth(),
+                'this_year' => Carbon::now()->startOfYear(),
+                default => null,
+            };
+            $endDate = match ($period) {
+                'last_month' => Carbon::now()->subMonth()->endOfMonth(),
+                default => Carbon::now(),
+            };
+            if ($startDate) {
+                $query->whereBetween('shift_payments.created_at', [$startDate, $endDate]);
+            }
+        }
+
+        $payments = $query->orderBy('shift_payments.created_at', 'desc')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Stats
+        $totalPaid = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'paid_out')
+            ->sum('shift_payments.total_amount');
+
+        $thisMonthPaid = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->whereMonth('shift_payments.payout_completed_at', now()->month)
+            ->sum('shift_payments.total_amount');
+
+        return view('business.payments.history', [
+            'payments' => $payments,
+            'status' => $status,
+            'period' => $period,
+            'totalPaid' => $totalPaid ?? 0,
+            'thisMonthPaid' => $thisMonthPaid ?? 0,
+        ]);
     }
 
     /**
@@ -467,7 +571,43 @@ class DashboardController extends Controller
      */
     public function paymentsInvoices(): \Illuminate\View\View
     {
-        return view('business.payments.invoices');
+        $user = Auth::user();
+
+        // Get monthly invoice summaries
+        $invoices = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->whereIn('shift_payments.status', ['paid_out', 'released'])
+            ->select(
+                DB::raw('DATE_FORMAT(shift_payments.created_at, "%Y-%m") as period'),
+                DB::raw('SUM(shift_payments.total_amount) as total'),
+                DB::raw('SUM(shift_payments.platform_fee) as fees'),
+                DB::raw('COUNT(*) as shifts_count')
+            )
+            ->groupBy('period')
+            ->orderByDesc('period')
+            ->paginate(12);
+
+        // Total invoiced
+        $totalInvoiced = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->sum('shift_payments.total_amount');
+
+        // Total fees paid
+        $totalFees = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->sum('shift_payments.platform_fee');
+
+        return view('business.payments.invoices', [
+            'invoices' => $invoices,
+            'totalInvoiced' => $totalInvoiced ?? 0,
+            'totalFees' => $totalFees ?? 0,
+        ]);
     }
 
     /**
@@ -475,7 +615,55 @@ class DashboardController extends Controller
      */
     public function paymentsPending(): \Illuminate\View\View
     {
-        return view('business.payments.pending');
+        $user = Auth::user();
+
+        // Get shifts with pending payments (upcoming assigned shifts not yet paid)
+        $upcomingShifts = Shift::with(['assignments.worker'])
+            ->where('business_id', $user->id)
+            ->whereIn('status', ['filled', 'in_progress'])
+            ->where('shift_date', '>=', Carbon::today())
+            ->orderBy('shift_date', 'asc')
+            ->get();
+
+        // Calculate estimated pending
+        $estimatedPending = 0;
+        foreach ($upcomingShifts as $shift) {
+            $estimatedPending += ($shift->final_rate ?? $shift->base_rate) * $shift->duration_hours * $shift->filled_workers;
+        }
+
+        // Get in-escrow payments
+        $inEscrowTotal = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'in_escrow')
+            ->sum('shift_payments.total_amount');
+
+        // Get pending release
+        $pendingRelease = DB::table('shift_payments')
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_payments.status', 'released')
+            ->sum('shift_payments.total_amount');
+
+        // Upcoming shift payments list
+        $pendingPayments = \App\Models\ShiftPayment::with(['assignment.shift', 'assignment.worker'])
+            ->join('shift_assignments', 'shift_payments.shift_assignment_id', '=', 'shift_assignments.id')
+            ->join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->whereIn('shift_payments.status', ['in_escrow', 'released'])
+            ->select('shift_payments.*')
+            ->orderBy('shifts.shift_date', 'asc')
+            ->paginate(15);
+
+        return view('business.payments.pending', [
+            'upcomingShifts' => $upcomingShifts,
+            'estimatedPending' => $estimatedPending,
+            'inEscrowTotal' => $inEscrowTotal ?? 0,
+            'pendingRelease' => $pendingRelease ?? 0,
+            'pendingPayments' => $pendingPayments,
+        ]);
     }
 
     /**
@@ -483,7 +671,86 @@ class DashboardController extends Controller
      */
     public function reportsAnalytics(): \Illuminate\View\View
     {
-        return view('business.reports.analytics');
+        $user = Auth::user();
+
+        // Shift metrics over time
+        $shiftsLastSixMonths = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $shiftsLastSixMonths[] = [
+                'month' => $month->format('M'),
+                'posted' => Shift::where('business_id', $user->id)
+                    ->whereMonth('created_at', $month->month)
+                    ->whereYear('created_at', $month->year)
+                    ->count(),
+                'completed' => Shift::where('business_id', $user->id)
+                    ->where('status', 'completed')
+                    ->whereMonth('shift_date', $month->month)
+                    ->whereYear('shift_date', $month->year)
+                    ->count(),
+                'cancelled' => Shift::where('business_id', $user->id)
+                    ->where('status', 'cancelled')
+                    ->whereMonth('cancelled_at', $month->month)
+                    ->whereYear('cancelled_at', $month->year)
+                    ->count(),
+            ];
+        }
+
+        // Fill rate trends
+        $fillRateTrend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $monthShifts = Shift::where('business_id', $user->id)
+                ->whereMonth('shift_date', $month->month)
+                ->whereYear('shift_date', $month->year)
+                ->get();
+            $totalFillRate = 0;
+            $count = 0;
+            foreach ($monthShifts as $shift) {
+                if ($shift->required_workers > 0) {
+                    $totalFillRate += ($shift->filled_workers / $shift->required_workers) * 100;
+                    $count++;
+                }
+            }
+            $fillRateTrend[] = [
+                'month' => $month->format('M'),
+                'rate' => $count > 0 ? round($totalFillRate / $count) : 0,
+            ];
+        }
+
+        // Application conversion rate
+        $totalApplications = ShiftApplication::join('shifts', 'shift_applications.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->count();
+        $approvedApplications = ShiftApplication::join('shifts', 'shift_applications.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_applications.status', 'approved')
+            ->count();
+        $conversionRate = $totalApplications > 0 ? round(($approvedApplications / $totalApplications) * 100) : 0;
+
+        // Popular shift types
+        $popularRoles = Shift::where('business_id', $user->id)
+            ->select('role_type', DB::raw('COUNT(*) as count'))
+            ->groupBy('role_type')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get();
+
+        // Time to fill (avg hours from posting to filled)
+        $avgTimeToFill = Shift::where('business_id', $user->id)
+            ->where('status', 'completed')
+            ->whereNotNull('confirmed_at')
+            ->avg(DB::raw('TIMESTAMPDIFF(HOUR, created_at, confirmed_at)'));
+
+        return view('business.reports.analytics', [
+            'shiftsLastSixMonths' => $shiftsLastSixMonths,
+            'fillRateTrend' => $fillRateTrend,
+            'conversionRate' => $conversionRate,
+            'totalApplications' => $totalApplications,
+            'approvedApplications' => $approvedApplications,
+            'popularRoles' => $popularRoles,
+            'avgTimeToFill' => round($avgTimeToFill ?? 0),
+        ]);
     }
 
     /**
@@ -491,7 +758,29 @@ class DashboardController extends Controller
      */
     public function reportsExport(): \Illuminate\View\View
     {
-        return view('business.reports.export');
+        $user = Auth::user();
+
+        // Available report types
+        $reportTypes = [
+            ['id' => 'shifts', 'name' => 'Shifts Report', 'description' => 'All shifts with details and status'],
+            ['id' => 'payments', 'name' => 'Payments Report', 'description' => 'Payment history and spending breakdown'],
+            ['id' => 'workers', 'name' => 'Workers Report', 'description' => 'Worker assignments and ratings'],
+            ['id' => 'applications', 'name' => 'Applications Report', 'description' => 'Application history and conversion rates'],
+        ];
+
+        // Get date range stats
+        $totalShifts = Shift::where('business_id', $user->id)->count();
+        $totalPayments = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->sum(DB::raw('sa.hours_worked * s.final_rate'));
+
+        return view('business.reports.export', [
+            'reportTypes' => $reportTypes,
+            'totalShifts' => $totalShifts,
+            'totalPayments' => $totalPayments,
+        ]);
     }
 
     /**
@@ -499,7 +788,71 @@ class DashboardController extends Controller
      */
     public function reportsPerformance(): \Illuminate\View\View
     {
-        return view('business.reports.performance');
+        $user = Auth::user();
+
+        // Worker performance metrics
+        $topWorkers = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->join('users as u', 'sa.worker_id', '=', 'u.id')
+            ->leftJoin('ratings as r', function ($join) use ($user) {
+                $join->on('sa.id', '=', 'r.assignment_id')
+                    ->where('r.rater_id', '=', $user->id);
+            })
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->groupBy('u.id', 'u.name')
+            ->select(
+                'u.id',
+                'u.name',
+                DB::raw('COUNT(sa.id) as shifts_count'),
+                DB::raw('SUM(sa.hours_worked) as total_hours'),
+                DB::raw('AVG(r.rating) as avg_rating')
+            )
+            ->orderByDesc('shifts_count')
+            ->limit(10)
+            ->get();
+
+        // Shift completion rate
+        $totalShifts = Shift::where('business_id', $user->id)
+            ->whereIn('status', ['completed', 'cancelled'])
+            ->count();
+        $completedShifts = Shift::where('business_id', $user->id)
+            ->where('status', 'completed')
+            ->count();
+        $completionRate = $totalShifts > 0 ? round(($completedShifts / $totalShifts) * 100) : 0;
+
+        // No-show rate
+        $noShowCount = ShiftAssignment::join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_assignments.status', 'no_show')
+            ->count();
+        $totalAssignments = ShiftAssignment::join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->count();
+        $noShowRate = $totalAssignments > 0 ? round(($noShowCount / $totalAssignments) * 100, 1) : 0;
+
+        // Average rating given to workers
+        $avgRatingGiven = \App\Models\Rating::where('rater_id', $user->id)
+            ->where('rater_type', 'business')
+            ->avg('rating');
+
+        // On-time start rate
+        $onTimeStarts = ShiftAssignment::join('shifts', 'shift_assignments.shift_id', '=', 'shifts.id')
+            ->where('shifts.business_id', $user->id)
+            ->where('shift_assignments.status', 'completed')
+            ->whereRaw('shift_assignments.clock_in_time <= shifts.start_datetime')
+            ->count();
+        $onTimeRate = $totalAssignments > 0 ? round(($onTimeStarts / $completedShifts) * 100) : 0;
+
+        return view('business.reports.performance', [
+            'topWorkers' => $topWorkers,
+            'completionRate' => $completionRate,
+            'noShowRate' => $noShowRate,
+            'avgRatingGiven' => round($avgRatingGiven ?? 0, 1),
+            'onTimeRate' => $onTimeRate,
+            'totalShifts' => $totalShifts,
+            'completedShifts' => $completedShifts,
+        ]);
     }
 
     /**
@@ -507,7 +860,85 @@ class DashboardController extends Controller
      */
     public function reportsSpending(): \Illuminate\View\View
     {
-        return view('business.reports.spending');
+        $user = Auth::user();
+
+        // Monthly spending over last 6 months
+        $monthlySpending = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $spending = DB::table('shift_assignments as sa')
+                ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+                ->where('s.business_id', $user->id)
+                ->where('sa.status', 'completed')
+                ->whereMonth('s.shift_date', $month->month)
+                ->whereYear('s.shift_date', $month->year)
+                ->sum(DB::raw('sa.hours_worked * s.final_rate'));
+            $monthlySpending[] = [
+                'month' => $month->format('M Y'),
+                'amount' => $spending ?? 0,
+            ];
+        }
+
+        // Spending by role type
+        $spendingByRole = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->groupBy('s.role_type')
+            ->select('s.role_type', DB::raw('SUM(sa.hours_worked * s.final_rate) as total'))
+            ->orderByDesc('total')
+            ->get();
+
+        // Total spending stats
+        $thisMonthSpending = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->whereMonth('s.shift_date', now()->month)
+            ->whereYear('s.shift_date', now()->year)
+            ->sum(DB::raw('sa.hours_worked * s.final_rate'));
+
+        $lastMonthSpending = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->whereMonth('s.shift_date', now()->subMonth()->month)
+            ->whereYear('s.shift_date', now()->subMonth()->year)
+            ->sum(DB::raw('sa.hours_worked * s.final_rate'));
+
+        $ytdSpending = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->whereYear('s.shift_date', now()->year)
+            ->sum(DB::raw('sa.hours_worked * s.final_rate'));
+
+        $allTimeSpending = DB::table('shift_assignments as sa')
+            ->join('shifts as s', 'sa.shift_id', '=', 's.id')
+            ->where('s.business_id', $user->id)
+            ->where('sa.status', 'completed')
+            ->sum(DB::raw('sa.hours_worked * s.final_rate'));
+
+        // Average hourly rate paid
+        $avgHourlyRate = Shift::where('business_id', $user->id)
+            ->where('status', 'completed')
+            ->avg('final_rate');
+
+        // Calculate month-over-month change
+        $spendingChange = $lastMonthSpending > 0
+            ? round((($thisMonthSpending - $lastMonthSpending) / $lastMonthSpending) * 100)
+            : 0;
+
+        return view('business.reports.spending', [
+            'monthlySpending' => $monthlySpending,
+            'spendingByRole' => $spendingByRole,
+            'thisMonthSpending' => $thisMonthSpending ?? 0,
+            'lastMonthSpending' => $lastMonthSpending ?? 0,
+            'ytdSpending' => $ytdSpending ?? 0,
+            'allTimeSpending' => $allTimeSpending ?? 0,
+            'avgHourlyRate' => round($avgHourlyRate ?? 0, 2),
+            'spendingChange' => $spendingChange,
+        ]);
     }
 
     /**

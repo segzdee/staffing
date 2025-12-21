@@ -44,8 +44,8 @@
             </button>
             @foreach(['Hospitality', 'Healthcare', 'Retail', 'Logistics', 'Construction', 'Events', 'Manufacturing', 'Food Service'] as $industry)
                 <button
-                    wire:click="filterByIndustry('{{ strtolower($industry) }}')"
-                    class="px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-all duration-200 {{ $selectedIndustry === strtolower($industry) ? 'bg-brand-purple text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}"
+                    wire:click="filterByIndustry('{{ strtolower(str_replace(' ', '_', $industry)) }}')"
+                    class="px-4 py-2 rounded-full font-semibold whitespace-nowrap transition-all duration-200 {{ $selectedIndustry === strtolower(str_replace(' ', '_', $industry)) ? 'bg-brand-purple text-white shadow-lg' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' }}"
                 >
                     {{ $industry }}
                 </button>
@@ -53,10 +53,29 @@
         </div>
     </div>
 
+    <!-- Guest CTA Banner -->
+    @if($isGuest)
+        <div class="mb-8 bg-gradient-to-r from-brand-purple to-brand-teal rounded-xl p-6 text-white shadow-lg">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-xl font-bold mb-1">Ready to start earning?</h3>
+                    <p class="text-white/80">Create a free account to apply for shifts and get matched with opportunities</p>
+                </div>
+                <a
+                    href="{{ route('register') }}"
+                    class="px-6 py-3 bg-white text-brand-purple rounded-lg font-semibold hover:bg-gray-100 transition-colors whitespace-nowrap"
+                >
+                    Sign Up Free
+                </a>
+            </div>
+        </div>
+    @endif
+
     <!-- Shift Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         @forelse($shifts as $shift)
             <div
+                wire:key="shift-{{ $shift['id'] }}"
                 class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group border-l-4
                     {{ $shift['urgency'] === 'urgent' ? 'border-red-500' : ($shift['urgency'] === 'high' ? 'border-orange-500' : ($shift['urgency'] === 'medium' ? 'border-yellow-500' : 'border-green-500')) }}"
                 role="article"
@@ -127,7 +146,7 @@
                     </div>
 
                     <!-- Skills -->
-                    @if(count($shift['skills']) > 0)
+                    @if(is_array($shift['skills']) && count($shift['skills']) > 0)
                         <div class="flex flex-wrap gap-2 mb-4">
                             @foreach(array_slice($shift['skills'], 0, 3) as $skill)
                                 <span class="text-xs bg-purple-100 text-brand-purple px-2 py-1 rounded-full">
@@ -142,7 +161,7 @@
                         </div>
                     @endif
 
-                    <!-- Demand Level & Applications -->
+                    <!-- Demand Level & Spots (different for guests vs authenticated) -->
                     <div class="flex items-center justify-between pt-4 border-t border-gray-200">
                         <div class="flex items-center space-x-2">
                             <span class="text-xs text-gray-600">Demand:</span>
@@ -152,7 +171,11 @@
                             </span>
                         </div>
                         <div class="text-xs text-gray-600">
-                            {{ $shift['applications_count'] }}/{{ $shift['max_workers'] }} applied
+                            @if($isGuest)
+                                {{ $shift['spots_remaining'] }} {{ $shift['spots_remaining'] === 1 ? 'spot' : 'spots' }} left
+                            @else
+                                {{ $shift['applications_count'] }}/{{ $shift['max_workers'] }} applied
+                            @endif
                         </div>
                     </div>
 
@@ -162,14 +185,23 @@
                     </div>
                 </div>
 
-                <!-- Apply Button -->
+                <!-- Apply Button - Different for guest vs authenticated -->
                 <div class="px-6 pb-6">
-                    <a
-                        href="{{ route('shifts.show', $shift['id']) }}"
-                        class="block w-full py-3 bg-gradient-to-r from-brand-purple to-brand-teal text-white rounded-lg font-semibold text-center hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200"
-                    >
-                        View Details
-                    </a>
+                    @if($isGuest)
+                        <a
+                            href="{{ route('register', ['redirect' => '/shifts/' . $shift['id'], 'intent' => 'apply_shift', 'shift_id' => $shift['id']]) }}"
+                            class="block w-full py-3 bg-gradient-to-r from-brand-purple to-brand-teal text-white rounded-lg font-semibold text-center hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200"
+                        >
+                            Sign Up to Apply
+                        </a>
+                    @else
+                        <a
+                            href="{{ route('shifts.show', $shift['id']) }}"
+                            class="block w-full py-3 bg-gradient-to-r from-brand-purple to-brand-teal text-white rounded-lg font-semibold text-center hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200"
+                        >
+                            View Details
+                        </a>
+                    @endif
                 </div>
             </div>
         @empty
@@ -183,15 +215,48 @@
         @endforelse
     </div>
 
-    <!-- Load More Button -->
+    <!-- View All / Load More Button -->
     @if(count($shifts) >= 12)
         <div class="text-center">
-            <button
-                wire:click="loadShifts"
-                class="px-8 py-3 bg-white border-2 border-brand-purple text-brand-purple rounded-lg font-semibold hover:bg-brand-purple hover:text-white transition-all duration-200"
-            >
-                Load More Shifts
-            </button>
+            @if($isGuest)
+                <a
+                    href="{{ route('register', ['intent' => 'browse_shifts']) }}"
+                    class="inline-block px-8 py-3 bg-white border-2 border-brand-purple text-brand-purple rounded-lg font-semibold hover:bg-brand-purple hover:text-white transition-all duration-200"
+                >
+                    Sign Up to View All Shifts
+                </a>
+            @else
+                <a
+                    href="{{ route('shifts.index') }}"
+                    class="inline-block px-8 py-3 bg-white border-2 border-brand-purple text-brand-purple rounded-lg font-semibold hover:bg-brand-purple hover:text-white transition-all duration-200"
+                >
+                    View All Shifts
+                </a>
+            @endif
+        </div>
+    @endif
+
+    <!-- Trust Indicators for Guests -->
+    @if($isGuest && count($shifts) > 0)
+        <div class="mt-12 pt-8 border-t border-gray-200">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div>
+                    <div class="text-3xl font-bold text-brand-purple">{{ count($shifts) * 15 }}+</div>
+                    <div class="text-sm text-gray-600">Active Shifts</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-brand-purple">$24</div>
+                    <div class="text-sm text-gray-600">Avg Hourly Rate</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-brand-purple">4.8</div>
+                    <div class="text-sm text-gray-600">Worker Rating</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-brand-purple">24hr</div>
+                    <div class="text-sm text-gray-600">Fast Payments</div>
+                </div>
+            </div>
         </div>
     @endif
 </div>

@@ -1696,6 +1696,24 @@ Route::post('/webhooks/paystack', [App\Http\Controllers\Webhooks\PaystackWebhook
     ->middleware('web')
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
+// Stripe Connect webhook (no auth, csrf exempt) - for agency payouts
+Route::post('/webhooks/stripe/connect', [App\Http\Controllers\Webhooks\StripeConnectWebhookController::class, 'handle'])
+    ->name('webhooks.stripe.connect')
+    ->middleware('web')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// Checkr webhook (no auth, csrf exempt) - for background check status updates
+Route::post('/webhooks/checkr', [App\Http\Controllers\Webhooks\CheckrWebhookController::class, 'handleWebhook'])
+    ->name('webhooks.checkr')
+    ->middleware('web')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
+// Onfido webhook (no auth, csrf exempt) - for identity verification updates
+Route::post('/webhooks/onfido', [App\Http\Controllers\Webhooks\OnfidoWebhookController::class, 'handle'])
+    ->name('webhooks.onfido')
+    ->middleware('web')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
+
 // ============================================================================
 // GLO-010: DATA RESIDENCY ROUTES
 // ============================================================================

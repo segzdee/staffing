@@ -59,13 +59,17 @@ class LiveShiftMarket extends Component
             $startDateTime = $this->combineDateTime($shift->shift_date, $shift->start_time);
             $endDateTime = $this->combineDateTime($shift->shift_date, $shift->end_time);
 
+            // Get the effective rate as a numeric value (dollars)
+            $rateObj = $shift->getEffectiveHourlyRate();
+            $hourlyRate = $rateObj ? ($rateObj->getAmount() / 100) : 0;
+
             return [
                 'id' => $shift->id,
                 'title' => $shift->title,
                 'business_name' => $shift->business->business_name ?? $shift->business->name ?? 'Unknown',
                 'location' => $shift->location_address ?? $shift->location_city ?? $shift->city,
-                'hourly_rate' => $shift->hourly_rate,
-                'rate_trend' => $this->getRateTrend($shift->hourly_rate),
+                'hourly_rate' => $hourlyRate,
+                'rate_trend' => $this->getRateTrend($hourlyRate),
                 'start_time' => $startDateTime ? $startDateTime->format('M j, g:i A') : 'TBD',
                 'end_time' => $endDateTime ? $endDateTime->format('g:i A') : 'TBD',
                 'duration' => $this->calculateDuration($startDateTime, $endDateTime),
@@ -112,12 +116,15 @@ class LiveShiftMarket extends Component
         }
 
         // Cache the average rate calculation to avoid repeated queries
+        // Rates are stored in cents, so divide by 100 to get dollars
         static $avgRate = null;
         if ($avgRate === null) {
-            $avgRate = Shift::where('status', 'open')
+            $avgCents = Shift::where('status', 'open')
                 ->where('shift_date', '>=', now()->subDays(30)->toDateString())
-                ->where('hourly_rate', '>', 0)
-                ->avg('hourly_rate') ?? 0;
+                ->whereRaw('COALESCE(final_rate, base_rate) > 0')
+                ->selectRaw('AVG(COALESCE(final_rate, base_rate)) as avg_rate')
+                ->value('avg_rate') ?? 0;
+            $avgRate = $avgCents / 100;
         }
 
         if ($avgRate <= 0) {

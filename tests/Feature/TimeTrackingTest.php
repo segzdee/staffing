@@ -464,20 +464,25 @@ it('can reject adjustment', function () {
 
 it('auto clocks out workers after shift ends', function () {
     // Create an assignment that should be auto clocked out
-    // Shift ended 1 hour ago
+    // Use a shift that clearly ended in the past (noon shift: 8am-4pm, ended at 4pm + 30min grace = 4:30pm)
+    // Create shift for yesterday to ensure it's fully in the past
+    $yesterday = now()->subDay();
+    $shiftStart = $yesterday->copy()->setTime(8, 0, 0);
+    $shiftEnd = $yesterday->copy()->setTime(16, 0, 0); // 4pm same day
+
     $oldShift = Shift::factory()->create([
         'business_id' => $this->business->id,
-        'shift_date' => now()->toDateString(),
-        'start_time' => now()->subHours(9)->format('H:i:s'),
-        'end_time' => now()->subHours(1)->format('H:i:s'),
+        'shift_date' => $yesterday->toDateString(),
+        'start_time' => $shiftStart->format('H:i:s'),
+        'end_time' => $shiftEnd->format('H:i:s'),
     ]);
 
     $oldAssignment = ShiftAssignment::factory()->create([
         'shift_id' => $oldShift->id,
         'worker_id' => $this->worker->id,
         'status' => 'checked_in',
-        'actual_clock_in' => now()->subHours(9),
-        'check_in_time' => now()->subHours(9),
+        'actual_clock_in' => $shiftStart,
+        'check_in_time' => $shiftStart,
     ]);
 
     // Run the job

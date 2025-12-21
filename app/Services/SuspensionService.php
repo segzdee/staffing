@@ -97,7 +97,7 @@ class SuspensionService
                 'suspension_reason' => $data['reason_details'],
                 'strike_count' => $strikeCount,
                 'last_strike_at' => Carbon::now(),
-                'suspension_count' => DB::raw('suspension_count + 1'),
+                'suspension_count' => ($worker->suspension_count ?? 0) + 1,
                 'last_suspended_at' => Carbon::now(),
             ]);
 

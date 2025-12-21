@@ -23,8 +23,12 @@ class PaymentReleasedMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
+        // Handle both Money objects and numeric values
+        $amount = $this->payment->amount_net;
+        $amountValue = $amount instanceof \Money\Money ? $amount->getAmount() / 100 : (float) $amount;
+
         return new Envelope(
-            subject: "💰 Payment Released - $" . number_format($this->payment->amount_net, 2),
+            subject: 'Payment Released - $'.number_format($amountValue, 2),
         );
     }
 

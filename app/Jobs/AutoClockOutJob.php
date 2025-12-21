@@ -31,7 +31,7 @@ class AutoClockOutJob implements ShouldQueue
     {
         Log::info('AutoClockOutJob: Starting auto clock-out process');
 
-        // Find assignments that are checked in and shift has ended + grace period
+        // Find assignments that are checked in and haven't clocked out
         $assignments = ShiftAssignment::query()
             ->where('status', 'checked_in')
             ->where(function ($query) {
@@ -40,29 +40,20 @@ class AutoClockOutJob implements ShouldQueue
             })
             ->whereNull('actual_clock_out')
             ->whereNull('check_out_time')
-            ->whereHas('shift', function ($query) {
-                // Shift end time + grace period has passed
-                $now = now();
-                $graceMinutes = $this->gracePeriodMinutes;
-
-                $query->where(function ($q) use ($now, $graceMinutes) {
-                    // Regular shifts (end_time > start_time - same day)
-                    $q->whereRaw('end_time > start_time')
-                        ->whereRaw("DATE_ADD(CONCAT(shift_date, ' ', end_time), INTERVAL ? MINUTE) < ?", [
-                            $graceMinutes,
-                            $now->format('Y-m-d H:i:s'),
-                        ]);
-                })->orWhere(function ($q) use ($now, $graceMinutes) {
-                    // Overnight shifts (end_time < start_time - ends next day)
-                    $q->whereRaw('end_time < start_time')
-                        ->whereRaw("DATE_ADD(CONCAT(DATE_ADD(shift_date, INTERVAL 1 DAY), ' ', end_time), INTERVAL ? MINUTE) < ?", [
-                            $graceMinutes,
-                            $now->format('Y-m-d H:i:s'),
-                        ]);
-                });
-            })
             ->with(['shift', 'worker'])
-            ->get();
+            ->get()
+            ->filter(function ($assignment) {
+                // Filter in PHP to handle datetime casts properly
+                $shift = $assignment->shift;
+                if (! $shift) {
+                    return false;
+                }
+
+                $endDateTime = $this->getShiftEndDateTime($shift);
+                $gracePeriodEnd = $endDateTime->copy()->addMinutes($this->gracePeriodMinutes);
+
+                return now()->isAfter($gracePeriodEnd);
+            });
 
         $count = 0;
 
@@ -132,14 +123,32 @@ class AutoClockOutJob implements ShouldQueue
      */
     protected function getShiftEndDateTime($shift): Carbon
     {
-        $shiftDate = Carbon::parse($shift->shift_date);
-        $endTime = Carbon::parse($shift->end_time);
+        $shiftDate = Carbon::parse($shift->shift_date)->startOfDay();
 
-        // If overnight shift (end_time < start_time), end is next day
-        if ($shift->end_time < $shift->start_time) {
+        // Handle different storage formats for end_time
+        if ($shift->end_time instanceof Carbon) {
+            $endHour = $shift->end_time->hour;
+            $endMinute = $shift->end_time->minute;
+            $endSecond = $shift->end_time->second;
+        } else {
+            $endParsed = Carbon::parse($shift->end_time);
+            $endHour = $endParsed->hour;
+            $endMinute = $endParsed->minute;
+            $endSecond = $endParsed->second;
+        }
+
+        // Handle different storage formats for start_time
+        if ($shift->start_time instanceof Carbon) {
+            $startHour = $shift->start_time->hour;
+        } else {
+            $startHour = Carbon::parse($shift->start_time)->hour;
+        }
+
+        // If overnight shift (end hour < start hour), end is next day
+        if ($endHour < $startHour) {
             $shiftDate->addDay();
         }
 
-        return $shiftDate->setTimeFrom($endTime);
+        return $shiftDate->setTime($endHour, $endMinute, $endSecond);
     }
 }

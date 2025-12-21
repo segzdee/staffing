@@ -6,6 +6,7 @@ use App\Models\Shift;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 class DemoShiftSeeder extends Seeder
 {
@@ -23,39 +24,100 @@ class DemoShiftSeeder extends Seeder
         // Get or create a demo business account
         $demoBusiness = $this->getOrCreateDemoBusiness();
 
-        // Clear existing demo shifts
-        Shift::where('is_demo', true)->delete();
+        if (! $demoBusiness) {
+            $this->command->error('Could not create demo business account.');
 
-        $demoShifts = $this->getDemoShiftData();
-
-        foreach ($demoShifts as $shiftData) {
-            Shift::create(array_merge($shiftData, [
-                'business_id' => $demoBusiness->id,
-                'is_demo' => true,
-                'in_market' => true,
-                'status' => 'open',
-                'required_workers' => $shiftData['required_workers'] ?? 1,
-                'filled_workers' => $shiftData['filled_workers'] ?? 0,
-                'market_posted_at' => now(),
-                'market_views' => rand(5, 150),
-                'application_count' => rand(0, 8),
-            ]));
+            return;
         }
 
-        $this->command->info('Created '.count($demoShifts).' demo shifts for the Live Shift Market.');
+        // Clear existing demo shifts (only if is_demo column exists)
+        if (Schema::hasColumn('shifts', 'is_demo')) {
+            Shift::where('is_demo', true)->delete();
+        }
+
+        $demoShifts = $this->getDemoShiftData();
+        $created = 0;
+
+        foreach ($demoShifts as $shiftData) {
+            try {
+                // Build shift data with only columns that exist
+                $shiftRecord = $this->buildShiftRecord($shiftData, $demoBusiness->id);
+                Shift::create($shiftRecord);
+                $created++;
+            } catch (\Exception $e) {
+                $this->command->warn("Failed to create shift '{$shiftData['title']}': ".$e->getMessage());
+            }
+        }
+
+        $this->command->info("Created {$created} demo shifts for the Live Shift Market.");
     }
 
-    private function getOrCreateDemoBusiness(): User
+    /**
+     * Build shift record with only existing columns.
+     */
+    private function buildShiftRecord(array $shiftData, int $businessId): array
     {
-        return User::firstOrCreate(
-            ['email' => 'demo-business@overtimestaff.com'],
-            [
-                'name' => 'OvertimeStaff Demo',
-                'password' => bcrypt('demo-business-'.uniqid()),
-                'role' => 'business',
-                'email_verified_at' => now(),
-            ]
-        );
+        $record = [
+            'business_id' => $businessId,
+            'title' => $shiftData['title'],
+            'description' => $shiftData['description'] ?? '',
+            'shift_date' => $shiftData['shift_date'],
+            'start_time' => $shiftData['start_time'],
+            'end_time' => $shiftData['end_time'],
+            'base_rate' => $shiftData['base_rate'],
+            'status' => 'open',
+        ];
+
+        // Add optional columns if they exist
+        $optionalColumns = [
+            'industry' => $shiftData['industry'] ?? null,
+            'demo_business_name' => $shiftData['demo_business_name'] ?? null,
+            'location_address' => $shiftData['location_address'] ?? null,
+            'location_city' => $shiftData['location_city'] ?? null,
+            'location_state' => $shiftData['location_state'] ?? null,
+            'location_country' => $shiftData['location_country'] ?? null,
+            'duration_hours' => $shiftData['duration_hours'] ?? null,
+            'urgency_level' => $shiftData['urgency_level'] ?? 'normal',
+            'required_workers' => $shiftData['required_workers'] ?? 1,
+            'filled_workers' => $shiftData['filled_workers'] ?? 0,
+            'required_skills' => $shiftData['required_skills'] ?? null,
+            'required_certifications' => $shiftData['required_certifications'] ?? null,
+            'is_demo' => true,
+            'in_market' => true,
+            'market_posted_at' => now(),
+            'market_views' => rand(5, 150),
+            'application_count' => rand(0, 8),
+        ];
+
+        foreach ($optionalColumns as $column => $value) {
+            if ($value !== null && Schema::hasColumn('shifts', $column)) {
+                $record[$column] = $value;
+            }
+        }
+
+        return $record;
+    }
+
+    private function getOrCreateDemoBusiness(): ?User
+    {
+        try {
+            // Check which column to use for user type
+            $userTypeColumn = Schema::hasColumn('users', 'user_type') ? 'user_type' : 'role';
+
+            return User::firstOrCreate(
+                ['email' => 'demo-business@overtimestaff.com'],
+                [
+                    'name' => 'OvertimeStaff Demo',
+                    'password' => bcrypt('demo-business-'.uniqid()),
+                    $userTypeColumn => 'business',
+                    'email_verified_at' => now(),
+                ]
+            );
+        } catch (\Exception $e) {
+            $this->command->error('Error creating demo business: '.$e->getMessage());
+
+            return null;
+        }
     }
 
     private function getDemoShiftData(): array

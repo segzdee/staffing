@@ -9,6 +9,10 @@
 
     <title>@yield('title', 'OvertimeStaff')</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/icon-192x192.png') }}">
+
     {{-- Open Graph / Facebook --}}
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">

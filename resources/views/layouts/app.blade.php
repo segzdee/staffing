@@ -8,6 +8,10 @@
 
     <title>@yield('title', config('app.name', 'OvertimeStaff'))</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/icon-192x192.png') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -18,6 +18,10 @@ Global Design System v4.0
 
     <title>@yield('title', 'OvertimeStaff - Global Staffing Marketplace')</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/icons/icon-192x192.png') }}">
+
     {{-- Open Graph / Facebook --}}
     @php
         $ogTitle = $__env->yieldContent('og_title') ?: (config('app.name') . ' - Global Staffing Marketplace');

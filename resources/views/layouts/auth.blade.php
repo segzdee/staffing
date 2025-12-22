@@ -20,8 +20,28 @@
         rel="stylesheet">
 
     <!-- Vite Assets -->
-    @if(file_exists(public_path('build/manifest.json')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @php
+        $manifestExists = file_exists(public_path('build/manifest.json'));
+        $assetsBuilt = $manifestExists && file_exists(public_path('build/assets'));
+    @endphp
+    @if($assetsBuilt)
+        @try
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @catch(\Exception $e)
+            <!-- Fallback if Vite fails -->
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script nonce="{{ $cspNonce ?? '' }}">
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            fontFamily: {
+                                sans: ['Inter', 'system-ui', 'sans-serif'],
+                            },
+                        },
+                    },
+                }
+            </script>
+        @endtry
     @else
         <!-- Fallback to Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>

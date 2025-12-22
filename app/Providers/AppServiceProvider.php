@@ -34,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Safe operations that don't require database
         Blade::withoutDoubleEncoding();
         Paginator::useBootstrap();
 

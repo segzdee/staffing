@@ -53,3 +53,4 @@ if (!\$admin->wasRecentlyCreated) {
 
 echo 'Test users created! Worker ID: ' . \$worker->id . ', Business ID: ' . \$business->id . ', Agency ID: ' . \$agency->id . ', Admin ID: ' . \$admin->id;
 "
+

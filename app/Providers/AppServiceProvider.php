@@ -33,17 +33,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Set default string length for MySQL compatibility
-        Schema::defaultStringLength(191);
-
         Blade::withoutDoubleEncoding();
         Paginator::useBootstrap();
 
         try {
-            // Check if database connection is available first
-            DB::connection()->getPdo();
+            // Set default string length for MySQL compatibility (only if DB is available)
+            Schema::defaultStringLength(191);
 
             // Check if admin_settings table exists before querying
+            // Schema::hasTable() will handle connection errors gracefully
             if (Schema::hasTable('admin_settings')) {
                 $setting = AdminSettings::first();
                 if ($setting) {

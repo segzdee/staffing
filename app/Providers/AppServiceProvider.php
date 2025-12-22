@@ -38,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
 
         try {
             // Set default string length for MySQL compatibility (only if DB is available)
+            // This is safe to call even without DB connection - it just sets a config value
             Schema::defaultStringLength(191);
 
             // Check if admin_settings table exists before querying
@@ -60,17 +61,30 @@ class AppServiceProvider extends ServiceProvider
             View::share('size', 10);
         }
 
-        // Register model observers
-        Shift::observe(ShiftObserver::class);
-        ShiftApplication::observe(ShiftApplicationObserver::class);
-        ShiftAssignment::observe(ShiftAssignmentObserver::class);
-        ShiftPayment::observe(ShiftPaymentObserver::class);
+        // Register model observers (safe - they only run when models are used)
+        try {
+            Shift::observe(ShiftObserver::class);
+            ShiftApplication::observe(ShiftApplicationObserver::class);
+            ShiftAssignment::observe(ShiftAssignmentObserver::class);
+            ShiftPayment::observe(ShiftPaymentObserver::class);
+        } catch (\Exception $e) {
+            // Log but don't crash if observers fail to register
+            \Log::warning('Failed to register model observers', ['error' => $e->getMessage()]);
+        }
 
         // ADM-007: Feature Flags Blade Directives
-        $this->registerFeatureFlagDirectives();
+        try {
+            $this->registerFeatureFlagDirectives();
+        } catch (\Exception $e) {
+            \Log::warning('Failed to register feature flag directives', ['error' => $e->getMessage()]);
+        }
 
         // Register money formatting Blade directives
-        $this->registerMoneyDirectives();
+        try {
+            $this->registerMoneyDirectives();
+        } catch (\Exception $e) {
+            \Log::warning('Failed to register money directives', ['error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -97,17 +111,35 @@ class AppServiceProvider extends ServiceProvider
     {
         // @feature('key') ... @endfeature
         Blade::if('feature', function (string $key) {
-            return feature($key);
+            try {
+                return feature($key);
+            } catch (\Exception $e) {
+                \Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+
+                return false;
+            }
         });
 
         // @featureFor('key', $user) ... @endfeatureFor
         Blade::if('featureFor', function (string $key, $user) {
-            return feature($key, $user);
+            try {
+                return feature($key, $user);
+            } catch (\Exception $e) {
+                \Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+
+                return false;
+            }
         });
 
         // @featureDisabled('key') ... @endfeatureDisabled
         Blade::if('featureDisabled', function (string $key) {
-            return ! feature($key);
+            try {
+                return ! feature($key);
+            } catch (\Exception $e) {
+                \Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+
+                return true; // Default to disabled if check fails
+            }
         });
     }
 

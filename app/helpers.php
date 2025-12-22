@@ -35,7 +35,17 @@ if (! function_exists('feature')) {
      */
     function feature(string $key, ?User $user = null): bool
     {
-        return app(FeatureFlagService::class)->isEnabled($key, $user ?? auth()->user());
+        try {
+            return app(FeatureFlagService::class)->isEnabled($key, $user ?? auth()->user());
+        } catch (\Exception $e) {
+            // Log but don't crash - return false (feature disabled) as safe default
+            \Illuminate\Support\Facades\Log::warning('Feature flag check failed', [
+                'key' => $key,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 }
 

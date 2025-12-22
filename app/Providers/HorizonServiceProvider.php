@@ -28,10 +28,20 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewHorizon', function ($user) {
-            return in_array($user->email, [
-                'admin@overtimestaff.com',
-                'dev.admin@overtimestaff.io',
-            ]) || $user->user_type === 'admin';
+            try {
+                if (! $user) {
+                    return false;
+                }
+
+                return in_array($user->email, [
+                    'admin@overtimestaff.com',
+                    'dev.admin@overtimestaff.io',
+                ]) || ($user->user_type ?? null) === 'admin';
+            } catch (\Exception $e) {
+                \Log::warning('Horizon gate check failed', ['error' => $e->getMessage()]);
+
+                return false;
+            }
         });
     }
 }

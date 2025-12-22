@@ -15,6 +15,7 @@ The compute cluster is crashing, which means the entire application is failing t
    - **Timeout errors** (Maximum execution time exceeded)
    - **Database connection errors**
    - **Service provider errors**
+   - **Class not found errors**
 
 ### Step 2: Check Application Health
 Run in Laravel Cloud console:
@@ -34,43 +35,73 @@ Run in Laravel Cloud console:
 php artisan db:show
 ```
 
+### Step 5: Check Environment Variables
+Run in Laravel Cloud console:
+```bash
+php artisan tinker --execute="echo 'DB Host: ' . config('database.connections.mysql.host');"
+```
+
 ## Common Crash Causes
 
-### 1. Fatal Errors in Service Providers
+### 1. Fatal Errors in Service Providers ✅ FIXED
 **Symptom**: Application fails during bootstrap
-**Check**: Look for "Fatal error" in logs
-**Fix**: All service providers now have error handling
+**Status**: All service providers now have comprehensive error handling
+**Files Fixed**:
+- `AppServiceProvider` - All operations wrapped in try-catch
+- `ViewServiceProvider` - Database queries protected
+- `BroadcastServiceProvider` - Channels file loading protected
+- `HorizonServiceProvider` - Gate function protected
 
-### 2. Memory Exhaustion
+### 2. Missing Log Facade Import ✅ FIXED
+**Symptom**: "Class 'Log' not found" fatal error
+**Status**: Log facade now properly imported in all service providers
+**Files Fixed**:
+- `AppServiceProvider` - Added `use Illuminate\Support\Facades\Log;`
+- `HorizonServiceProvider` - Added `use Illuminate\Support\Facades\Log;`
+
+### 3. Memory Exhaustion
 **Symptom**: "Allowed memory size exhausted"
 **Fix**: Increase PHP memory limit in Laravel Cloud settings
+**Check**: `php -i | grep memory_limit`
 
-### 3. Database Connection Timeout
+### 4. Database Connection Timeout
 **Symptom**: Application hangs during bootstrap
-**Fix**: Service providers now handle DB failures gracefully
+**Status**: ✅ Fixed - Service providers handle DB failures gracefully
 
-### 4. Missing Dependencies
+### 5. Missing Dependencies
 **Symptom**: "Class not found" errors
 **Fix**: Run `composer install` in Laravel Cloud
+**Check**: `composer show | grep [package-name]`
 
-### 5. Inertia SSR Startup Failure
+### 6. Inertia SSR Startup Failure ✅ FIXED
 **Symptom**: SSR process exits with code 1
-**Status**: ✅ Fixed - SSR disabled in config
+**Status**: ✅ Fixed - SSR disabled in `config/inertia.php`
+
+### 7. Broadcast Channels Database Queries
+**Symptom**: Fatal error when loading channels.php
+**Status**: ✅ Fixed - All channel callbacks wrapped in try-catch
 
 ## Code Fixes Applied
 
 ### ✅ Service Provider Error Handling
 - `AppServiceProvider`: All operations wrapped in try-catch
 - `ViewServiceProvider`: Database queries protected
+- `BroadcastServiceProvider`: Channels file loading protected
 - `HorizonServiceProvider`: Gate function protected
+- All Log calls wrapped in try-catch to prevent logging failures from crashing
 
 ### ✅ Feature Flag Error Handling
 - `feature()` helper: Returns false on error (safe default)
 - Blade directives: All wrapped in try-catch
+- Logging failures don't crash the application
 
 ### ✅ Model Observer Registration
 - Observer registration wrapped in try-catch
 - Logs warnings but doesn't crash
+
+### ✅ Broadcast Channel Authorization
+- All channel callbacks wrapped in try-catch
+- Returns false on error (safe default)
 
 ## Emergency Recovery
 
@@ -99,7 +130,7 @@ If cluster continues to crash:
 All critical operations now have:
 - ✅ Try-catch error handling
 - ✅ Graceful fallbacks
-- ✅ Logging for debugging
+- ✅ Logging for debugging (with fallback if logging fails)
 - ✅ Safe defaults
 
 ## Next Steps
@@ -108,3 +139,11 @@ All critical operations now have:
 2. **Run diagnostic commands** above
 3. **Review recent deployments** for breaking changes
 4. **Test health endpoint**: `https://www.overtimestaff.com/up`
+
+## Recent Fixes (2025-12-22)
+
+- ✅ Added Log facade imports
+- ✅ Wrapped all Log calls in try-catch
+- ✅ Added error handling to BroadcastServiceProvider
+- ✅ Added error handling to broadcast channel callbacks
+- ✅ All service providers now fail gracefully

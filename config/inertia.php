@@ -13,8 +13,8 @@ return [
     */
 
     'ssr' => [
-        'enabled' => false,
-        'bundle' => null,
+        'enabled' => env('INERTIA_SSR_ENABLED', false),
+        'bundle' => env('INERTIA_SSR_BUNDLE', null),
     ],
 
     /*

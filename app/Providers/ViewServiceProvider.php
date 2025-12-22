@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\AdminSettings;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class ViewServiceProvider extends ServiceProvider
@@ -15,8 +17,11 @@ class ViewServiceProvider extends ServiceProvider
     public function boot()
     {
         try {
+            // Check if database connection is available first
+            DB::connection()->getPdo();
+            
             // Check if database connection is available and table exists
-            if (\Illuminate\Support\Facades\Schema::hasTable('admin_settings')) {
+            if (Schema::hasTable('admin_settings')) {
                 // Admin Settings - ensure $settings is never null
                 $settings = AdminSettings::first();
                 // Share settings, or a default object if none exists
@@ -25,8 +30,9 @@ class ViewServiceProvider extends ServiceProvider
                 // Share empty object as fallback when table doesn't exist
                 View()->share('settings', new \stdClass);
             }
-        } catch (\Exception $exception) {
+        } catch (\PDOException | \Illuminate\Database\QueryException | \Exception $exception) {
             // Share empty object as fallback to prevent undefined variable errors
+            // Handles database connection failures, query exceptions, and other errors
             View()->share('settings', new \stdClass);
         }
 

@@ -13,6 +13,7 @@ use App\Observers\ShiftObserver;
 use App\Observers\ShiftPaymentObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -39,6 +40,9 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
 
         try {
+            // Check if database connection is available first
+            DB::connection()->getPdo();
+
             // Check if admin_settings table exists before querying
             if (Schema::hasTable('admin_settings')) {
                 $setting = AdminSettings::first();
@@ -53,8 +57,8 @@ class AppServiceProvider extends ServiceProvider
                 // Default 10MB when table doesn't exist (OvertimeStaff)
                 View::share('size', 10);
             }
-        } catch (\Exception $e) {
-            // Fallback default
+        } catch (\PDOException|\Illuminate\Database\QueryException|\Exception $e) {
+            // Fallback default - database connection failed or table doesn't exist
             View::share('size', 10);
         }
 

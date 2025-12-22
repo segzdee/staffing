@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Laravel\Horizon\Horizon;
 use Laravel\Horizon\HorizonApplicationServiceProvider;
 
@@ -38,7 +39,11 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
                     'dev.admin@overtimestaff.io',
                 ]) || ($user->user_type ?? null) === 'admin';
             } catch (\Exception $e) {
-                \Log::warning('Horizon gate check failed', ['error' => $e->getMessage()]);
+                try {
+                    Log::warning('Horizon gate check failed', ['error' => $e->getMessage()]);
+                } catch (\Exception $logError) {
+                    // If logging fails, silently continue
+                }
 
                 return false;
             }

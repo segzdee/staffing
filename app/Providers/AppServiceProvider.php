@@ -14,6 +14,7 @@ use App\Observers\ShiftPaymentObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -69,21 +70,33 @@ class AppServiceProvider extends ServiceProvider
             ShiftPayment::observe(ShiftPaymentObserver::class);
         } catch (\Exception $e) {
             // Log but don't crash if observers fail to register
-            \Log::warning('Failed to register model observers', ['error' => $e->getMessage()]);
+            try {
+                Log::warning('Failed to register model observers', ['error' => $e->getMessage()]);
+            } catch (\Exception $logError) {
+                // If logging fails, silently continue
+            }
         }
 
         // ADM-007: Feature Flags Blade Directives
         try {
             $this->registerFeatureFlagDirectives();
         } catch (\Exception $e) {
-            \Log::warning('Failed to register feature flag directives', ['error' => $e->getMessage()]);
+            try {
+                Log::warning('Failed to register feature flag directives', ['error' => $e->getMessage()]);
+            } catch (\Exception $logError) {
+                // If logging fails, silently continue
+            }
         }
 
         // Register money formatting Blade directives
         try {
             $this->registerMoneyDirectives();
         } catch (\Exception $e) {
-            \Log::warning('Failed to register money directives', ['error' => $e->getMessage()]);
+            try {
+                Log::warning('Failed to register money directives', ['error' => $e->getMessage()]);
+            } catch (\Exception $logError) {
+                // If logging fails, silently continue
+            }
         }
     }
 
@@ -114,7 +127,11 @@ class AppServiceProvider extends ServiceProvider
             try {
                 return feature($key);
             } catch (\Exception $e) {
-                \Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+                try {
+                    Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+                } catch (\Exception $logError) {
+                    // If logging fails, silently continue
+                }
 
                 return false;
             }
@@ -125,7 +142,11 @@ class AppServiceProvider extends ServiceProvider
             try {
                 return feature($key, $user);
             } catch (\Exception $e) {
-                \Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+                try {
+                    Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+                } catch (\Exception $logError) {
+                    // If logging fails, silently continue
+                }
 
                 return false;
             }
@@ -136,7 +157,11 @@ class AppServiceProvider extends ServiceProvider
             try {
                 return ! feature($key);
             } catch (\Exception $e) {
-                \Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+                try {
+                    Log::warning('Feature flag check failed', ['key' => $key, 'error' => $e->getMessage()]);
+                } catch (\Exception $logError) {
+                    // If logging fails, silently continue
+                }
 
                 return true; // Default to disabled if check fails
             }

@@ -23,38 +23,46 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 // Shift-specific channels
 Broadcast::channel('shift.{shiftId}', function (User $user, $shiftId) {
-    $shift = Shift::find($shiftId);
-    if (! $shift) {
+    try {
+        $shift = Shift::find($shiftId);
+        if (! $shift) {
+            return false;
+        }
+
+        // Business owner, assigned workers, or admin can listen
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($shift->business_id === $user->id) {
+            return ['id' => $user->id, 'name' => $user->name, 'role' => 'business'];
+        }
+
+        if ($shift->assignments()->where('worker_id', $user->id)->exists()) {
+            return ['id' => $user->id, 'name' => $user->name, 'role' => 'worker'];
+        }
+
+        return false;
+    } catch (\Exception $e) {
         return false;
     }
-
-    // Business owner, assigned workers, or admin can listen
-    if ($user->isAdmin()) {
-        return true;
-    }
-
-    if ($shift->business_id === $user->id) {
-        return ['id' => $user->id, 'name' => $user->name, 'role' => 'business'];
-    }
-
-    if ($shift->assignments()->where('worker_id', $user->id)->exists()) {
-        return ['id' => $user->id, 'name' => $user->name, 'role' => 'worker'];
-    }
-
-    return false;
 });
 
 // Conversation/messaging channels
 Broadcast::channel('conversation.{conversationId}', function (User $user, $conversationId) {
-    $conversation = Conversation::find($conversationId);
-    if (! $conversation) {
+    try {
+        $conversation = Conversation::find($conversationId);
+        if (! $conversation) {
+            return false;
+        }
+
+        // Check if user is a participant
+        return $conversation->participants()->where('user_id', $user->id)->exists()
+            ? ['id' => $user->id, 'name' => $user->name]
+            : false;
+    } catch (\Exception $e) {
         return false;
     }
-
-    // Check if user is a participant
-    return $conversation->participants()->where('user_id', $user->id)->exists()
-        ? ['id' => $user->id, 'name' => $user->name]
-        : false;
 });
 
 // Worker availability broadcasts (public channel for businesses)
@@ -65,7 +73,11 @@ Broadcast::channel('availability-broadcasts', function (User $user) {
 
 // Presence channel for online users
 Broadcast::channel('online-users', function (User $user) {
-    return ['id' => $user->id, 'name' => $user->name, 'user_type' => $user->user_type];
+    try {
+        return ['id' => $user->id, 'name' => $user->name, 'user_type' => $user->user_type ?? null];
+    } catch (\Exception $e) {
+        return false;
+    }
 });
 
 // Worker-specific private channel (legacy support)

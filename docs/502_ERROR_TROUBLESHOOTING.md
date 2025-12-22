@@ -73,10 +73,18 @@ php artisan view:cache
 
 ## Code Fixes Applied
 
-### ✅ ViewServiceProvider Fix
+### ✅ ViewServiceProvider Fix (Commit: c58d8ba)
 - Added `Schema::hasTable()` check before querying `admin_settings`
 - Prevents database query errors during bootstrap
 - File: `app/Providers/ViewServiceProvider.php`
+
+### ✅ Enhanced Database Connection Error Handling (Commit: 9b763da)
+- Added database connection check before `Schema::hasTable()` calls
+- Catches `PDOException` and `QueryException` specifically
+- Prevents 502 errors when database connection fails
+- Applied to both `AppServiceProvider` and `ViewServiceProvider`
+- Ensures graceful fallback when database is unavailable
+- Files: `app/Providers/AppServiceProvider.php`, `app/Providers/ViewServiceProvider.php`
 
 ## Next Steps
 

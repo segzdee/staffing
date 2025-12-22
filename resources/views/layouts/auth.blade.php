@@ -22,28 +22,12 @@
     <!-- Vite Assets -->
     @php
         $manifestExists = file_exists(public_path('build/manifest.json'));
-        $assetsBuilt = $manifestExists && file_exists(public_path('build/assets'));
+        $assetsBuilt = $manifestExists && is_dir(public_path('build/assets'));
     @endphp
     @if($assetsBuilt)
-        @try
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
-        @catch(\Exception $e)
-            <!-- Fallback if Vite fails -->
-            <script src="https://cdn.tailwindcss.com"></script>
-            <script nonce="{{ $cspNonce ?? '' }}">
-                tailwind.config = {
-                    theme: {
-                        extend: {
-                            fontFamily: {
-                                sans: ['Inter', 'system-ui', 'sans-serif'],
-                            },
-                        },
-                    },
-                }
-            </script>
-        @endtry
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
-        <!-- Fallback to Tailwind CDN -->
+        <!-- Fallback to Tailwind CDN when assets not built -->
         <script src="https://cdn.tailwindcss.com"></script>
         <script nonce="{{ $cspNonce ?? '' }}">
             tailwind.config = {

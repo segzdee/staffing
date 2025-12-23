@@ -66,7 +66,7 @@ return [
                 ? array_filter([
                     // PHP 8.4+ uses Pdo\Mysql::ATTR_SSL_CA, older versions use PDO::MYSQL_ATTR_SSL_CA
                     (PHP_VERSION_ID >= 80400 && class_exists('Pdo\Mysql')
-                        ? \Pdo\Mysql::ATTR_SSL_CA 
+                        ? \Pdo\Mysql::ATTR_SSL_CA
                         : PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
                 ])
                 : [],
@@ -137,18 +137,24 @@ return [
 
         'default' => [
             'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'scheme' => (str_starts_with(env('REDIS_HOST', ''), 'tls://') || str_starts_with(env('REDIS_HOST', ''), 'rediss://')) ? 'tls' : 'tcp',
+            'host' => str_replace(['tls://', 'rediss://'], '', env('REDIS_HOST', '127.0.0.1')),
+            'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', '6379'),
             'database' => env('REDIS_DB', '0'),
+            'read_timeout' => env('REDIS_READ_TIMEOUT', 60),
         ],
 
         'cache' => [
             'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'scheme' => (str_starts_with(env('REDIS_HOST', ''), 'tls://') || str_starts_with(env('REDIS_HOST', ''), 'rediss://')) ? 'tls' : 'tcp',
+            'host' => str_replace(['tls://', 'rediss://'], '', env('REDIS_HOST', '127.0.0.1')),
+            'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', '6379'),
-            'database' => env('REDIS_CACHE_DB', '1'),
+            'database' => env('REDIS_CACHE_DB', '0'),
+            'read_timeout' => env('REDIS_READ_TIMEOUT', 60),
         ],
 
     ],

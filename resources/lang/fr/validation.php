@@ -13,7 +13,7 @@ return [
     |
     */
 
-        'accepted'             => 'Le champ :attribute doit être accepté.',
+    'accepted'             => 'Le champ :attribute doit être accepté.',
     'active_url'           => 'Le champ :attribute n\'est pas une URL valide.',
     'after'                => 'Le champ :attribute doit être une date après :date.',
     'after_or_equal'       => 'Le champ :attribute doit être une date postérieure ou égale à :date.',
@@ -30,7 +30,6 @@ return [
         'string'  => 'Le champ :attribute doit être entre :min et :max caractères.',
         'array'   => 'Le champ :attribute doit être entre :min et :max éléments.',
     ],
-    
     'boolean'              => 'Le champ :attribute doit être vrai ou faux.',
     'confirmed'            => 'Le champ :attribute de la confirmation ne correspond pas.',
     'date'                 => 'Le champ :attribute de la date n\'est pas valide.',

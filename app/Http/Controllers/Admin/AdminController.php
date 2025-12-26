@@ -1618,31 +1618,31 @@ class AdminController extends Controller
 
         $request->validate([
             'APP_URL' => 'required|url',
-            'AWS_ACCESS_KEY_ID' => 'required_if:FILESYSTEM_DRIVER,==,s3',
-            'AWS_SECRET_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,==,s3',
-            'AWS_DEFAULT_REGION' => 'required_if:FILESYSTEM_DRIVER,==,s3',
-            'AWS_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,s3',
+            'AWS_ACCESS_KEY_ID' => 'required_if:FILESYSTEM_DRIVER,s3',
+            'AWS_SECRET_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,s3',
+            'AWS_DEFAULT_REGION' => 'required_if:FILESYSTEM_DRIVER,s3',
+            'AWS_BUCKET' => 'required_if:FILESYSTEM_DRIVER,s3',
 
-            'DOS_ACCESS_KEY_ID' => 'required_if:FILESYSTEM_DRIVER,==,dospace',
-            'DOS_SECRET_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,==,dospace',
-            'DOS_DEFAULT_REGION' => 'required_if:FILESYSTEM_DRIVER,==,dospace',
-            'DOS_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,dospace',
+            'DOS_ACCESS_KEY_ID' => 'required_if:FILESYSTEM_DRIVER,dospace',
+            'DOS_SECRET_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,dospace',
+            'DOS_DEFAULT_REGION' => 'required_if:FILESYSTEM_DRIVER,dospace',
+            'DOS_BUCKET' => 'required_if:FILESYSTEM_DRIVER,dospace',
 
-            'WAS_ACCESS_KEY_ID' => 'required_if:FILESYSTEM_DRIVER,==,wasabi',
-            'WAS_SECRET_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,==,wasabi',
-            'WAS_DEFAULT_REGION' => 'required_if:FILESYSTEM_DRIVER,==,wasabi',
-            'WAS_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,wasabi',
+            'WAS_ACCESS_KEY_ID' => 'required_if:FILESYSTEM_DRIVER,wasabi',
+            'WAS_SECRET_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,wasabi',
+            'WAS_DEFAULT_REGION' => 'required_if:FILESYSTEM_DRIVER,wasabi',
+            'WAS_BUCKET' => 'required_if:FILESYSTEM_DRIVER,wasabi',
 
-            'BACKBLAZE_ACCOUNT_ID' => 'required_if:FILESYSTEM_DRIVER,==,backblaze',
-            'BACKBLAZE_APP_KEY' => 'required_if:FILESYSTEM_DRIVER,==,backblaze',
-            'BACKBLAZE_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,backblaze',
-            'BACKBLAZE_BUCKET_ID' => 'required_if:FILESYSTEM_DRIVER,==,backblaze',
-            'BACKBLAZE_BUCKET_REGION' => 'required_if:FILESYSTEM_DRIVER,==,backblaze',
+            'BACKBLAZE_ACCOUNT_ID' => 'required_if:FILESYSTEM_DRIVER,backblaze',
+            'BACKBLAZE_APP_KEY' => 'required_if:FILESYSTEM_DRIVER,backblaze',
+            'BACKBLAZE_BUCKET' => 'required_if:FILESYSTEM_DRIVER,backblaze',
+            'BACKBLAZE_BUCKET_ID' => 'required_if:FILESYSTEM_DRIVER,backblaze',
+            'BACKBLAZE_BUCKET_REGION' => 'required_if:FILESYSTEM_DRIVER,backblaze',
 
-            'VULTR_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,==,vultr',
-            'VULTR_SECRET_KEY' => 'required_if:FILESYSTEM_DRIVER,==,vultr',
-            'VULTR_REGION' => 'required_if:FILESYSTEM_DRIVER,==,vultr',
-            'VULTR_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,vultr',
+            'VULTR_ACCESS_KEY' => 'required_if:FILESYSTEM_DRIVER,vultr',
+            'VULTR_SECRET_KEY' => 'required_if:FILESYSTEM_DRIVER,vultr',
+            'VULTR_REGION' => 'required_if:FILESYSTEM_DRIVER,vultr',
+            'VULTR_BUCKET' => 'required_if:FILESYSTEM_DRIVER,vultr',
         ], $messages);
 
         // SECURITY: Use whitelist-based environment update service

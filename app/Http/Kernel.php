@@ -83,7 +83,8 @@ class Kernel extends HttpKernel
         'worker.activated' => \App\Http\Middleware\EnsureWorkerActivated::class, // STAFF-REG-011: Worker activation gate
         'business.activated' => \App\Http\Middleware\EnsureBusinessActivated::class, // BIZ-REG-011: Business activation gate
         'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class, // SECURITY: Webhook signature verification
-        'two-factor' => \App\Http\Middleware\EnsureTwoFactorVerified::class, // SECURITY: Two-factor authentication verification
+        'two-factor' => \App\Http\Middleware\EnsureTwoFactorVerified::class, // SECURITY: Two-factor authentication verification (login flow)
+        'require-2fa' => \App\Http\Middleware\RequireTwoFactor::class, // SECURITY: Require 2FA for financial/sensitive operations
         'white-label' => \App\Http\Middleware\WhiteLabelMiddleware::class, // AGY-006: White-label branding detection
     ];
 }

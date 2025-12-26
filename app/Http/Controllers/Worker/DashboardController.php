@@ -11,6 +11,7 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
@@ -1100,7 +1101,7 @@ class DashboardController extends Controller
                     ->with('error', 'Insufficient balance for this withdrawal.');
             }
 
-            // Verify payout method belongs to user
+            // SECURITY: Verify payout method belongs to user using policy
             $payoutMethod = DB::table('payout_methods')
                 ->where('id', $request->payout_method_id)
                 ->where('user_id', $user->id)
@@ -1117,8 +1118,43 @@ class DashboardController extends Controller
                     ]);
                 DB::rollBack();
 
+                // SECURITY: Audit log unauthorized withdrawal attempt
+                app(\App\Services\AuditLogService::class)->logFinancialOperation(
+                    'withdrawal_attempt_unauthorized',
+                    $user->id,
+                    [
+                        'payout_method_id' => $request->payout_method_id,
+                        'reason' => 'Invalid payout method',
+                    ]
+                );
+
                 return redirect()->back()
                     ->with('error', 'Invalid payout method selected.');
+            }
+
+            // SECURITY: Policy check using gate
+            if (! Gate::allows('withdraw', $payoutMethod)) {
+                DB::table('withdrawal_idempotency')
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->update([
+                        'status' => 'failed',
+                        'error_message' => 'Unauthorized payout method',
+                        'updated_at' => Carbon::now(),
+                    ]);
+                DB::rollBack();
+
+                // SECURITY: Audit log unauthorized withdrawal attempt
+                app(\App\Services\AuditLogService::class)->logFinancialOperation(
+                    'withdrawal_attempt_unauthorized',
+                    $user->id,
+                    [
+                        'payout_method_id' => $request->payout_method_id,
+                        'reason' => 'Policy check failed',
+                    ]
+                );
+
+                return redirect()->back()
+                    ->with('error', 'You are not authorized to use this payout method.');
             }
 
             // Calculate fees
@@ -1139,6 +1175,22 @@ class DashboardController extends Controller
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
+
+            // SECURITY: Audit log withdrawal request
+            app(\App\Services\AuditLogService::class)->logFinancialOperation(
+                'withdrawal_requested',
+                $user->id,
+                [
+                    'withdrawal_id' => $withdrawalId,
+                    'amount' => $amount,
+                    'fee' => $fee,
+                    'net_amount' => $netAmount,
+                    'payout_method_id' => $payoutMethod->id,
+                    'payout_method_type' => $payoutMethod->type ?? 'unknown',
+                    'is_instant' => $isInstant,
+                    'idempotency_key' => $idempotencyKey,
+                ]
+            );
 
             // PRIORITY-0: Update idempotency record with withdrawal ID
             DB::table('withdrawal_idempotency')

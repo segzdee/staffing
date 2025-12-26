@@ -369,15 +369,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/analytics/export', [App\Http\Controllers\Admin\DashboardController::class, 'analyticsExport'])->name('analytics.export');
 
         // Finance
-        Route::get('/finance/transactions', [App\Http\Controllers\Admin\DashboardController::class, 'financeTransactions'])->name('finance.transactions');
-        Route::get('/finance/escrow', [App\Http\Controllers\Admin\DashboardController::class, 'financeEscrow'])->name('finance.escrow');
-        Route::post('/finance/escrow/release-all-due', [App\Http\Controllers\Admin\DashboardController::class, 'financeEscrowReleaseAllDue'])->name('finance.escrow.release-all-due');
-        Route::get('/finance/payouts', [App\Http\Controllers\Admin\DashboardController::class, 'financePayouts'])->name('finance.payouts');
-        Route::get('/finance/refunds', [App\Http\Controllers\Admin\DashboardController::class, 'financeRefunds'])->name('finance.refunds');
-        Route::get('/finance/disputed', [App\Http\Controllers\Admin\DashboardController::class, 'financeDisputed'])->name('finance.disputed');
-        Route::get('/finance/commissions', [App\Http\Controllers\Admin\DashboardController::class, 'financeCommissions'])->name('finance.commissions');
-        Route::get('/finance/reports', [App\Http\Controllers\Admin\DashboardController::class, 'financeReports'])->name('finance.reports');
-        Route::get('/finance/reports/generate', [App\Http\Controllers\Admin\DashboardController::class, 'financeReportsGenerate'])->name('finance.reports.generate');
+        // SECURITY: 2FA required for all financial operations
+        Route::middleware('require-2fa')->group(function () {
+            Route::get('/finance/transactions', [App\Http\Controllers\Admin\DashboardController::class, 'financeTransactions'])->name('finance.transactions');
+            Route::get('/finance/escrow', [App\Http\Controllers\Admin\DashboardController::class, 'financeEscrow'])->name('finance.escrow');
+            Route::post('/finance/escrow/release-all-due', [App\Http\Controllers\Admin\DashboardController::class, 'financeEscrowReleaseAllDue'])->name('finance.escrow.release-all-due');
+            Route::get('/finance/payouts', [App\Http\Controllers\Admin\DashboardController::class, 'financePayouts'])->name('finance.payouts');
+            Route::get('/finance/refunds', [App\Http\Controllers\Admin\DashboardController::class, 'financeRefunds'])->name('finance.refunds');
+            Route::get('/finance/disputed', [App\Http\Controllers\Admin\DashboardController::class, 'financeDisputed'])->name('finance.disputed');
+            Route::get('/finance/commissions', [App\Http\Controllers\Admin\DashboardController::class, 'financeCommissions'])->name('finance.commissions');
+            Route::get('/finance/reports', [App\Http\Controllers\Admin\DashboardController::class, 'financeReports'])->name('finance.reports');
+            Route::get('/finance/reports/generate', [App\Http\Controllers\Admin\DashboardController::class, 'financeReportsGenerate'])->name('finance.reports.generate');
+        });
 
         // Moderation
         Route::get('/moderation/reports', [App\Http\Controllers\Admin\DashboardController::class, 'moderationReports'])->name('moderation.reports');
@@ -566,8 +569,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ========================================
         // REFUND MANAGEMENT ROUTES
+        // SECURITY: 2FA required for financial operations
         // ========================================
-        Route::prefix('refunds')->name('refunds.')->group(function () {
+        Route::prefix('refunds')->name('refunds.')->middleware('require-2fa')->group(function () {
             Route::get('/', [App\Http\Controllers\Admin\RefundController::class, 'index'])->name('index');
             Route::get('/create', [App\Http\Controllers\Admin\RefundController::class, 'create'])->name('create');
             Route::post('/', [App\Http\Controllers\Admin\RefundController::class, 'store'])->name('store');
@@ -1176,7 +1180,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/preferences', [App\Http\Controllers\Worker\DashboardController::class, 'updatePreferences'])->name('preferences.update');
         Route::get('/shift-history', [App\Http\Controllers\Worker\DashboardController::class, 'shiftHistory'])->name('shift-history');
         Route::get('/tax-documents', [App\Http\Controllers\Worker\DashboardController::class, 'taxDocuments'])->name('tax-documents');
-        Route::get('/withdraw', [App\Http\Controllers\Worker\DashboardController::class, 'withdraw'])->name('withdraw');
+        // SECURITY: 2FA required for financial operations
+        Route::get('/withdraw', [App\Http\Controllers\Worker\DashboardController::class, 'withdraw'])->middleware('require-2fa')->name('withdraw');
 
         // ========================================
         // FIN-004: INSTAPAY (SAME-DAY PAYOUT) ROUTES
@@ -1283,8 +1288,9 @@ Route::middleware(['auth'])->group(function () {
 
         // ========================================
         // WORKER PAYMENT & WITHDRAWAL ROUTES
+        // SECURITY: 2FA required for financial operations
         // ========================================
-        Route::post('/withdraw', [App\Http\Controllers\Worker\DashboardController::class, 'processWithdrawal'])->name('withdraw.process');
+        Route::post('/withdraw', [App\Http\Controllers\Worker\DashboardController::class, 'processWithdrawal'])->middleware('require-2fa')->name('withdraw.process');
         Route::post('/payment-setup/initiate', [App\Http\Controllers\Worker\PaymentSetupController::class, 'initiateOnboarding'])->name('payment-setup.initiate');
 
         // ========================================

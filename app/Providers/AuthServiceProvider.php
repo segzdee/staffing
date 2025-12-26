@@ -126,6 +126,20 @@ class AuthServiceProvider extends ServiceProvider
     ];
 
     /**
+     * Register gates for withdrawal operations.
+     * SECURITY: Gate-based authorization for financial operations.
+     */
+    protected function registerGates(): void
+    {
+        // Gate for withdrawal operations
+        Gate::define('withdraw', function ($user, $payoutMethod) {
+            $policy = new \App\Policies\WithdrawalPolicy;
+
+            return $policy->withdraw($user, $payoutMethod);
+        });
+    }
+
+    /**
      * Register any authentication / authorization services.
      *
      * @return void
@@ -133,6 +147,7 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+        $this->registerGates();
         $this->registerSessionRotatingGuard();
 
         // Define additional gates for role-based access

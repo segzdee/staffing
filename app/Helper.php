@@ -41,6 +41,14 @@ class Helper
         return $str;
     }
 
+    /**
+     * Process text with hashtags and mentions.
+     * SECURITY: Now uses HTML sanitization service to prevent XSS.
+     *
+     * @param  string  $str  The text to process
+     * @param  string|null  $url  Optional URL to remove
+     * @return string|false Processed HTML or false if empty
+     */
     public static function checkText($str, $url = null)
     {
         if (mb_strlen($str, 'utf8') < 1) {
@@ -49,26 +57,41 @@ class Helper
 
         $str = str_replace($url, '', $str);
         $str = trim($str);
-        $str = nl2br(e($str));
+
+        // SECURITY: Escape first, then process
+        $str = e($str);
+        $str = nl2br($str);
         $str = str_replace('&#039;', "'", $str);
-
         $str = str_replace([chr(10), chr(13)], '', $str);
-        $url = preg_replace('#^https?://#', '', url('').'/');
 
-        // Hashtags and @Mentions
+        $baseUrl = preg_replace('#^https?://#', '', url('').'/');
+
+        // Hashtags and @Mentions - SECURITY: Build safe URLs, then sanitize
         $str = preg_replace_callback(
             '~([#@])([^\s#@!\"\$\%&\'\(\)\*\+\,\-./\:\;\<\=\>?\[/\/\/\\]\^\`\{\|\}\~]+)~',
-            function ($matches) use ($url) {
-                $url = $matches[1] == '#' ? ''.$url.'explore?q=%23'.$matches[2].'' : $url.$matches[2];
+            function ($matches) use ($baseUrl) {
+                // SECURITY: Escape the matched text
+                $matchedText = htmlspecialchars($matches[0], ENT_QUOTES, 'UTF-8');
+                $tag = htmlspecialchars($matches[1], ENT_QUOTES, 'UTF-8');
+                $value = htmlspecialchars($matches[2], ENT_QUOTES, 'UTF-8');
 
-                return '<a href="//'.$url."\">$matches[0]</a>";
+                // Build safe URL
+                $href = $tag == '#'
+                    ? urlencode($baseUrl.'explore?q=%23'.$value)
+                    : urlencode($baseUrl.$value);
+
+                // SECURITY: Use htmlspecialchars for href and add rel="noopener noreferrer"
+                return '<a href="'.htmlspecialchars($href, ENT_QUOTES, 'UTF-8').'" rel="noopener noreferrer">'.$matchedText.'</a>';
             },
             $str
         );
 
         $str = stripslashes($str);
 
-        return $str;
+        // SECURITY: Final sanitization pass using HTML sanitization service
+        $sanitizer = app(\App\Services\HtmlSanitizationService::class);
+
+        return $sanitizer->sanitizeComment($str);
     }
 
     public static function formatNumber($number)
@@ -452,10 +475,34 @@ class Helper
         }
     }
 
-    // ============== linkText
+    /**
+     * Convert URLs in text to links.
+     * SECURITY: Now uses HTML sanitization to prevent XSS.
+     *
+     * @param  string  $text  The text containing URLs
+     * @return string Text with URLs converted to safe links
+     */
     public static function linkText($text)
     {
-        return preg_replace('/https?:\/\/[\w\-\.!~#?&=+%;:\*\'"(),\/]+/u', '<a class="data-link" href="$0" target="_blank">$0</a>', $text);
+        // SECURITY: Escape the text first
+        $text = e($text);
+
+        // Convert URLs to links with proper escaping
+        $text = preg_replace_callback(
+            '/https?:\/\/[\w\-\.!~#?&=+%;:\*\'"(),\/]+/u',
+            function ($matches) {
+                $url = htmlspecialchars($matches[0], ENT_QUOTES, 'UTF-8');
+
+                // SECURITY: Add rel="noopener noreferrer" for target="_blank"
+                return '<a class="data-link" href="'.$url.'" target="_blank" rel="noopener noreferrer">'.$url.'</a>';
+            },
+            $text
+        );
+
+        // SECURITY: Final sanitization pass
+        $sanitizer = app(\App\Services\HtmlSanitizationService::class);
+
+        return $sanitizer->sanitize($text);
     }
 
     public static function strRandom()
@@ -575,8 +622,8 @@ class Helper
      * Get a value directly from the .env file (not from cached config).
      * This is needed when modifying the .env file since env() won't work with cached config.
      *
-     * @param string $key The environment variable key
-     * @param mixed $default Default value if key not found
+     * @param  string  $key  The environment variable key
+     * @param  mixed  $default  Default value if key not found
      * @return mixed
      */
     public static function getEnvValue(string $key, $default = null)
@@ -591,7 +638,7 @@ class Helper
 
         // Match the key with optional quotes around the value
         // Pattern handles: KEY=value, KEY="value", KEY='value', KEY= (empty)
-        if (preg_match('/^' . preg_quote($key, '/') . '=(.*)$/m', $content, $matches)) {
+        if (preg_match('/^'.preg_quote($key, '/').'=(.*)$/m', $content, $matches)) {
             $value = trim($matches[1]);
 
             // Remove surrounding quotes if present
@@ -613,7 +660,7 @@ class Helper
 
         // Read the current value directly from .env file, not from env() which fails when config is cached
         $currentValue = self::getEnvValue($key, '');
-        $env = $comma ? '"' . $currentValue . '"' : $currentValue;
+        $env = $comma ? '"'.$currentValue.'"' : $currentValue;
 
         if (file_exists($path)) {
 

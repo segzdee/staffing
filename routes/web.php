@@ -1678,28 +1678,28 @@ Route::prefix('admin/configuration')->name('admin.configuration.')->middleware([
     Route::post('/clear-cache', [App\Http\Controllers\Admin\ConfigurationController::class, 'clearCache'])->name('clear-cache');
 });
 
-// Stripe subscription webhook (no auth, csrf exempt)
+// Stripe subscription webhook (no auth, csrf exempt, signature verification required)
 Route::post('/webhook/stripe/subscription', [App\Http\Controllers\Webhook\StripeSubscriptionWebhookController::class, 'handle'])
     ->name('webhook.stripe.subscription')
-    ->middleware('web')
+    ->middleware(['web', 'webhook.verify:stripe'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-// PayPal webhook (no auth, csrf exempt)
+// PayPal webhook (no auth, csrf exempt, signature verification required)
 Route::post('/webhooks/paypal', [App\Http\Controllers\Webhooks\PayPalWebhookController::class, 'handle'])
     ->name('webhooks.paypal')
-    ->middleware('web')
+    ->middleware(['web', 'webhook.verify:paypal'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-// Paystack webhook (no auth, csrf exempt)
+// Paystack webhook (no auth, csrf exempt, signature verification required)
 Route::post('/webhooks/paystack', [App\Http\Controllers\Webhooks\PaystackWebhookController::class, 'handle'])
     ->name('webhooks.paystack')
-    ->middleware('web')
+    ->middleware(['web', 'webhook.verify:paystack'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
-// Stripe Connect webhook (no auth, csrf exempt) - for agency payouts
+// Stripe Connect webhook (no auth, csrf exempt, signature verification required) - for agency payouts
 Route::post('/webhooks/stripe/connect', [App\Http\Controllers\Webhooks\StripeConnectWebhookController::class, 'handle'])
     ->name('webhooks.stripe.connect')
-    ->middleware('web')
+    ->middleware(['web', 'webhook.verify:stripe'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 
 // Checkr webhook (no auth, csrf exempt) - for background check status updates

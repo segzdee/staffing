@@ -287,12 +287,21 @@ class User extends Authenticatable implements FilamentUser, HasLocalePreference,
         }
 
         try {
+            // PRIORITY-0 FIX: Group orWhere to fix precedence issue
+            // Query should be: (region AND country) OR (country AND no region)
             return TaxRates::whereStatus('1')
-                ->whereIsoState($this->getRegion())
-                ->whereCountry($this->getCountry())
-                ->orWhere('country', $this->getCountry())
-                ->whereNull('iso_state')
-                ->whereStatus('1')
+                ->where(function ($query) {
+                    $query->where(function ($q) {
+                        // Specific region + country match
+                        $q->whereIsoState($this->getRegion())
+                            ->whereCountry($this->getCountry());
+                    })
+                        ->orWhere(function ($q) {
+                            // Country-level match (no region specified)
+                            $q->where('country', $this->getCountry())
+                                ->whereNull('iso_state');
+                        });
+                })
                 ->get();
         } catch (\Exception $e) {
             return collect(); // Return empty collection on error

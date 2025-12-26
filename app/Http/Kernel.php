@@ -85,6 +85,7 @@ class Kernel extends HttpKernel
         'webhook.verify' => \App\Http\Middleware\VerifyWebhookSignature::class, // SECURITY: Webhook signature verification
         'two-factor' => \App\Http\Middleware\EnsureTwoFactorVerified::class, // SECURITY: Two-factor authentication verification (login flow)
         'require-2fa' => \App\Http\Middleware\RequireTwoFactor::class, // SECURITY: Require 2FA for financial/sensitive operations
+        'manage-settings' => \App\Http\Middleware\ManageSettingsMiddleware::class, // SECURITY: Require manage_settings permission for config changes
         'white-label' => \App\Http\Middleware\WhiteLabelMiddleware::class, // AGY-006: White-label branding detection
     ];
 }

@@ -614,8 +614,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // ========================================
         // SETTINGS ACTION ROUTES
+        // SECURITY: All settings routes require manage_settings permission
         // ========================================
-        Route::prefix('settings')->name('settings.')->group(function () {
+        Route::prefix('settings')->name('settings.')->middleware('manage-settings')->group(function () {
             Route::post('/general', [App\Http\Controllers\Admin\SettingsController::class, 'save'])->name('general.save');
             Route::post('/limits', [App\Http\Controllers\Admin\SettingsController::class, 'saveLimits'])->name('limits.save');
             Route::post('/maintenance', [App\Http\Controllers\Admin\SettingsController::class, 'maintenanceMode'])->name('maintenance');
@@ -1441,7 +1442,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('api/market')->middleware('throttle:60,1')->group(function () {
         Route::get('/', [App\Http\Controllers\LiveMarketController::class, 'index'])->name('api.market.index');
-        Route::get('/simulate', [App\Http\Controllers\LiveMarketController::class, 'simulateActivity'])->name('api.market.simulate');
+        // SECURITY: Simulate endpoint should only be available in non-production environments
+        if (app()->environment(['local', 'staging', 'testing'])) {
+            Route::get('/simulate', [App\Http\Controllers\LiveMarketController::class, 'simulateActivity'])->name('api.market.simulate');
+        }
     });
 });
 
@@ -1670,7 +1674,8 @@ Route::prefix('admin/subscriptions')->name('admin.subscriptions.')->middleware([
 });
 
 // Admin configuration management routes
-Route::prefix('admin/configuration')->name('admin.configuration.')->middleware(['auth', 'role:admin'])->group(function () {
+// SECURITY: All configuration routes require manage_settings permission
+Route::prefix('admin/configuration')->name('admin.configuration.')->middleware(['auth', 'role:admin', 'manage-settings'])->group(function () {
     Route::get('/', [App\Http\Controllers\Admin\ConfigurationController::class, 'index'])->name('index');
     Route::put('/', [App\Http\Controllers\Admin\ConfigurationController::class, 'update'])->name('update');
     Route::get('/history', [App\Http\Controllers\Admin\ConfigurationController::class, 'history'])->name('history');
@@ -1801,6 +1806,45 @@ Route::prefix('worker/paystubs')->name('worker.paystubs.')->middleware(['auth'])
     Route::get('/{payrollRun}', [App\Http\Controllers\Worker\PaystubController::class, 'show'])->name('show');
     Route::get('/{payrollRun}/download', [App\Http\Controllers\Worker\PaystubController::class, 'download'])->name('download');
     Route::get('/{payrollRun}/preview', [App\Http\Controllers\Worker\PaystubController::class, 'preview'])->name('preview');
+});
+
+// ============================================================================
+// LEGACY ADMIN PANEL ROUTES (panel/admin/*)
+// SECURITY: All configuration routes require manage_settings permission
+// These routes are for backward compatibility with views that reference panel/admin/*
+// ============================================================================
+Route::prefix('panel/admin')->name('panel.admin.')->middleware(['auth', 'role:admin', 'manage-settings'])->group(function () {
+    // Storage settings (SettingsController::storage handles both GET and POST)
+    Route::match(['get', 'post'], '/storage', [App\Http\Controllers\Admin\SettingsController::class, 'storage'])->name('storage');
+
+    // Google settings
+    Route::get('/google', [App\Http\Controllers\Admin\SettingsController::class, 'google'])->name('google');
+    Route::post('/google', [App\Http\Controllers\Admin\SettingsController::class, 'updateGoogle'])->name('google.save');
+
+    // Email settings (SettingsController doesn't have a GET method, use AdminController)
+    Route::get('/email', function () {
+        return view('admin.email-settings');
+    })->name('email');
+    Route::post('/email', [App\Http\Controllers\Admin\SettingsController::class, 'emailSettings'])->name('email.save');
+
+    // Social login settings (SettingsController doesn't have a GET method)
+    Route::get('/social', function () {
+        return view('admin.social-login-settings');
+    })->name('social');
+    Route::post('/social', [App\Http\Controllers\Admin\SettingsController::class, 'updateSocialLogin'])->name('social.save');
+
+    // Payment gateway settings (handled by AdminController)
+    Route::get('/payments', [App\Http\Controllers\Admin\AdminController::class, 'payments'])->name('payments');
+    Route::post('/payments', [App\Http\Controllers\Admin\AdminController::class, 'savePayments'])->name('payments.save');
+    Route::get('/payments/{id}', [App\Http\Controllers\Admin\AdminController::class, 'paymentsGateways'])->name('payments.gateway');
+    Route::post('/payments/{id}', [App\Http\Controllers\Admin\AdminController::class, 'savePaymentsGateways'])->name('payments.gateway.save');
+
+    // Theme settings
+    Route::get('/theme', [App\Http\Controllers\Admin\AdminController::class, 'theme'])->name('theme');
+    Route::post('/theme', [App\Http\Controllers\Admin\AdminController::class, 'themeStore'])->name('theme.save');
+
+    // PWA settings (AdminController::pwa handles both GET and POST)
+    Route::match(['get', 'post'], '/pwa', [App\Http\Controllers\Admin\AdminController::class, 'pwa'])->name('pwa');
 });
 
 // ============================================================================

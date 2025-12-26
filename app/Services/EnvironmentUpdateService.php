@@ -117,8 +117,17 @@ class EnvironmentUpdateService
                     continue;
                 }
 
+                // Get old value before updating
+                $oldValue = env($key);
+
                 Helper::envUpdate($key, $value);
                 $updated[] = $key;
+
+                // SECURITY: Log individual config change with AuditLogService
+                if (auth()->check()) {
+                    $auditService = app(\App\Services\AuditLogService::class);
+                    $auditService->logConfigChange($key, $oldValue, $value, auth()->id());
+                }
             } catch (\Exception $e) {
                 $errors[] = [
                     'key' => $key,
@@ -133,9 +142,9 @@ class EnvironmentUpdateService
             }
         }
 
-        // SECURITY: Audit log all environment updates
+        // SECURITY: Summary audit log for batch updates
         if (! empty($updated)) {
-            Log::channel('admin')->warning('Environment variables updated via admin panel', [
+            Log::channel('admin')->info('Environment variables batch updated via admin panel', [
                 'admin_id' => auth()->id(),
                 'updated_keys' => $updated,
                 'rejected_keys' => $rejected,

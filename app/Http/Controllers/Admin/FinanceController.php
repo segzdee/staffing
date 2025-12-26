@@ -313,11 +313,16 @@ class FinanceController extends Controller
         ]);
 
         // SECURITY: Only update secret fields if new value provided (not empty)
-        $secretFields = ['key_secret', 'webhook_secret'];
+        $secretFields = ['key_secret', 'webhook_secret', 'ccbill_salt'];
         foreach ($secretFields as $field) {
             if (isset($input[$field]) && empty($input[$field])) {
                 unset($input[$field]);
             }
+        }
+
+        // Also handle 'key' field for gateways that use it as secret (Mollie)
+        if ($data->name == 'Mollie' && isset($input['key']) && empty($input['key'])) {
+            unset($input['key']);
         }
 
         $data->fill($input)->save();
@@ -333,24 +338,40 @@ class FinanceController extends Controller
 
         // Set Keys on .env file (only if new values provided)
         if ($data->name == 'Stripe') {
-            if (!empty($input['key'])) {
+            if (! empty($input['key'])) {
                 Helper::envUpdate('STRIPE_KEY', $input['key']);
             }
-            if (!empty($input['key_secret'])) {
+            if (! empty($input['key_secret'])) {
                 Helper::envUpdate('STRIPE_SECRET', $input['key_secret']);
             }
-            if (!empty($input['webhook_secret'])) {
+            if (! empty($input['webhook_secret'])) {
                 Helper::envUpdate('STRIPE_WEBHOOK_SECRET', $input['webhook_secret']);
             }
         }
 
         if ($data->name == 'Flutterwave') {
-            if (!empty($input['key'])) {
+            if (! empty($input['key'])) {
                 Helper::envUpdate('FLW_PUBLIC_KEY', $input['key']);
             }
-            if (!empty($input['key_secret'])) {
+            if (! empty($input['key_secret'])) {
                 Helper::envUpdate('FLW_SECRET_KEY', $input['key_secret']);
             }
+        }
+
+        // SECURITY: Audit log for .env updates
+        $envUpdates = [];
+        foreach ($input as $key => $value) {
+            if (! empty($value) && in_array($key, ['key', 'key_secret', 'webhook_secret', 'ccbill_salt'])) {
+                $envUpdates[] = $key;
+            }
+        }
+        if (! empty($envUpdates)) {
+            \Log::channel('admin')->warning('Environment variables updated via admin panel', [
+                'admin_id' => auth()->id(),
+                'gateway' => $data->name,
+                'updated_keys' => $envUpdates,
+                'ip' => $request->ip(),
+            ]);
         }
 
         return back()->withSuccessMessage(__('admin.success_update'));

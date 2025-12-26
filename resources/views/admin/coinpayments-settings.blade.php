@@ -77,7 +77,18 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">IPN Secret Key</label>
                 <div class="col-sm-10">
-                  <input type="password" value="{{ $data->key_secret }}" name="key_secret" class="form-control">
+                  @if($data->key_secret)
+                    <div class="input-group">
+                      <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($data->key_secret) }}" class="form-control" readonly>
+                      <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                        <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                      </span>
+                    </div>
+                    <p class="help-block text-muted">
+                      <small>Current value is masked. Enter a new value below to update.</small>
+                    </p>
+                  @endif
+                  <input type="password" name="key_secret" class="form-control" placeholder="Enter new IPN secret key to update" autocomplete="new-password">
                  <p class="help-block"><em>Account Settings -> Merchant Settings-> IPN</em></p>
                 </div>
               </div>

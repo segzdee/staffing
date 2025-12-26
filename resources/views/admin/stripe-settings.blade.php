@@ -102,7 +102,21 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label">Stripe Webhook Secret</label>
                 <div class="col-sm-10">
-                  <input type="password" value="{{ env_value('STRIPE_WEBHOOK_SECRET', '') }}" name="webhook_secret" class="form-control">
+                  @php
+                    $webhookSecret = $data->webhook_secret ?? env_value('STRIPE_WEBHOOK_SECRET', '');
+                  @endphp
+                  @if($webhookSecret)
+                    <div class="input-group">
+                      <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($webhookSecret) }}" class="form-control" readonly>
+                      <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                        <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                      </span>
+                    </div>
+                    <p class="help-block text-muted">
+                      <small>Current value is masked. Enter a new value below to update.</small>
+                    </p>
+                  @endif
+                  <input type="password" name="webhook_secret" class="form-control" placeholder="Enter new webhook secret to update" autocomplete="new-password">
                  <p class="help-block"><a href="https://dashboard.stripe.com/webhooks" target="_blank" rel="noopener noreferrer">https://dashboard.stripe.com/webhooks</a></p>
                 </div>
               </div>

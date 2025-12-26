@@ -62,12 +62,7 @@ class CriticalRoutesTest extends TestCase
      */
     public function test_worker_dashboard_loads_for_authenticated_worker(): void
     {
-        $user = User::factory()->create();
-        // Create worker profile to make user a worker
-        $user->workerProfile()->create([
-            'user_id' => $user->id,
-            'status' => 'active',
-        ]);
+        $user = User::factory()->create(['user_type' => 'worker']);
         $this->actingAs($user);
 
         $response = $this->get('/worker/dashboard');
@@ -90,12 +85,7 @@ class CriticalRoutesTest extends TestCase
      */
     public function test_business_dashboard_loads_for_authenticated_business(): void
     {
-        $user = User::factory()->create();
-        // Create business profile to make user a business
-        $user->businessProfile()->create([
-            'user_id' => $user->id,
-            'status' => 'active',
-        ]);
+        $user = User::factory()->create(['user_type' => 'business']);
         $this->actingAs($user);
 
         $response = $this->get('/company/dashboard');
@@ -113,8 +103,7 @@ class CriticalRoutesTest extends TestCase
         $response->assertRedirect('/login');
 
         // Authenticated but not admin
-        $user = User::factory()->create();
-        $user->workerProfile()->create(['user_id' => $user->id]);
+        $user = User::factory()->create(['user_type' => 'worker', 'role' => 'user']);
         $this->actingAs($user);
 
         $response = $this->get('/admin/dashboard');
@@ -168,7 +157,7 @@ class CriticalRoutesTest extends TestCase
      */
     public function test_api_dashboard_stats_returns_data(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['user_type' => 'worker']);
         $this->actingAs($user, 'sanctum');
 
         $response = $this->getJson('/api/dashboard/stats');
@@ -219,8 +208,7 @@ class CriticalRoutesTest extends TestCase
      */
     public function test_withdrawal_route_requires_worker_role(): void
     {
-        $user = User::factory()->create();
-        $user->businessProfile()->create(['user_id' => $user->id]);
+        $user = User::factory()->create(['user_type' => 'business']);
         $this->actingAs($user);
 
         $response = $this->get('/worker/withdraw');

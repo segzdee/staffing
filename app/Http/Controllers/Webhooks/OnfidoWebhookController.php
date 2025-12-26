@@ -24,9 +24,6 @@ class OnfidoWebhookController extends Controller
 
     /**
      * Handle Onfido webhook.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handle(Request $request): JsonResponse
     {
@@ -35,12 +32,12 @@ class OnfidoWebhookController extends Controller
 
         // Log incoming webhook
         Log::info('Onfido webhook received', [
-            'has_signature' => !empty($signature),
+            'has_signature' => ! empty($signature),
             'payload_preview' => substr($payload, 0, 200),
         ]);
 
         // Verify signature
-        if (!$this->verificationService->verifyWebhookSignature($payload, $signature)) {
+        if (! $this->verificationService->verifyWebhookSignature($payload, $signature)) {
             Log::warning('Invalid Onfido webhook signature');
 
             return response()->json([
@@ -52,8 +49,9 @@ class OnfidoWebhookController extends Controller
         try {
             $data = json_decode($payload, true);
 
-            if (!$data) {
+            if (! $data) {
                 Log::warning('Invalid JSON payload in Onfido webhook');
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid payload.',
@@ -99,9 +97,6 @@ class OnfidoWebhookController extends Controller
 
     /**
      * Handle check.completed webhook.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handleCheckCompleted(Request $request): JsonResponse
     {
@@ -110,9 +105,6 @@ class OnfidoWebhookController extends Controller
 
     /**
      * Handle report.completed webhook.
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function handleReportCompleted(Request $request): JsonResponse
     {
@@ -121,8 +113,6 @@ class OnfidoWebhookController extends Controller
 
     /**
      * Health check endpoint for webhook verification.
-     *
-     * @return JsonResponse
      */
     public function healthCheck(): JsonResponse
     {

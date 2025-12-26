@@ -61,9 +61,34 @@ class StripeConnectWebhookController extends Controller
             return response('Invalid signature', 400);
         }
 
+        $eventId = $event->id;
+        $eventType = $event->type;
+
+        // PRIORITY-0: Idempotency check
+        $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+        $shouldProcess = $idempotencyService->shouldProcess('stripe', $eventId);
+
+        if (! $shouldProcess['should_process']) {
+            Log::info('Stripe Connect webhook event already processed, skipping', [
+                'event_id' => $eventId,
+                'event_type' => $eventType,
+                'message' => $shouldProcess['message'],
+            ]);
+
+            return response('Event already processed', 200);
+        }
+
+        // Record event for idempotency
+        $webhookEvent = $idempotencyService->recordEvent('stripe', $eventId, $eventType, $payload);
+
+        // Mark as processing
+        if (! $idempotencyService->markProcessing($webhookEvent)) {
+            return response('Event already processing', 200);
+        }
+
         Log::info('Stripe Connect webhook received', [
-            'event_type' => $event->type,
-            'event_id' => $event->id,
+            'event_type' => $eventType,
+            'event_id' => $eventId,
         ]);
 
         // Route to appropriate handler
@@ -71,13 +96,21 @@ class StripeConnectWebhookController extends Controller
 
         if (method_exists($this, $methodName)) {
             try {
-                return $this->$methodName($event);
+                $result = $this->$methodName($event);
+
+                // PRIORITY-0: Mark as processed successfully
+                $idempotencyService->markProcessed($webhookEvent, ['success' => true]);
+
+                return $result;
             } catch (\Exception $e) {
                 Log::error('Stripe Connect webhook handler error', [
                     'event_type' => $event->type,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
+
+                // PRIORITY-0: Mark as failed
+                $idempotencyService->markFailed($webhookEvent, $e->getMessage(), true);
 
                 return response('Webhook handler error', 500);
             }
@@ -87,6 +120,9 @@ class StripeConnectWebhookController extends Controller
         Log::info('Unhandled Stripe Connect webhook event', [
             'event_type' => $event->type,
         ]);
+
+        // PRIORITY-0: Mark as processed (unhandled but acknowledged)
+        $idempotencyService->markProcessed($webhookEvent, ['unhandled' => true]);
 
         return response('Webhook received', 200);
     }

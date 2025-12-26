@@ -1024,6 +1024,29 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
+        // PRIORITY-0: Generate idempotency key from request
+        $idempotencyKey = $request->header('Idempotency-Key') ??
+                         $request->input('idempotency_key') ??
+                         hash('sha256', $user->id.'_'.$request->amount.'_'.$request->payout_method_id.'_'.now()->timestamp);
+
+        // PRIORITY-0: Check for duplicate withdrawal request
+        $existingWithdrawal = DB::table('withdrawal_idempotency')
+            ->where('idempotency_key', $idempotencyKey)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existingWithdrawal) {
+            if ($existingWithdrawal->status === 'completed') {
+                return redirect()->back()
+                    ->with('error', 'This withdrawal request has already been processed.');
+            }
+
+            if ($existingWithdrawal->status === 'processing') {
+                return redirect()->back()
+                    ->with('error', 'This withdrawal request is currently being processed.');
+            }
+        }
+
         $minWithdrawal = config('payment.min_withdrawal', 25);
 
         $request->validate([
@@ -1033,6 +1056,28 @@ class DashboardController extends Controller
         ]);
 
         try {
+            DB::beginTransaction();
+
+            // PRIORITY-0: Record withdrawal request for idempotency
+            if (! $existingWithdrawal) {
+                DB::table('withdrawal_idempotency')->insert([
+                    'user_id' => $user->id,
+                    'idempotency_key' => $idempotencyKey,
+                    'status' => 'processing',
+                    'request_data' => json_encode($request->all()),
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+            } else {
+                // Update existing record to processing
+                DB::table('withdrawal_idempotency')
+                    ->where('id', $existingWithdrawal->id)
+                    ->update([
+                        'status' => 'processing',
+                        'updated_at' => Carbon::now(),
+                    ]);
+            }
+
             // Get available balance
             $availableBalance = DB::table('shift_payments')
                 ->where('worker_id', $user->id)
@@ -1042,6 +1087,15 @@ class DashboardController extends Controller
             $amount = $request->amount;
 
             if ($amount > $availableBalance) {
+                DB::table('withdrawal_idempotency')
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->update([
+                        'status' => 'failed',
+                        'error_message' => 'Insufficient balance',
+                        'updated_at' => Carbon::now(),
+                    ]);
+                DB::rollBack();
+
                 return redirect()->back()
                     ->with('error', 'Insufficient balance for this withdrawal.');
             }
@@ -1054,6 +1108,15 @@ class DashboardController extends Controller
                 ->first();
 
             if (! $payoutMethod) {
+                DB::table('withdrawal_idempotency')
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->update([
+                        'status' => 'failed',
+                        'error_message' => 'Invalid payout method',
+                        'updated_at' => Carbon::now(),
+                    ]);
+                DB::rollBack();
+
                 return redirect()->back()
                     ->with('error', 'Invalid payout method selected.');
             }
@@ -1076,6 +1139,14 @@ class DashboardController extends Controller
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
+
+            // PRIORITY-0: Update idempotency record with withdrawal ID
+            DB::table('withdrawal_idempotency')
+                ->where('idempotency_key', $idempotencyKey)
+                ->update([
+                    'withdrawal_id' => $withdrawalId,
+                    'updated_at' => Carbon::now(),
+                ]);
 
             // Mark payments as withdrawn (up to the withdrawal amount)
             $remainingAmount = $amount * 100;
@@ -1123,6 +1194,18 @@ class DashboardController extends Controller
                 }
             }
 
+            // PRIORITY-0: Mark idempotency as completed
+            DB::table('withdrawal_idempotency')
+                ->where('idempotency_key', $idempotencyKey)
+                ->update([
+                    'status' => 'completed',
+                    'response_data' => json_encode(['withdrawal_id' => $withdrawalId]),
+                    'processed_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ]);
+
+            DB::commit();
+
             // Log the activity
             activity()
                 ->performedOn($user)
@@ -1133,6 +1216,7 @@ class DashboardController extends Controller
                     'net_amount' => $netAmount,
                     'payout_method' => $payoutMethod->type,
                     'instant' => $isInstant,
+                    'idempotency_key' => $idempotencyKey,
                 ])
                 ->log('Withdrawal requested');
 
@@ -1144,9 +1228,25 @@ class DashboardController extends Controller
                 ->with('success', $message);
 
         } catch (\Exception $e) {
+            // PRIORITY-0: Mark idempotency as failed
+            if (isset($idempotencyKey)) {
+                DB::table('withdrawal_idempotency')
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->update([
+                        'status' => 'failed',
+                        'error_message' => $e->getMessage(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+            }
+
+            if (isset($withdrawalId)) {
+                DB::rollBack();
+            }
+
             \Log::error('Worker Withdrawal Error: '.$e->getMessage(), [
                 'user_id' => $user->id,
                 'amount' => $request->amount,
+                'idempotency_key' => $idempotencyKey ?? null,
             ]);
 
             return redirect()->back()

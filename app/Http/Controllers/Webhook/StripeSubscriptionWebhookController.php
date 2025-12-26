@@ -36,7 +36,7 @@ class StripeSubscriptionWebhookController extends Controller
         $signature = $request->header('Stripe-Signature');
         $webhookSecret = config('services.stripe.webhook_secret');
 
-        // Verify webhook signature
+        // PRIORITY-0: Verify webhook signature (middleware should handle this, but double-check)
         if ($webhookSecret) {
             try {
                 $event = Webhook::constructEvent(
@@ -69,10 +69,41 @@ class StripeSubscriptionWebhookController extends Controller
         $eventData = $event instanceof \Stripe\Event ? $event->toArray() : $event;
 
         $eventType = $eventData['type'] ?? null;
+        $eventId = $eventData['id'] ?? null;
+
+        // PRIORITY-0: Idempotency check
+        $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+        $shouldProcess = $idempotencyService->shouldProcess('stripe', $eventId);
+
+        if (! $shouldProcess['should_process']) {
+            Log::info('Stripe webhook event already processed, skipping', [
+                'event_id' => $eventId,
+                'event_type' => $eventType,
+                'message' => $shouldProcess['message'],
+            ]);
+
+            return response()->json([
+                'received' => true,
+                'processed' => false,
+                'message' => 'Event already processed',
+            ]);
+        }
+
+        // Record event for idempotency
+        $webhookEvent = $idempotencyService->recordEvent('stripe', $eventId, $eventType, $eventData);
+
+        // Mark as processing
+        if (! $idempotencyService->markProcessing($webhookEvent)) {
+            return response()->json([
+                'received' => true,
+                'processed' => false,
+                'message' => 'Event already processing',
+            ]);
+        }
 
         Log::info('Stripe subscription webhook received', [
             'type' => $eventType,
-            'id' => $eventData['id'] ?? null,
+            'id' => $eventId,
         ]);
 
         // Only handle subscription-related events
@@ -109,6 +140,9 @@ class StripeSubscriptionWebhookController extends Controller
                     'error' => $result['error'] ?? 'Unknown error',
                 ]);
 
+                // PRIORITY-0: Mark as failed (retryable)
+                $idempotencyService->markFailed($webhookEvent, $result['error'] ?? 'Processing failed', true);
+
                 // Still return 200 to prevent Stripe retries for business logic errors
                 return response()->json([
                     'received' => true,
@@ -116,6 +150,9 @@ class StripeSubscriptionWebhookController extends Controller
                     'message' => $result['error'] ?? 'Processing failed',
                 ]);
             }
+
+            // PRIORITY-0: Mark as processed successfully
+            $idempotencyService->markProcessed($webhookEvent, $result);
 
             return response()->json([
                 'received' => true,
@@ -128,6 +165,9 @@ class StripeSubscriptionWebhookController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
+
+            // PRIORITY-0: Mark as failed
+            $idempotencyService->markFailed($webhookEvent, $e->getMessage(), true);
 
             // Return 500 to trigger Stripe retry for unexpected errors
             return response()->json([

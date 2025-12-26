@@ -69,10 +69,33 @@ class PayPalWebhookController extends Controller
 
         $eventType = $event['event_type'];
         $resource = $event['resource'] ?? [];
+        $eventId = $event['id'] ?? $request->header('PayPal-Transmission-Id');
+
+        // PRIORITY-0: Idempotency check
+        $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+        $shouldProcess = $idempotencyService->shouldProcess('paypal', $eventId);
+
+        if (! $shouldProcess['should_process']) {
+            Log::info('PayPal webhook event already processed, skipping', [
+                'event_id' => $eventId,
+                'event_type' => $eventType,
+                'message' => $shouldProcess['message'],
+            ]);
+
+            return response('Event already processed', 200);
+        }
+
+        // Record event for idempotency
+        $webhookEvent = $idempotencyService->recordEvent('paypal', $eventId, $eventType, $payload);
+
+        // Mark as processing
+        if (! $idempotencyService->markProcessing($webhookEvent)) {
+            return response('Event already processing', 200);
+        }
 
         Log::info('PayPal webhook verified', [
             'event_type' => $eventType,
-            'event_id' => $event['id'] ?? null,
+            'event_id' => $eventId,
         ]);
 
         // Route to appropriate handler
@@ -80,13 +103,21 @@ class PayPalWebhookController extends Controller
 
         if (method_exists($this, $methodName)) {
             try {
-                return $this->$methodName($event, $resource);
+                $result = $this->$methodName($event, $resource);
+
+                // PRIORITY-0: Mark as processed successfully
+                $idempotencyService->markProcessed($webhookEvent, ['success' => true]);
+
+                return $result;
             } catch (\Exception $e) {
                 Log::error('PayPal webhook handler error', [
                     'event_type' => $eventType,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
+
+                // PRIORITY-0: Mark as failed
+                $idempotencyService->markFailed($webhookEvent, $e->getMessage(), true);
 
                 return response('Webhook handler error', 500);
             }
@@ -96,6 +127,9 @@ class PayPalWebhookController extends Controller
         Log::info('Unhandled PayPal webhook event', [
             'event_type' => $eventType,
         ]);
+
+        // PRIORITY-0: Mark as processed (unhandled but acknowledged)
+        $idempotencyService->markProcessed($webhookEvent, ['unhandled' => true]);
 
         return response('Webhook received', 200);
     }

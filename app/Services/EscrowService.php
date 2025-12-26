@@ -2,37 +2,39 @@
 
 namespace App\Services;
 
-use App\Models\ShiftAssignment;
-use App\Models\Shift;
-use App\Models\ShiftPayment;
-use App\Models\User;
-use App\Models\Transaction;
 use App\Models\EscrowRecord;
-use Carbon\Carbon;
+use App\Models\Shift;
+use App\Models\ShiftAssignment;
+use App\Models\ShiftPayment;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Stripe\StripeClient;
 use Stripe\Exception\ApiErrorException;
+use Stripe\StripeClient;
 
 /**
  * Escrow Management Service
- * 
+ *
  * Centralized escrow operations for OvertimeStaff platform
  * Handles all escrow capture, tracking, and release operations
- * 
+ *
  * SL-002: Escrow Management System
  * FIN-002: Escrow Management System
  */
 class EscrowService
 {
     protected $stripe;
+
     protected $masterEscrowAccountId;
 
-    public function __construct()
+    protected PaymentLedgerService $ledgerService;
+
+    public function __construct(PaymentLedgerService $ledgerService)
     {
         $stripeSecret = config('services.stripe.secret');
         $this->stripe = $stripeSecret ? new StripeClient($stripeSecret) : null;
         $this->masterEscrowAccountId = config('services.stripe.escrow_account_id');
+        $this->ledgerService = $ledgerService;
     }
 
     /**
@@ -64,9 +66,9 @@ class EscrowService
                     'assignment_id' => $assignment->id,
                     'worker_id' => $worker->id,
                     'business_id' => $business->id,
-                    'type' => 'shift_escrow'
+                    'type' => 'shift_escrow',
                 ],
-                'description' => "Shift #{$shift->id} - {$worker->name} at {$business->name}"
+                'description' => "Shift #{$shift->id} - {$worker->name} at {$business->name}",
             ]);
 
             // Create shift payment record
@@ -88,7 +90,7 @@ class EscrowService
             ]);
 
             // Create escrow record
-            EscrowRecord::create([
+            $escrowRecord = EscrowRecord::create([
                 'shift_payment_id' => $shiftPayment->id,
                 'business_id' => $business->id,
                 'worker_id' => $worker->id,
@@ -101,9 +103,18 @@ class EscrowService
                 'metadata' => [
                     'shift_id' => $shift->id,
                     'assignment_id' => $assignment->id,
-                    'calculation_breakdown' => $escrowCalculation
-                ]
+                    'calculation_breakdown' => $escrowCalculation,
+                ],
             ]);
+
+            // PRIORITY-0: Record in payment ledger (single source of truth)
+            $this->ledgerService->recordEscrowCapture(
+                $assignment,
+                'stripe',
+                $paymentIntent->id,
+                $escrowCalculation['total_cents'],
+                $shift->currency ?? 'usd'
+            );
 
             DB::commit();
 
@@ -111,7 +122,7 @@ class EscrowService
                 'shift_id' => $shift->id,
                 'worker_id' => $worker->id,
                 'amount' => $escrowCalculation['total_cents'] / 100,
-                'payment_intent_id' => $paymentIntent->id
+                'payment_intent_id' => $paymentIntent->id,
             ]);
 
             return $shiftPayment;
@@ -121,8 +132,9 @@ class EscrowService
             Log::error('Failed to capture escrow', [
                 'shift_id' => $assignment->shift_id,
                 'assignment_id' => $assignment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -133,8 +145,9 @@ class EscrowService
     public function confirmEscrowCapture(ShiftPayment $payment): bool
     {
         try {
-            if (!$payment->payment_intent_id) {
+            if (! $payment->payment_intent_id) {
                 Log::error('No payment intent ID for escrow confirmation', ['payment_id' => $payment->id]);
+
                 return false;
             }
 
@@ -144,8 +157,9 @@ class EscrowService
             if ($confirmedIntent->status !== 'succeeded') {
                 Log::error('Payment intent not succeeded', [
                     'payment_id' => $payment->id,
-                    'intent_status' => $confirmedIntent->status
+                    'intent_status' => $confirmedIntent->status,
                 ]);
+
                 return false;
             }
 
@@ -157,27 +171,27 @@ class EscrowService
                 'source_transaction' => $confirmedIntent->charges->data[0]->id,
                 'metadata' => [
                     'shift_payment_id' => $payment->id,
-                    'type' => 'escrow_transfer'
-                ]
+                    'type' => 'escrow_transfer',
+                ],
             ]);
 
             // Update records
             $payment->update([
                 'status' => 'HELD',
                 'captured_at' => now(),
-                'stripe_transfer_id' => $transfer->id
+                'stripe_transfer_id' => $transfer->id,
             ]);
 
             $payment->escrowRecord->update([
                 'status' => 'HELD',
                 'stripe_transfer_id' => $transfer->id,
-                'captured_at' => now()
+                'captured_at' => now(),
             ]);
 
             Log::info('Escrow funds transferred successfully', [
                 'payment_id' => $payment->id,
                 'transfer_id' => $transfer->id,
-                'amount' => $payment->amount_cents / 100
+                'amount' => $payment->amount_cents / 100,
             ]);
 
             return true;
@@ -185,8 +199,9 @@ class EscrowService
         } catch (ApiErrorException $e) {
             Log::error('Stripe error during escrow confirmation', [
                 'payment_id' => $payment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -215,9 +230,18 @@ class EscrowService
                     'metadata' => [
                         'shift_payment_id' => $payment->id,
                         'type' => 'worker_payout',
-                        'net_hours' => $settlement['net_hours']
-                    ]
+                        'net_hours' => $settlement['net_hours'],
+                    ],
                 ]);
+
+                // PRIORITY-0: Record in payment ledger (single source of truth)
+                $this->ledgerService->recordEscrowRelease(
+                    $payment,
+                    'stripe',
+                    $workerTransfer->id,
+                    $settlement['worker_payout_cents'],
+                    $payment->currency
+                );
 
                 // Create transaction record for worker
                 Transaction::create([
@@ -229,7 +253,7 @@ class EscrowService
                     'description' => "Shift #{$payment->shift_id} earnings",
                     'stripe_transfer_id' => $workerTransfer->id,
                     'shift_id' => $payment->shift_id,
-                    'payment_id' => $payment->id
+                    'payment_id' => $payment->id,
                 ]);
             }
 
@@ -240,9 +264,17 @@ class EscrowService
                     'amount' => $settlement['refund_to_business_cents'],
                     'metadata' => [
                         'shift_payment_id' => $payment->id,
-                        'type' => 'excess_refund'
-                    ]
+                        'type' => 'excess_refund',
+                    ],
                 ]);
+
+                // PRIORITY-0: Record refund in payment ledger
+                $this->ledgerService->recordRefund(
+                    $payment,
+                    'stripe',
+                    $settlement['refund_to_business_cents'],
+                    'Excess refund after shift completion'
+                );
 
                 Transaction::create([
                     'user_id' => $business->id,
@@ -252,7 +284,7 @@ class EscrowService
                     'status' => 'COMPLETED',
                     'description' => "Shift #{$payment->shift_id} excess refund",
                     'stripe_refund_id' => $refund->id,
-                    'shift_id' => $payment->shift_id
+                    'shift_id' => $payment->shift_id,
                 ]);
             }
 
@@ -263,13 +295,13 @@ class EscrowService
                 'final_worker_payout_cents' => $settlement['worker_payout_cents'],
                 'final_platform_fee_cents' => $settlement['platform_fee_cents'],
                 'actual_hours_worked' => $settlement['actual_hours'],
-                'net_hours_worked' => $settlement['net_hours']
+                'net_hours_worked' => $settlement['net_hours'],
             ]);
 
             // Update escrow record
             $payment->escrowRecord->update([
                 'status' => 'RELEASED',
-                'released_at' => now()
+                'released_at' => now(),
             ]);
 
             DB::commit();
@@ -277,7 +309,7 @@ class EscrowService
             Log::info('Escrow released successfully', [
                 'payment_id' => $payment->id,
                 'worker_payout' => $settlement['worker_payout_cents'] / 100,
-                'business_refund' => $settlement['refund_to_business_cents'] / 100
+                'business_refund' => $settlement['refund_to_business_cents'] / 100,
             ]);
 
             return true;
@@ -286,8 +318,9 @@ class EscrowService
             DB::rollBack();
             Log::error('Failed to release escrow', [
                 'payment_id' => $payment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -313,9 +346,17 @@ class EscrowService
                     'metadata' => [
                         'shift_payment_id' => $payment->id,
                         'type' => 'cancellation_refund',
-                        'penalty_cents' => $penaltyCalculation['penalty_cents']
-                    ]
+                        'penalty_cents' => $penaltyCalculation['penalty_cents'],
+                    ],
                 ]);
+
+                // PRIORITY-0: Record refund in payment ledger
+                $this->ledgerService->recordRefund(
+                    $payment,
+                    'stripe',
+                    $refundAmountCents,
+                    'Cancellation refund (penalty: '.($penaltyCalculation['penalty_cents'] / 100).')'
+                );
 
                 // Create refund transaction
                 Transaction::create([
@@ -326,7 +367,7 @@ class EscrowService
                     'status' => 'COMPLETED',
                     'description' => "Shift #{$payment->shift_id} cancellation refund",
                     'stripe_refund_id' => $refund->id,
-                    'shift_id' => $payment->shift_id
+                    'shift_id' => $payment->shift_id,
                 ]);
             }
 
@@ -338,8 +379,8 @@ class EscrowService
                     'destination' => $worker->stripe_account_id,
                     'metadata' => [
                         'shift_payment_id' => $payment->id,
-                        'type' => 'cancellation_compensation'
-                    ]
+                        'type' => 'cancellation_compensation',
+                    ],
                 ]);
 
                 Transaction::create([
@@ -350,7 +391,7 @@ class EscrowService
                     'status' => 'COMPLETED',
                     'description' => "Shift #{$payment->shift_id} cancellation compensation",
                     'stripe_transfer_id' => $workerTransfer->id,
-                    'shift_id' => $payment->shift_id
+                    'shift_id' => $payment->shift_id,
                 ]);
             }
 
@@ -359,19 +400,19 @@ class EscrowService
                 'status' => 'REFUNDED',
                 'refunded_at' => now(),
                 'refund_amount_cents' => $refundAmountCents,
-                'penalty_cents' => $penaltyCalculation['penalty_cents']
+                'penalty_cents' => $penaltyCalculation['penalty_cents'],
             ]);
 
             // Update escrow record
             $payment->escrowRecord->update([
                 'status' => 'REFUNDED',
-                'refunded_at' => now()
+                'refunded_at' => now(),
             ]);
 
             Log::info('Escrow refund processed', [
                 'payment_id' => $payment->id,
                 'refund_amount' => $refundAmountCents / 100,
-                'worker_compensation' => $penaltyCalculation['worker_compensation_cents'] / 100
+                'worker_compensation' => $penaltyCalculation['worker_compensation_cents'] / 100,
             ]);
 
             return true;
@@ -379,8 +420,9 @@ class EscrowService
         } catch (\Exception $e) {
             Log::error('Failed to refund escrow', [
                 'payment_id' => $payment->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -423,7 +465,7 @@ class EscrowService
             'tax_cents' => $taxCents,
             'contingency_buffer_cents' => $contingencyBufferCents,
             'total_cents' => $totalCents,
-            'exchange_rate' => $this->getExchangeRate($shift)
+            'exchange_rate' => $this->getExchangeRate($shift),
         ];
     }
 
@@ -460,7 +502,7 @@ class EscrowService
             'refund_to_business_cents' => $refundToBusinessCents,
             'actual_hours' => $details['verified_hours'],
             'net_hours' => $details['net_hours'] ?? $details['verified_hours'],
-            'overtime_hours' => $details['overtime_hours'] ?? 0
+            'overtime_hours' => $details['overtime_hours'] ?? 0,
         ];
     }
 
@@ -484,7 +526,7 @@ class EscrowService
         try {
             // Get Stripe escrow balance
             $stripeBalance = $this->stripe->balance->retrieve([
-                'stripe_account' => $this->masterEscrowAccountId
+                'stripe_account' => $this->masterEscrowAccountId,
             ]);
 
             // Sum of all held escrow records
@@ -495,7 +537,7 @@ class EscrowService
                 'expected_escrow_cents' => $expectedEscrow,
                 'difference_cents' => ($stripeBalance->available[0]->amount ?? 0) - $expectedEscrow,
                 'reconciled_at' => now(),
-                'status' => 'RECONCILED'
+                'status' => 'RECONCILED',
             ];
 
             if (abs($reconciliation['difference_cents']) > 100) { // More than $1 difference

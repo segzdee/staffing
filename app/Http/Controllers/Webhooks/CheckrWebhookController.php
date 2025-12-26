@@ -31,7 +31,7 @@ class CheckrWebhookController extends Controller
     public function handleWebhook(Request $request): JsonResponse
     {
         // Verify webhook signature
-        if (!$this->verifySignature($request)) {
+        if (! $this->verifySignature($request)) {
             Log::warning('Checkr webhook signature verification failed', [
                 'ip' => $request->ip(),
             ]);
@@ -189,17 +189,19 @@ class CheckrWebhookController extends Controller
         $secret = config('services.checkr.webhook_secret');
 
         // If no secret configured, allow in development
-        if (!$secret) {
+        if (! $secret) {
             if (app()->environment('local', 'development', 'testing')) {
                 Log::warning('Checkr webhook secret not configured, skipping verification in dev mode');
+
                 return true;
             }
+
             return false;
         }
 
         $signature = $request->header('X-Checkr-Signature');
 
-        if (!$signature) {
+        if (! $signature) {
             return false;
         }
 
@@ -241,7 +243,7 @@ class CheckrWebhookController extends Controller
 
         // Verify this is a report-related event
         $type = $payload['type'] ?? '';
-        if (!str_starts_with($type, 'report.')) {
+        if (! str_starts_with($type, 'report.')) {
             return response()->json(['error' => 'Invalid event type'], 400);
         }
 

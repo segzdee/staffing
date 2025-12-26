@@ -71,10 +71,34 @@ class PaystackWebhookController extends Controller
 
         $eventType = $event['event'];
         $data = $event['data'] ?? [];
+        $eventId = $data['id'] ?? $data['reference'] ?? uniqid('paystack_', true);
+
+        // PRIORITY-0: Idempotency check
+        $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+        $shouldProcess = $idempotencyService->shouldProcess('paystack', $eventId);
+
+        if (! $shouldProcess['should_process']) {
+            Log::info('Paystack webhook event already processed, skipping', [
+                'event_id' => $eventId,
+                'event_type' => $eventType,
+                'message' => $shouldProcess['message'],
+            ]);
+
+            return response('Event already processed', 200);
+        }
+
+        // Record event for idempotency
+        $webhookEvent = $idempotencyService->recordEvent('paystack', $eventId, $eventType, $payload);
+
+        // Mark as processing
+        if (! $idempotencyService->markProcessing($webhookEvent)) {
+            return response('Event already processing', 200);
+        }
 
         Log::info('Paystack webhook verified', [
             'event_type' => $eventType,
             'reference' => $data['reference'] ?? null,
+            'event_id' => $eventId,
         ]);
 
         // Route to appropriate handler
@@ -82,13 +106,21 @@ class PaystackWebhookController extends Controller
 
         if (method_exists($this, $methodName)) {
             try {
-                return $this->$methodName($event, $data);
+                $result = $this->$methodName($event, $data);
+
+                // PRIORITY-0: Mark as processed successfully
+                $idempotencyService->markProcessed($webhookEvent, ['success' => true]);
+
+                return $result;
             } catch (\Exception $e) {
                 Log::error('Paystack webhook handler error', [
                     'event_type' => $eventType,
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                 ]);
+
+                // PRIORITY-0: Mark as failed
+                $idempotencyService->markFailed($webhookEvent, $e->getMessage(), true);
 
                 return response('Webhook handler error', 500);
             }
@@ -98,6 +130,9 @@ class PaystackWebhookController extends Controller
         Log::info('Unhandled Paystack webhook event', [
             'event_type' => $eventType,
         ]);
+
+        // PRIORITY-0: Mark as processed (unhandled but acknowledged)
+        $idempotencyService->markProcessed($webhookEvent, ['unhandled' => true]);
 
         return response('Webhook received', 200);
     }

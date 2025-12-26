@@ -61,7 +61,7 @@
 				<div class="mb-4">
 					<h6 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{{ __('general.description') }}</h6>
 					<div class="text-base text-gray-900 dark:text-white prose prose-sm dark:prose-invert max-w-none">
-						{!! Helper::checkText($sale->description_custom_content) !!}
+						{!! app(\App\Services\HtmlSanitizationService::class)->sanitizeRichText(Helper::checkText($sale->description_custom_content) ?: '') !!}
 					</div>
 				</div>
 				@endif

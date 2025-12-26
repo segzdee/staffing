@@ -2,38 +2,32 @@
 
 namespace App\Http\Controllers\Payment;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Controllers\Traits\Functions;
 use App\Models\AdminSettings;
+use App\Models\Deposits;
 use App\Models\Notifications;
+use App\Models\PaymentGateways;
 use App\Models\Plans;
+use App\Models\ShiftPayment;
+use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Http\Controllers\WebhookController;
 use Laravel\Cashier\Subscription;
-use App\Models\PaymentGateways;
-use App\Models\Transactions;
-use App\Models\Deposits;
-use Stripe\PaymentIntent as StripePaymentIntent;
-use App\Models\User;
-use App\Models\ShiftPayment;
-use App\Models\ShiftAssignment;
-use App\Http\Controllers\Traits\Functions;
 
 class StripeWebHookController extends WebhookController
 {
-  use Functions;
+    use Functions;
 
     /**
-     *
      * customer.subscription.deleted
      *
-     * @param array $payload
      * @return Response|\Symfony\Component\HttpFoundation\Response
      */
-    public function handleCustomerSubscriptionDeleted(array $payload) {
+    public function handleCustomerSubscriptionDeleted(array $payload)
+    {
         $user = $this->getUserByStripeId($payload['data']['object']['customer']);
         if ($user) {
             $user->subscriptions->filter(function ($subscription) use ($payload) {
@@ -42,32 +36,32 @@ class StripeWebHookController extends WebhookController
                 $subscription->markAsCancelled();
             });
         }
+
         return new Response('Webhook Handled', 200);
     }
 
     /**
-     *
      * WEBHOOK Insert the information of each payment in the Payments table when successfully generating an invoice in Stripe
      *
-     * @param array $payload
+     * @param  array  $payload
      * @return Response|\Symfony\Component\HttpFoundation\Response
      */
     public function handleInvoicePaymentSucceeded($payload)
     {
         try {
             $settings = AdminSettings::first();
-            $data     = $payload['data'];
-            $object   = $data['object'];
+            $data = $payload['data'];
+            $object = $data['object'];
             $customer = $object['customer'];
-            $amount   = $settings->currency_code == 'JPY' ? $object['subtotal'] : ($object['subtotal'] / 100);
-            $user     = $this->getUserByStripeId($customer);
+            $amount = $settings->currency_code == 'JPY' ? $object['subtotal'] : ($object['subtotal'] / 100);
+            $user = $this->getUserByStripeId($customer);
             $interval = $object['lines']['data'][0]['metadata']['interval'] ?? 'monthly';
-            $taxes    = $object['lines']['data'][0]['metadata']['taxes'] ?? null;
+            $taxes = $object['lines']['data'][0]['metadata']['taxes'] ?? null;
 
             if ($user) {
                 $subscription = Subscription::whereStripeId($object['subscription'])->first();
                 if ($subscription) {
-                    $subscription->stripe_status = "active";
+                    $subscription->stripe_status = 'active';
                     $subscription->interval = $interval;
                     $subscription->save();
 
@@ -82,104 +76,107 @@ class StripeWebHookController extends WebhookController
 
                     // Insert Transaction
                     $this->transaction(
-                          $object['id'],
-                          $subscription->user_id,
-                          $subscription->id,
-                          $user->user()->id,
-                          $amount,
-                          $earnings['user'],
-                          $earnings['admin'],
-                          'Stripe', 'subscription',
-                          $earnings['percentageApplied'],
-                          $taxes ?? null
-                        );
+                        $object['id'],
+                        $subscription->user_id,
+                        $subscription->id,
+                        $user->user()->id,
+                        $amount,
+                        $earnings['user'],
+                        $earnings['admin'],
+                        'Stripe', 'subscription',
+                        $earnings['percentageApplied'],
+                        $taxes ?? null
+                    );
 
                     // Add Earnings to User
                     $user->user()->increment('balance', $earnings['user']);
 
                     // Send Notification to user
                     if ($object['billing_reason'] == 'subscription_cycle') {
-                      // Notify to user - destination, author, type, target
-                  		Notifications::send($user->user()->id, $subscription->user_id, 12, $subscription->user_id);
+                        // Notify to user - destination, author, type, target
+                        Notifications::send($user->user()->id, $subscription->user_id, 12, $subscription->user_id);
                     }
                 }
+
                 return new Response('Webhook Handled: {handleInvoicePaymentSucceeded}', 200);
             }
+
             return new Response('Webhook Handled but user not found: {handleInvoicePaymentSucceeded}', 200);
         } catch (\Exception $exception) {
             Log::debug($exception->getMessage());
+
             return new Response('Webhook Unhandled: {handleInvoicePaymentSucceeded}', $exception->getCode());
         }
     }
 
     /**
-     *
      * checkout.session.completed
      *
-     * @param array $payload
+     * @param  array  $payload
      * @return Response|\Symfony\Component\HttpFoundation\Response
      */
     public function handleCheckoutSessionCompleted($payload)
     {
         try {
             $settings = AdminSettings::first();
-            $data     = $payload['data'];
-            $object   = $data['object'];
-            $user     = $object['metadata']['user'] ?? null;
-            $amount   = $object['metadata']['amount'] ?? null;
-            $taxes    = $object['metadata']['taxes'] ?? null;
-            $type     = $object['metadata']['type'] ?? null;
+            $data = $payload['data'];
+            $object = $data['object'];
+            $user = $object['metadata']['user'] ?? null;
+            $amount = $object['metadata']['amount'] ?? null;
+            $taxes = $object['metadata']['taxes'] ?? null;
+            $type = $object['metadata']['type'] ?? null;
 
             if (! isset($type)) {
-              return new Response('Webhook Handled with error: type transaction not defined', 500);
+                return new Response('Webhook Handled with error: type transaction not defined', 500);
             }
 
             // Add funds (Deposit)
             if (isset($type) && $type == 'deposit') {
-              if ($object['payment_status'] == 'paid' && isset($user)) {
-                $amount_total = $object['amount_total'] / 100;
+                if ($object['payment_status'] == 'paid' && isset($user)) {
+                    $amount_total = $object['amount_total'] / 100;
 
-                if (isset($amount) && $amount_total >= $amount) {
+                    if (isset($amount) && $amount_total >= $amount) {
 
-                  // Check transaction
-      						$verifiedTxnId = Deposits::where('txn_id', $object['payment_intent'])->first();
+                        // Check transaction
+                        $verifiedTxnId = Deposits::where('txn_id', $object['payment_intent'])->first();
 
-                  if (! $verifiedTxnId) {
-                    // Insert Deposit
-                    $this->deposit($user, $object['payment_intent'], $amount, 'Stripe', $taxes);
+                        if (! $verifiedTxnId) {
+                            // Insert Deposit
+                            $this->deposit($user, $object['payment_intent'], $amount, 'Stripe', $taxes);
 
-                    // Add Funds to User
-                    User::find($user)->increment('wallet', $amount);
-                  }
+                            // Add Funds to User
+                            User::find($user)->increment('wallet', $amount);
+                        }
+                    }
                 }
-              }
             }
 
             return new Response('Webhook Handled: {handleInvoicePaymentSucceeded}', 200);
 
         } catch (\Exception $exception) {
             Log::debug($exception->getMessage());
+
             return new Response('Webhook Unhandled: {handleInvoicePaymentSucceeded}', $exception->getCode());
         }
     }
 
     /**
-     *
      * charge.refunded
      *
-     * @param array $payload
+     * @param  array  $payload
      * @return Response|\Symfony\Component\HttpFoundation\Response
      */
     public function handleChargeRefunded($payload)
     {
         try {
-          $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
-          $stripe->subscriptions->cancel($payload['data']['object']['subscription'], []);
+            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+            $stripe->subscriptions->cancel($payload['data']['object']['subscription'], []);
 
-          return new Response('Webhook Handled: {handleChargeRefunded}', 200);
+            return new Response('Webhook Handled: {handleChargeRefunded}', 200);
 
         } catch (\Exception $exception) {
-            Log::debug("Exception Webhook {handleChargeRefunded}: " . $exception->getMessage() . ", Line: " . $exception->getLine() . ', File: ' . $exception->getFile());
+            Log::debug('Exception Webhook {handleChargeRefunded}: '.$exception->getMessage().', Line: '.$exception->getLine().', File: '.$exception->getFile());
+
             return new Response('Webhook Handled with error: {handleChargeRefunded}', 400);
         }
     }
@@ -187,14 +184,13 @@ class StripeWebHookController extends WebhookController
     /**
      * WEBHOOK Manage the SCA by notifying the user by email
      *
-     * @param  array  $payload
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handleInvoicePaymentActionRequired(array $payload)
     {
         $subscription = Subscription::whereStripeId($payload['data']['object']['subscription'])->first();
         if ($subscription) {
-            $subscription->stripe_status = "incomplete";
+            $subscription->stripe_status = 'incomplete';
             $subscription->last_payment = $payload['data']['object']['payment_intent'];
             $subscription->save();
         }
@@ -205,13 +201,14 @@ class StripeWebHookController extends WebhookController
 
         if ($user = $this->getUserByStripeId($payload['data']['object']['customer'])) {
             if (in_array(Notifiable::class, class_uses_recursive($user))) {
-              $payment = new \Laravel\Cashier\Payment(Cashier::stripe()->paymentIntents->retrieve(
-                  $payload['data']['object']['payment_intent']
-              ));
+                $payment = new \Laravel\Cashier\Payment(Cashier::stripe()->paymentIntents->retrieve(
+                    $payload['data']['object']['payment_intent']
+                ));
 
                 $user->notify(new $notification($payment));
             }
         }
+
         return $this->successMethod();
     }
 
@@ -219,40 +216,101 @@ class StripeWebHookController extends WebhookController
      * Handle shift payment - payment_intent.succeeded
      * Webhook when escrow payment is successfully captured
      *
-     * @param  array  $payload
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handlePaymentIntentSucceeded(array $payload)
     {
         try {
             $paymentIntent = $payload['data']['object'];
+            $paymentIntentId = $paymentIntent['id'];
 
-            // Check if this is a shift payment
+            // PRIORITY-0: Idempotency check
+            $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+            $shouldProcess = $idempotencyService->shouldProcess('stripe', $paymentIntentId);
+
+            if (! $shouldProcess['should_process']) {
+                Log::info('payment_intent.succeeded already processed', [
+                    'payment_intent_id' => $paymentIntentId,
+                ]);
+
+                return new Response('Event already processed', 200);
+            }
+
+            // Record event for idempotency
+            $webhookEvent = $idempotencyService->recordEvent('stripe', $paymentIntentId, 'payment_intent.succeeded', $payload);
+            $idempotencyService->markProcessing($webhookEvent);
+
+            // PRIORITY-0 FIX: Check for both 'shift_payment' and 'shift_escrow' metadata types
+            // EscrowService creates payment intents with type='shift_escrow'
             $metadata = $paymentIntent['metadata'] ?? [];
+            $isShiftPayment = isset($metadata['type']) &&
+                              in_array($metadata['type'], ['shift_payment', 'shift_escrow']);
 
-            if (isset($metadata['type']) && $metadata['type'] === 'shift_payment') {
+            if ($isShiftPayment) {
+                // Try to find by shift_payment_id in metadata first
                 $shiftPaymentId = $metadata['shift_payment_id'] ?? null;
 
-                if ($shiftPaymentId) {
+                // If not found, try to find by payment_intent_id
+                if (! $shiftPaymentId) {
+                    $shiftPayment = ShiftPayment::where('payment_intent_id', $paymentIntentId)->first();
+                } else {
                     $shiftPayment = ShiftPayment::find($shiftPaymentId);
+                }
 
-                    if ($shiftPayment && $shiftPayment->status === 'pending_escrow') {
+                if ($shiftPayment) {
+                    // PRIORITY-0: Route to escrow confirmation if status is PENDING_CAPTURE
+                    if ($shiftPayment->status === 'PENDING_CAPTURE') {
+                        $escrowService = app(\App\Services\EscrowService::class);
+                        $confirmed = $escrowService->confirmEscrowCapture($shiftPayment);
+
+                        if ($confirmed) {
+                            Log::info('Escrow confirmed via payment_intent.succeeded webhook', [
+                                'payment_id' => $shiftPayment->id,
+                                'payment_intent_id' => $paymentIntentId,
+                            ]);
+
+                            $idempotencyService->markProcessed($webhookEvent, ['escrow_confirmed' => true]);
+
+                            return new Response('Escrow confirmed', 200);
+                        }
+                    } elseif ($shiftPayment->status === 'pending_escrow') {
+                        // Legacy status handling
                         $shiftPayment->update([
                             'status' => 'in_escrow',
                             'escrow_held_at' => now(),
-                            'stripe_payment_intent' => $paymentIntent['id']
+                            'stripe_payment_intent' => $paymentIntentId,
                         ]);
 
-                        Log::info("Shift payment {$shiftPaymentId} successfully held in escrow");
+                        Log::info("Shift payment {$shiftPayment->id} successfully held in escrow");
+                        $idempotencyService->markProcessed($webhookEvent, ['escrow_held' => true]);
+
+                        return new Response('Escrow held', 200);
                     }
+                } else {
+                    Log::warning('Shift payment not found for payment_intent.succeeded', [
+                        'payment_intent_id' => $paymentIntentId,
+                        'metadata' => $metadata,
+                    ]);
                 }
             }
 
-            return new Response('Webhook Handled: {handlePaymentIntentSucceeded}', 200);
+            // Mark as processed (may not be a shift payment)
+            $idempotencyService->markProcessed($webhookEvent, ['processed' => true, 'is_shift_payment' => $isShiftPayment]);
+
+            return new Response('Webhook Handled', 200);
 
         } catch (\Exception $exception) {
-            Log::error("Webhook error handlePaymentIntentSucceeded: " . $exception->getMessage());
-            return new Response('Webhook Error: {handlePaymentIntentSucceeded}', 500);
+            Log::error('Webhook error handlePaymentIntentSucceeded', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+
+            // PRIORITY-0: Mark as failed
+            if (isset($webhookEvent)) {
+                $idempotencyService->markFailed($webhookEvent, $exception->getMessage(), true);
+            }
+
+            return new Response('Webhook Error', 500);
         }
     }
 
@@ -260,7 +318,6 @@ class StripeWebHookController extends WebhookController
      * Handle shift payment - payment_intent.payment_failed
      * Webhook when business payment fails
      *
-     * @param  array  $payload
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handlePaymentIntentPaymentFailed(array $payload)
@@ -278,7 +335,7 @@ class StripeWebHookController extends WebhookController
                     if ($shiftPayment) {
                         $shiftPayment->update([
                             'status' => 'failed',
-                            'error_message' => $paymentIntent['last_payment_error']['message'] ?? 'Payment failed'
+                            'error_message' => $paymentIntent['last_payment_error']['message'] ?? 'Payment failed',
                         ]);
 
                         // Update assignment status
@@ -286,7 +343,7 @@ class StripeWebHookController extends WebhookController
                             $shiftPayment->assignment->update(['status' => 'payment_failed']);
                         }
 
-                        Log::warning("Shift payment {$shiftPaymentId} failed: " . $paymentIntent['last_payment_error']['message'] ?? '');
+                        Log::warning("Shift payment {$shiftPaymentId} failed: ".$paymentIntent['last_payment_error']['message'] ?? '');
                     }
                 }
             }
@@ -294,7 +351,8 @@ class StripeWebHookController extends WebhookController
             return new Response('Webhook Handled: {handlePaymentIntentPaymentFailed}', 200);
 
         } catch (\Exception $exception) {
-            Log::error("Webhook error handlePaymentIntentPaymentFailed: " . $exception->getMessage());
+            Log::error('Webhook error handlePaymentIntentPaymentFailed: '.$exception->getMessage());
+
             return new Response('Webhook Error: {handlePaymentIntentPaymentFailed}', 500);
         }
     }
@@ -303,7 +361,6 @@ class StripeWebHookController extends WebhookController
      * Handle shift payout - transfer.created
      * Webhook when instant payout is initiated
      *
-     * @param  array  $payload
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handleTransferCreated(array $payload)
@@ -320,7 +377,7 @@ class StripeWebHookController extends WebhookController
 
                     if ($shiftPayment) {
                         $shiftPayment->update([
-                            'stripe_transfer_id' => $transfer['id']
+                            'stripe_transfer_id' => $transfer['id'],
                         ]);
 
                         Log::info("Transfer created for shift payment {$shiftPaymentId}");
@@ -331,7 +388,8 @@ class StripeWebHookController extends WebhookController
             return new Response('Webhook Handled: {handleTransferCreated}', 200);
 
         } catch (\Exception $exception) {
-            Log::error("Webhook error handleTransferCreated: " . $exception->getMessage());
+            Log::error('Webhook error handleTransferCreated: '.$exception->getMessage());
+
             return new Response('Webhook Error: {handleTransferCreated}', 500);
         }
     }
@@ -340,7 +398,6 @@ class StripeWebHookController extends WebhookController
      * Handle shift payout - transfer.paid
      * Webhook when worker receives instant payout
      *
-     * @param  array  $payload
      * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handleTransferPaid(array $payload)
@@ -355,7 +412,7 @@ class StripeWebHookController extends WebhookController
             if ($shiftPayment) {
                 $shiftPayment->update([
                     'status' => 'paid_out',
-                    'payout_completed_at' => now()
+                    'payout_completed_at' => now(),
                 ]);
 
                 // Update assignment payment status
@@ -379,7 +436,8 @@ class StripeWebHookController extends WebhookController
             return new Response('Webhook Handled: {handleTransferPaid}', 200);
 
         } catch (\Exception $exception) {
-            Log::error("Webhook error handleTransferPaid: " . $exception->getMessage());
+            Log::error('Webhook error handleTransferPaid: '.$exception->getMessage());
+
             return new Response('Webhook Error: {handleTransferPaid}', 500);
         }
     }

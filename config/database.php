@@ -2,10 +2,6 @@
 
 use Illuminate\Support\Str;
 
-// dd(phpinfo());
-// dd(ini_get("post_max_size"));
-// dd( env('APP_ENV', 'local'));
-
 return [
 
     /*

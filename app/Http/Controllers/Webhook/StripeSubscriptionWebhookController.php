@@ -107,6 +107,7 @@ class StripeSubscriptionWebhookController extends Controller
         ]);
 
         // Only handle subscription-related events
+        // SECURITY: Removed payment_intent.* events - these are handled by StripeWebHookController for escrow
         $subscriptionEvents = [
             'invoice.paid',
             'invoice.payment_failed',
@@ -119,8 +120,7 @@ class StripeSubscriptionWebhookController extends Controller
             'invoice.created',
             'invoice.finalized',
             'invoice.upcoming',
-            'payment_intent.succeeded',
-            'payment_intent.payment_failed',
+            // NOTE: payment_intent.* events removed - handled by Payment\StripeWebHookController for escrow
         ];
 
         if (! in_array($eventType, $subscriptionEvents)) {

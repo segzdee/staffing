@@ -2,34 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Shift;
 use App\Models\ShiftApplication;
 use App\Models\ShiftAssignment;
-use App\Models\ShiftPayment;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     /**
-     * Main dashboard - routes to appropriate dashboard based on user type
+     * Main dashboard - redirects to role-specific dashboard routes
+     * STANDARDIZATION: All dashboards now use role-specific routes for consistency
      */
     public function index()
     {
         $user = Auth::user();
 
         if ($user->user_type === 'worker') {
-            return $this->workerDashboard();
+            return redirect()->route('worker.dashboard');
         } elseif ($user->user_type === 'business') {
-            return $this->businessDashboard();
+            return redirect()->route('business.dashboard');
         } elseif ($user->user_type === 'agency') {
-            return $this->agencyDashboard();
+            return redirect()->route('agency.dashboard');
         } elseif ($user->user_type === 'admin' || $user->role === 'admin') {
-            return $this->adminDashboard();
+            return redirect()->route('admin.dashboard');
         }
 
         // Default fallback
@@ -111,6 +107,7 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $workers = []; // Placeholder
+
         return view('business.available-workers', compact('workers'));
     }
 
@@ -131,15 +128,13 @@ class DashboardController extends Controller
         return view('agency.dashboard', compact('stats'));
     }
 
-
-
     /**
      * User Profile
      */
     public function profile()
     {
         return view('profile.show', [
-            'user' => Auth::user()
+            'user' => Auth::user(),
         ]);
     }
 
@@ -159,7 +154,4 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact('stats', 'recentUsers'));
     }
-
-
-
 }

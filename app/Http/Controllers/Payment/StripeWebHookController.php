@@ -162,6 +162,7 @@ class StripeWebHookController extends WebhookController
 
     /**
      * charge.refunded
+     * SECURITY: Only cancel subscription if charge belongs to subscription invoice
      *
      * @param  array  $payload
      * @return Response|\Symfony\Component\HttpFoundation\Response
@@ -169,13 +170,48 @@ class StripeWebHookController extends WebhookController
     public function handleChargeRefunded($payload)
     {
         try {
-            $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
-            $stripe->subscriptions->cancel($payload['data']['object']['subscription'], []);
+            $charge = $payload['data']['object'];
+            $subscriptionId = $charge['subscription'] ?? null;
+
+            // SECURITY: Verify charge belongs to a subscription before canceling
+            if (! $subscriptionId) {
+                Log::info('charge.refunded: No subscription ID in payload, skipping cancellation', [
+                    'charge_id' => $charge['id'] ?? null,
+                ]);
+
+                return new Response('Webhook Handled: {handleChargeRefunded} (no subscription)', 200);
+            }
+
+            // SECURITY: Verify the charge is actually from a subscription invoice
+            // A refund doesn't always mean "cancel subscription" (partial refunds, dispute reversals, etc.)
+            $invoiceId = $charge['invoice'] ?? null;
+            if ($invoiceId) {
+                $stripe = new \Stripe\StripeClient(config('services.stripe.secret'));
+                try {
+                    $invoice = $stripe->invoices->retrieve($invoiceId);
+                    // Only cancel if this is a subscription invoice and business logic requires it
+                    if ($invoice->subscription && $invoice->billing_reason === 'subscription_cycle') {
+                        // PRIORITY-0: Add business logic check here - should we cancel on refund?
+                        // For now, log and don't auto-cancel (requires explicit business rule)
+                        Log::warning('charge.refunded: Subscription refund detected but auto-cancel disabled', [
+                            'charge_id' => $charge['id'],
+                            'subscription_id' => $subscriptionId,
+                            'invoice_id' => $invoiceId,
+                        ]);
+                        // $stripe->subscriptions->cancel($subscriptionId, []);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('charge.refunded: Failed to verify invoice', [
+                        'error' => $e->getMessage(),
+                        'invoice_id' => $invoiceId,
+                    ]);
+                }
+            }
 
             return new Response('Webhook Handled: {handleChargeRefunded}', 200);
 
         } catch (\Exception $exception) {
-            Log::debug('Exception Webhook {handleChargeRefunded}: '.$exception->getMessage().', Line: '.$exception->getLine().', File: '.$exception->getFile());
+            Log::error('Exception Webhook {handleChargeRefunded}: '.$exception->getMessage().', Line: '.$exception->getLine().', File: '.$exception->getFile());
 
             return new Response('Webhook Handled with error: {handleChargeRefunded}', 400);
         }
@@ -258,8 +294,9 @@ class StripeWebHookController extends WebhookController
                 }
 
                 if ($shiftPayment) {
-                    // PRIORITY-0: Route to escrow confirmation if status is PENDING_CAPTURE
-                    if ($shiftPayment->status === 'PENDING_CAPTURE') {
+                    // PRIORITY-0: Route to escrow confirmation if status is PENDING
+                    // SECURITY: Use standard EscrowRecord status constants (migrated from PENDING_CAPTURE)
+                    if ($shiftPayment->status === \App\Models\EscrowRecord::STATUS_PENDING || $shiftPayment->status === 'PENDING_CAPTURE') {
                         $escrowService = app(\App\Services\EscrowService::class);
                         $confirmed = $escrowService->confirmEscrowCapture($shiftPayment);
 
@@ -274,14 +311,23 @@ class StripeWebHookController extends WebhookController
                             return new Response('Escrow confirmed', 200);
                         }
                     } elseif ($shiftPayment->status === 'pending_escrow') {
-                        // Legacy status handling
+                        // Legacy status handling - migrate to standard status
+                        // SECURITY: Standardize to EscrowRecord constants
                         $shiftPayment->update([
-                            'status' => 'in_escrow',
+                            'status' => \App\Models\EscrowRecord::STATUS_HELD, // Use standard constant
                             'escrow_held_at' => now(),
                             'stripe_payment_intent' => $paymentIntentId,
                         ]);
 
-                        Log::info("Shift payment {$shiftPayment->id} successfully held in escrow");
+                        // Update escrow record if exists
+                        if ($shiftPayment->escrowRecord) {
+                            $shiftPayment->escrowRecord->update([
+                                'status' => \App\Models\EscrowRecord::STATUS_HELD,
+                                'captured_at' => now(),
+                            ]);
+                        }
+
+                        Log::info("Shift payment {$shiftPayment->id} successfully held in escrow (legacy status migrated)");
                         $idempotencyService->markProcessed($webhookEvent, ['escrow_held' => true]);
 
                         return new Response('Escrow held', 200);
@@ -367,7 +413,24 @@ class StripeWebHookController extends WebhookController
     {
         try {
             $transfer = $payload['data']['object'];
+            $transferId = $transfer['id'];
             $metadata = $transfer['metadata'] ?? [];
+
+            // PRIORITY-0: Idempotency check for transfer events
+            $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+            $shouldProcess = $idempotencyService->shouldProcess('stripe', $transferId);
+
+            if (! $shouldProcess['should_process']) {
+                Log::info('transfer.created already processed', [
+                    'transfer_id' => $transferId,
+                ]);
+
+                return new Response('Event already processed', 200);
+            }
+
+            // Record event for idempotency
+            $webhookEvent = $idempotencyService->recordEvent('stripe', $transferId, 'transfer.created', $payload);
+            $idempotencyService->markProcessing($webhookEvent);
 
             if (isset($metadata['type']) && $metadata['type'] === 'shift_payout') {
                 $shiftPaymentId = $metadata['shift_payment_id'] ?? null;
@@ -377,18 +440,29 @@ class StripeWebHookController extends WebhookController
 
                     if ($shiftPayment) {
                         $shiftPayment->update([
-                            'stripe_transfer_id' => $transfer['id'],
+                            'stripe_transfer_id' => $transferId,
                         ]);
 
                         Log::info("Transfer created for shift payment {$shiftPaymentId}");
+                        $idempotencyService->markProcessed($webhookEvent, ['transfer_created' => true]);
                     }
                 }
+            }
+
+            // Mark as processed even if not a shift payout
+            if (! isset($webhookEvent->status) || $webhookEvent->status === 'processing') {
+                $idempotencyService->markProcessed($webhookEvent, ['processed' => true]);
             }
 
             return new Response('Webhook Handled: {handleTransferCreated}', 200);
 
         } catch (\Exception $exception) {
             Log::error('Webhook error handleTransferCreated: '.$exception->getMessage());
+
+            // Mark as failed if webhook event exists
+            if (isset($webhookEvent)) {
+                $idempotencyService->markFailed($webhookEvent, $exception->getMessage(), true);
+            }
 
             return new Response('Webhook Error: {handleTransferCreated}', 500);
         }
@@ -405,6 +479,23 @@ class StripeWebHookController extends WebhookController
         try {
             $transfer = $payload['data']['object'];
             $transferId = $transfer['id'];
+
+            // PRIORITY-0: Idempotency check for transfer events
+            $idempotencyService = app(\App\Services\WebhookIdempotencyService::class);
+            $eventId = 'transfer.paid.'.$transferId; // Unique event ID for this transfer
+            $shouldProcess = $idempotencyService->shouldProcess('stripe', $eventId);
+
+            if (! $shouldProcess['should_process']) {
+                Log::info('transfer.paid already processed', [
+                    'transfer_id' => $transferId,
+                ]);
+
+                return new Response('Event already processed', 200);
+            }
+
+            // Record event for idempotency
+            $webhookEvent = $idempotencyService->recordEvent('stripe', $eventId, 'transfer.paid', $payload);
+            $idempotencyService->markProcessing($webhookEvent);
 
             // Find shift payment by transfer ID
             $shiftPayment = ShiftPayment::where('stripe_transfer_id', $transferId)->first();
@@ -431,12 +522,21 @@ class StripeWebHookController extends WebhookController
                 }
 
                 Log::info("Worker received payout for shift payment {$shiftPayment->id}");
+                $idempotencyService->markProcessed($webhookEvent, ['payout_completed' => true]);
+            } else {
+                // Mark as processed even if shift payment not found
+                $idempotencyService->markProcessed($webhookEvent, ['processed' => true, 'shift_payment_found' => false]);
             }
 
             return new Response('Webhook Handled: {handleTransferPaid}', 200);
 
         } catch (\Exception $exception) {
             Log::error('Webhook error handleTransferPaid: '.$exception->getMessage());
+
+            // Mark as failed if webhook event exists
+            if (isset($webhookEvent)) {
+                $idempotencyService->markFailed($webhookEvent, $exception->getMessage(), true);
+            }
 
             return new Response('Webhook Error: {handleTransferPaid}', 500);
         }

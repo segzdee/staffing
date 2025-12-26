@@ -30,7 +30,13 @@ class PaymentLedgerService
     public function createEntry(array $data): PaymentLedger
     {
         return DB::transaction(function () use ($data) {
-            // Calculate balance after this entry
+            // SECURITY: Set created_source if not provided (default based on auth context)
+            if (! isset($data['created_source'])) {
+                $data['created_source'] = auth()->check() ? 'user' : 'system';
+            }
+
+            // PERFORMANCE: Optimize balance calculation - use cached balance if available
+            // For now, calculate from ledger (O(n) - will optimize in future migration)
             $balanceAfter = $this->calculateBalanceAfter(
                 $data['user_id'] ?? null,
                 $data['shift_payment_id'] ?? null,
@@ -76,7 +82,8 @@ class PaymentLedgerService
         string $provider,
         string $providerPaymentId,
         int $amount,
-        string $currency = 'USD'
+        string $currency = 'USD',
+        ?string $createdSource = null
     ): PaymentLedger {
         return $this->createEntry([
             'shift_payment_id' => $assignment->shiftPayment?->id,
@@ -89,6 +96,7 @@ class PaymentLedgerService
             'currency' => $currency,
             'description' => "Escrow captured for shift #{$assignment->shift_id}",
             'created_by' => auth()->id(),
+            'created_source' => $createdSource ?? (auth()->check() ? 'user' : 'system'),
         ]);
     }
 
@@ -107,7 +115,8 @@ class PaymentLedgerService
         string $provider,
         string $providerTransferId,
         int $amount,
-        string $currency = 'USD'
+        string $currency = 'USD',
+        ?string $createdSource = null
     ): PaymentLedger {
         return $this->createEntry([
             'shift_payment_id' => $payment->id,
@@ -120,6 +129,7 @@ class PaymentLedgerService
             'currency' => $currency,
             'description' => "Escrow released to worker for shift #{$payment->shiftAssignment->shift_id}",
             'created_by' => auth()->id(),
+            'created_source' => $createdSource ?? (auth()->check() ? 'user' : 'system'),
         ]);
     }
 
@@ -136,7 +146,8 @@ class PaymentLedgerService
         ShiftPayment $payment,
         string $provider,
         int $amount,
-        string $reason = ''
+        string $reason = '',
+        ?string $createdSource = null
     ): PaymentLedger {
         return $this->createEntry([
             'shift_payment_id' => $payment->id,
@@ -149,6 +160,7 @@ class PaymentLedgerService
             'description' => "Refund processed: {$reason}",
             'metadata' => ['reason' => $reason],
             'created_by' => auth()->id(),
+            'created_source' => $createdSource ?? (auth()->check() ? 'user' : 'webhook'),
         ]);
     }
 
@@ -163,7 +175,8 @@ class PaymentLedgerService
     public function recordFee(
         ShiftPayment $payment,
         int $feeAmount,
-        string $feeType = 'platform_fee'
+        string $feeType = 'platform_fee',
+        ?string $createdSource = null
     ): PaymentLedger {
         return $this->createEntry([
             'shift_payment_id' => $payment->id,
@@ -176,6 +189,7 @@ class PaymentLedgerService
             'description' => ucfirst(str_replace('_', ' ', $feeType)).' deducted',
             'metadata' => ['fee_type' => $feeType],
             'created_by' => auth()->id(),
+            'created_source' => $createdSource ?? (auth()->check() ? 'user' : 'system'),
         ]);
     }
 

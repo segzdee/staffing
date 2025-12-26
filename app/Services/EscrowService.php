@@ -43,6 +43,16 @@ class EscrowService
      */
     public function captureEscrow(ShiftAssignment $assignment): ?ShiftPayment
     {
+        // SECURITY: Hard guard - fail fast if Stripe not configured
+        if (! $this->stripe) {
+            Log::error('EscrowService: Stripe client not initialized', [
+                'assignment_id' => $assignment->id,
+                'shift_id' => $assignment->shift_id,
+            ]);
+
+            return null;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -71,7 +81,7 @@ class EscrowService
                 'description' => "Shift #{$shift->id} - {$worker->name} at {$business->name}",
             ]);
 
-            // Create shift payment record
+            // Create shift payment record using standard EscrowRecord constants
             $shiftPayment = ShiftPayment::create([
                 'shift_id' => $shift->id,
                 'assignment_id' => $assignment->id,
@@ -80,7 +90,7 @@ class EscrowService
                 'payment_intent_id' => $paymentIntent->id,
                 'amount_cents' => $escrowCalculation['total_cents'],
                 'currency' => $shift->currency ?? 'usd',
-                'status' => 'PENDING_CAPTURE',
+                'status' => EscrowRecord::STATUS_PENDING, // Use standard constant instead of 'PENDING_CAPTURE'
                 'worker_pay_cents' => $escrowCalculation['worker_pay_cents'],
                 'platform_fee_cents' => $escrowCalculation['platform_fee_cents'],
                 'tax_cents' => $escrowCalculation['tax_cents'],
@@ -89,14 +99,14 @@ class EscrowService
                 'rate_locked_at' => now(),
             ]);
 
-            // Create escrow record
+            // Create escrow record using standard constants
             $escrowRecord = EscrowRecord::create([
                 'shift_payment_id' => $shiftPayment->id,
                 'business_id' => $business->id,
                 'worker_id' => $worker->id,
                 'amount_cents' => $escrowCalculation['total_cents'],
                 'currency' => $shift->currency ?? 'usd',
-                'status' => 'PENDING',
+                'status' => EscrowRecord::STATUS_PENDING,
                 'stripe_transfer_id' => null,
                 'captured_at' => null,
                 'expires_at' => $shift->start_datetime->addHours(48), // 48-hour authorization
@@ -108,12 +118,14 @@ class EscrowService
             ]);
 
             // PRIORITY-0: Record in payment ledger (single source of truth)
+            // SECURITY: Use 'system' source since this is called from service layer (may not have auth context)
             $this->ledgerService->recordEscrowCapture(
                 $assignment,
                 'stripe',
                 $paymentIntent->id,
                 $escrowCalculation['total_cents'],
-                $shift->currency ?? 'usd'
+                $shift->currency ?? 'usd',
+                'system' // Created by system/service, not user action
             );
 
             DB::commit();
@@ -144,6 +156,15 @@ class EscrowService
      */
     public function confirmEscrowCapture(ShiftPayment $payment): bool
     {
+        // SECURITY: Hard guard - fail fast if Stripe not configured
+        if (! $this->stripe) {
+            Log::error('EscrowService: Stripe client not initialized for confirmation', [
+                'payment_id' => $payment->id,
+            ]);
+
+            return false;
+        }
+
         try {
             if (! $payment->payment_intent_id) {
                 Log::error('No payment intent ID for escrow confirmation', ['payment_id' => $payment->id]);
@@ -175,15 +196,15 @@ class EscrowService
                 ],
             ]);
 
-            // Update records
+            // Update records using standard EscrowRecord constants
             $payment->update([
-                'status' => 'HELD',
+                'status' => \App\Models\EscrowRecord::STATUS_HELD,
                 'captured_at' => now(),
                 'stripe_transfer_id' => $transfer->id,
             ]);
 
             $payment->escrowRecord->update([
-                'status' => 'HELD',
+                'status' => \App\Models\EscrowRecord::STATUS_HELD,
                 'stripe_transfer_id' => $transfer->id,
                 'captured_at' => now(),
             ]);
@@ -212,6 +233,15 @@ class EscrowService
      */
     public function releaseEscrow(ShiftPayment $payment, array $settlementDetails): bool
     {
+        // SECURITY: Hard guard - fail fast if Stripe not configured
+        if (! $this->stripe) {
+            Log::error('EscrowService: Stripe client not initialized for release', [
+                'payment_id' => $payment->id,
+            ]);
+
+            return false;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -235,12 +265,14 @@ class EscrowService
                 ]);
 
                 // PRIORITY-0: Record in payment ledger (single source of truth)
+                // SECURITY: Use 'system' source since this is called from service layer
                 $this->ledgerService->recordEscrowRelease(
                     $payment,
                     'stripe',
                     $workerTransfer->id,
                     $settlement['worker_payout_cents'],
-                    $payment->currency
+                    $payment->currency,
+                    'system' // Created by system/service, not user action
                 );
 
                 // Create transaction record for worker
@@ -269,11 +301,13 @@ class EscrowService
                 ]);
 
                 // PRIORITY-0: Record refund in payment ledger
+                // SECURITY: Use 'system' source since this is called from service layer
                 $this->ledgerService->recordRefund(
                     $payment,
                     'stripe',
                     $settlement['refund_to_business_cents'],
-                    'Excess refund after shift completion'
+                    'Excess refund after shift completion',
+                    'system' // Created by system/service, not user action
                 );
 
                 Transaction::create([
@@ -288,9 +322,9 @@ class EscrowService
                 ]);
             }
 
-            // Update payment record
+            // Update payment record using standard EscrowRecord constants
             $payment->update([
-                'status' => 'RELEASED',
+                'status' => \App\Models\EscrowRecord::STATUS_RELEASED,
                 'released_at' => now(),
                 'final_worker_payout_cents' => $settlement['worker_payout_cents'],
                 'final_platform_fee_cents' => $settlement['platform_fee_cents'],
@@ -300,7 +334,7 @@ class EscrowService
 
             // Update escrow record
             $payment->escrowRecord->update([
-                'status' => 'RELEASED',
+                'status' => \App\Models\EscrowRecord::STATUS_RELEASED,
                 'released_at' => now(),
             ]);
 
@@ -331,6 +365,15 @@ class EscrowService
      */
     public function refundEscrow(ShiftPayment $payment, array $penaltyCalculation): bool
     {
+        // SECURITY: Hard guard - fail fast if Stripe not configured
+        if (! $this->stripe) {
+            Log::error('EscrowService: Stripe client not initialized for refund', [
+                'payment_id' => $payment->id,
+            ]);
+
+            return false;
+        }
+
         try {
             $business = $payment->business;
             $worker = $payment->worker;
@@ -351,11 +394,13 @@ class EscrowService
                 ]);
 
                 // PRIORITY-0: Record refund in payment ledger
+                // SECURITY: Use 'system' source since this is called from service layer
                 $this->ledgerService->recordRefund(
                     $payment,
                     'stripe',
                     $refundAmountCents,
-                    'Cancellation refund (penalty: '.($penaltyCalculation['penalty_cents'] / 100).')'
+                    'Cancellation refund (penalty: '.($penaltyCalculation['penalty_cents'] / 100).')',
+                    'system' // Created by system/service, not user action
                 );
 
                 // Create refund transaction
@@ -395,9 +440,9 @@ class EscrowService
                 ]);
             }
 
-            // Update payment status
+            // Update payment status using standard EscrowRecord constants
             $payment->update([
-                'status' => 'REFUNDED',
+                'status' => \App\Models\EscrowRecord::STATUS_REFUNDED,
                 'refunded_at' => now(),
                 'refund_amount_cents' => $refundAmountCents,
                 'penalty_cents' => $penaltyCalculation['penalty_cents'],
@@ -405,7 +450,7 @@ class EscrowService
 
             // Update escrow record
             $payment->escrowRecord->update([
-                'status' => 'REFUNDED',
+                'status' => \App\Models\EscrowRecord::STATUS_REFUNDED,
                 'refunded_at' => now(),
             ]);
 
@@ -521,6 +566,17 @@ class EscrowService
      */
     public function reconcileEscrowBalances(): array
     {
+        // SECURITY: Hard guard - fail fast if Stripe not configured
+        if (! $this->stripe) {
+            Log::error('EscrowService: Stripe client not initialized for reconciliation');
+
+            return [
+                'status' => 'FAILED',
+                'error' => 'Stripe client not configured',
+                'reconciled_at' => now(),
+            ];
+        }
+
         $reconciliation = [];
 
         try {
@@ -530,7 +586,7 @@ class EscrowService
             ]);
 
             // Sum of all held escrow records
-            $expectedEscrow = EscrowRecord::where('status', 'HELD')->sum('amount_cents');
+            $expectedEscrow = EscrowRecord::where('status', EscrowRecord::STATUS_HELD)->sum('amount_cents');
 
             $reconciliation = [
                 'stripe_balance_cents' => $stripeBalance->available[0]->amount ?? 0,

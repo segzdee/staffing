@@ -11,7 +11,6 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
@@ -546,7 +545,7 @@ class DashboardController extends Controller
         $periodEarnings = (clone $earningsQuery)->sum('sp.amount_net') / 100; // Convert cents to dollars
         $pendingPayment = DB::table('shift_payments')
             ->where('worker_id', $user->id)
-            ->whereIn('status', ['in_escrow', 'released'])
+            ->whereIn('status', [\App\Models\EscrowRecord::STATUS_HELD, 'released'])
             ->sum('amount_net') / 100;
 
         $hoursWorked = ShiftAssignment::where('worker_id', $user->id)
@@ -954,7 +953,7 @@ class DashboardController extends Controller
         // Get pending balance (in escrow)
         $pendingBalance = DB::table('shift_payments')
             ->where('worker_id', $user->id)
-            ->where('status', 'in_escrow')
+            ->where('status', \App\Models\EscrowRecord::STATUS_HELD)
             ->sum('amount_net') / 100;
 
         // Get processing balance (withdrawal requested but not completed)
@@ -1132,30 +1131,9 @@ class DashboardController extends Controller
                     ->with('error', 'Invalid payout method selected.');
             }
 
-            // SECURITY: Policy check using gate
-            if (! Gate::allows('withdraw', $payoutMethod)) {
-                DB::table('withdrawal_idempotency')
-                    ->where('idempotency_key', $idempotencyKey)
-                    ->update([
-                        'status' => 'failed',
-                        'error_message' => 'Unauthorized payout method',
-                        'updated_at' => Carbon::now(),
-                    ]);
-                DB::rollBack();
-
-                // SECURITY: Audit log unauthorized withdrawal attempt
-                app(\App\Services\AuditLogService::class)->logFinancialOperation(
-                    'withdrawal_attempt_unauthorized',
-                    $user->id,
-                    [
-                        'payout_method_id' => $request->payout_method_id,
-                        'reason' => 'Policy check failed',
-                    ]
-                );
-
-                return redirect()->back()
-                    ->with('error', 'You are not authorized to use this payout method.');
-            }
+            // SECURITY: Explicit policy authorization check
+            // This will throw AuthorizationException if unauthorized (handled by exception handler)
+            $this->authorize('withdraw', $payoutMethod);
 
             // Calculate fees
             $isInstant = $request->boolean('instant') && $user->is_verified_worker;

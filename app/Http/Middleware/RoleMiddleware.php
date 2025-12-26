@@ -16,20 +16,18 @@ class RoleMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
-     * @param string $requiredRole
+     * @param  string  $requiredRole
      * @return mixed
      */
     public function handle(Request $request, Closure $next, $requiredRole = null)
     {
         // If no specific role required, just check authentication
-        if (!$requiredRole) {
+        if (! $requiredRole) {
             return $next($request);
         }
 
         // Check if user is authenticated
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect()->route('login');
         }
 
@@ -38,9 +36,9 @@ class RoleMiddleware
         // Check if user has the required role
         if ($user->user_type !== $requiredRole) {
 
-            // Debugging for test
+            // Logging for test environment (removed dump() for production safety)
             if (app()->environment('testing')) {
-                dump("Role Middleware Failed: UserType: {$user->user_type}, Required: {$requiredRole}");
+                \Log::debug("Role Middleware Failed: UserType: {$user->user_type}, Required: {$requiredRole}");
             }
 
             // Redirect to access denied page

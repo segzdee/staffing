@@ -52,6 +52,7 @@ class PaymentLedger extends Model
         'reference',
         'description',
         'created_by',
+        'created_source', // user, webhook, cron, system
         'webhook_event_id',
     ];
 

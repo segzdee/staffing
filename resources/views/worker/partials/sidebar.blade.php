@@ -9,9 +9,9 @@
     <span class="truncate">Dashboard</span>
 </a>
 
-<a href="{{ route('worker.market') }}"
+<a href="{{ route('api.market.index') }}"
     @click="if(window.innerWidth < 1024) closeSidebar()"
-    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('worker.market') ? 'active' : '' }}">
+    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('api.market*') ? 'active' : '' }}">
     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
     </svg>
@@ -54,9 +54,9 @@
     <span class="truncate">Calendar</span>
 </a>
 
-<a href="{{ route('worker.recommended') }}"
+<a href="{{ route('shifts.index') }}?recommended=1"
     @click="if(window.innerWidth < 1024) closeSidebar()"
-    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('worker.recommended') ? 'active' : '' }}">
+    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('shifts.index') && request()->get('recommended') ? 'active' : '' }}">
     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
     </svg>

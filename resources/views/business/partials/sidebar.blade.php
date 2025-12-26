@@ -27,9 +27,9 @@
     <span class="truncate">Post New Shift</span>
 </a>
 
-<a href="{{ route('business.templates.index') }}"
+<a href="{{ route('dashboard.company.templates') }}"
     @click="if(window.innerWidth < 1024) closeSidebar()"
-    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('business.templates*') ? 'active' : '' }}">
+    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('dashboard.company.templates') ? 'active' : '' }}">
     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
     </svg>
@@ -56,9 +56,9 @@
 
 <div class="my-2 border-t border-border"></div>
 
-<a href="{{ route('business.analytics') }}"
+<a href="{{ route('dashboard.company.analytics') }}"
     @click="if(window.innerWidth < 1024) closeSidebar()"
-    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('business.analytics') ? 'active' : '' }}">
+    class="sidebar-link flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors {{ request()->routeIs('dashboard.company.analytics') ? 'active' : '' }}">
     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
     </svg>

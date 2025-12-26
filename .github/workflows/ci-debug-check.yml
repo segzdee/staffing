@@ -1,0 +1,23 @@
+name: Check for Debug Statements
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  check-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Check for debug statements
+        run: |
+          if grep -r "dd(" app/ --exclude-dir=vendor || \
+             grep -r "dump(" app/ --exclude-dir=vendor || \
+             grep -r "die(" app/ --exclude-dir=vendor; then
+            echo "❌ Debug statements found in app/ directory"
+            echo "Please remove all dd(), dump(), and die() calls from production code"
+            exit 1
+          fi
+          echo "✅ No debug statements found"

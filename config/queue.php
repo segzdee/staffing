@@ -14,7 +14,8 @@ return [
     */
 
     // SECURITY: Default to database in production, sync only for local development
-    'default' => env('QUEUE_CONNECTION', app()->environment('production') ? 'database' : 'sync'),
+    // Note: Using env('APP_ENV') instead of app()->environment() to avoid bootstrap issues
+    'default' => env('QUEUE_CONNECTION', env('APP_ENV') === 'production' ? 'database' : 'sync'),
 
     /*
     |--------------------------------------------------------------------------

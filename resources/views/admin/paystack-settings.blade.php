@@ -77,7 +77,7 @@
                 <label class="col-sm-2 control-label">Paystack Publishable Key</label>
                 <div class="col-sm-10">
                   <input type="text" value="{{ $data->key }}" name="key" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.paystack.com/#/settings/developer" target="_blank">https://dashboard.paystack.com/#/settings/developer</a></p>
+                 <p class="help-block"><a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">https://dashboard.paystack.com/#/settings/developer</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->
@@ -88,7 +88,7 @@
                 <label class="col-sm-2 control-label">Paystack Secret Key</label>
                 <div class="col-sm-10">
                   <input type="password" value="{{ $data->key_secret }}" name="key_secret" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.paystack.com/#/settings/developer" target="_blank">https://dashboard.paystack.com/#/settings/developer</a></p>
+                 <p class="help-block"><a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer">https://dashboard.paystack.com/#/settings/developer</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->

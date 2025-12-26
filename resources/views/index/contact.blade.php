@@ -100,7 +100,7 @@
               </form>
               @if ($settings->captcha_contact == 'on')
                 <small class="btn-block text-center">{{trans('auth.protected_recaptcha')}}
-                  <a href="https://policies.google.com/privacy" target="_blank">{{trans('general.privacy')}}</a> - <a href="https://policies.google.com/terms" target="_blank">{{trans('general.terms')}}</a>
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">{{trans('general.privacy')}}</a> - <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">{{trans('general.terms')}}</a>
                 </small>
               @endif
             </div>

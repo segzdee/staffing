@@ -70,7 +70,7 @@
                 <label class="col-sm-2 control-label">Stripe Publishable Key</label>
                 <div class="col-sm-10">
                   <input type="text" value="{{ $data->key }}" name="key" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.stripe.com/account/apikeys" target="_blank">https://dashboard.stripe.com/account/apikeys</a></p>
+                 <p class="help-block"><a href="https://dashboard.stripe.com/account/apikeys" target="_blank" rel="noopener noreferrer">https://dashboard.stripe.com/account/apikeys</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->
@@ -81,7 +81,7 @@
                 <label class="col-sm-2 control-label">Stripe Secret Key</label>
                 <div class="col-sm-10">
                   <input type="password" value="{{ $data->key_secret }}" name="key_secret" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.stripe.com/account/apikeys" target="_blank">https://dashboard.stripe.com/account/apikeys</a></p>
+                 <p class="help-block"><a href="https://dashboard.stripe.com/account/apikeys" target="_blank" rel="noopener noreferrer">https://dashboard.stripe.com/account/apikeys</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->
@@ -92,7 +92,7 @@
                 <label class="col-sm-2 control-label">Stripe Webhook Secret</label>
                 <div class="col-sm-10">
                   <input type="password" value="{{ env_value('STRIPE_WEBHOOK_SECRET', '') }}" name="webhook_secret" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.stripe.com/webhooks" target="_blank">https://dashboard.stripe.com/webhooks</a></p>
+                 <p class="help-block"><a href="https://dashboard.stripe.com/webhooks" target="_blank" rel="noopener noreferrer">https://dashboard.stripe.com/webhooks</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->

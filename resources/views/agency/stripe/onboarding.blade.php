@@ -186,7 +186,7 @@
         {{-- Footer --}}
         <div class="p-4 bg-gray-50 border-t border-gray-200">
             <p class="text-xs text-gray-500 text-center">
-                Powered by <a href="https://stripe.com" target="_blank" class="text-indigo-600 hover:underline">Stripe</a>.
+                Powered by <a href="https://stripe.com" target="_blank" class="text-indigo-600 hover:underline" rel="noopener noreferrer">Stripe</a>.
                 Your bank information is securely stored by Stripe and never shared with OvertimeStaff.
             </p>
         </div>

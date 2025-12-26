@@ -21,7 +21,7 @@
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-shrink-0">
                 @if($profile['enabled'])
-                    <a href="{{ route('profile.public', $profile['slug']) }}" target="_blank" class="flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors min-h-[44px]">
+                    <a href="{{ route('profile.public', $profile['slug']) }}" target="_blank" class="flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 rounded-lg transition-colors min-h-[44px]" rel="noopener noreferrer">
                         View Live Profile
                     </a>
                 @endif

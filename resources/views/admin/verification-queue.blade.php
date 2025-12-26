@@ -319,7 +319,7 @@
                                                     <ul class="list-group">
                                                         @foreach($verification->documents as $doc)
                                                             <li class="list-group-item">
-                                                                <a href="{{ $doc['url'] ?? '#' }}" target="_blank">
+                                                                <a href="{{ $doc['url'] ?? '#' }}" target="_blank" rel="noopener noreferrer">
                                                                     <i class="fa fa-file-{{ $doc['type'] ?? 'alt' }}"></i>
                                                                     {{ $doc['name'] ?? 'Document' }}
                                                                 </a>

@@ -21,7 +21,7 @@
                     <!-- Logo -->
                     <tr>
                         <td style="padding: 25px 0; text-align: center;">
-                            <a style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #2F3133; text-decoration: none; text-shadow: 0 1px 0 white;" href="{{url('/')}}" target="_blank">
+                            <a style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #2F3133; text-decoration: none; text-shadow: 0 1px 0 white;" href="{{url('/')}}" target="_blank" rel="noopener noreferrer">
                                 {{$title_site}}
                             </a>
                         </td>
@@ -48,7 +48,7 @@
                           background-color: #3869D4; border-radius: 3px; color: #ffffff; font-size: 15px; line-height: 25px;
                           text-align: center; text-decoration: none; -webkit-text-size-adjust: none; background-color: #3869D4;"
                                 class="button"
-                                target="_blank">
+                                target="_blank" rel="noopener noreferrer">
                                 {{trans('emails.go_subscribers')}}
                             </a>
 

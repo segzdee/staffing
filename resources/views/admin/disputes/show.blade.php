@@ -119,7 +119,7 @@
                         <h4>Initial Evidence</h4>
                         <ul class="list-unstyled">
                             @foreach($dispute->evidence_urls as $url)
-                            <li><a href="{{ $url }}" target="_blank"><i class="fa fa-file"></i> View Evidence</a></li>
+                            <li><a href="{{ $url }}" target="_blank" rel="noopener noreferrer"><i class="fa fa-file"></i> View Evidence</a></li>
                             @endforeach
                         </ul>
                         @endif
@@ -372,7 +372,7 @@
                                         <ul class="list-unstyled" style="margin-top: 5px;">
                                             @foreach($message->attachments as $attachment)
                                             <li>
-                                                <a href="{{ $attachment['url'] ?? '#' }}" target="_blank">
+                                                <a href="{{ $attachment['url'] ?? '#' }}" target="_blank" rel="noopener noreferrer">
                                                     <i class="fa fa-file-o"></i> {{ $attachment['name'] ?? 'File' }}
                                                 </a>
                                                 <small class="text-muted">({{ number_format(($attachment['size'] ?? 0) / 1024, 1) }}KB)</small>

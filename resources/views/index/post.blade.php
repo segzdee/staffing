@@ -42,11 +42,11 @@
 
                   <div class="mt-4 justify-content-middle">
                     <hr>
-                    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u={{url()->current()}}" class="mr-2">
+                    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u={{url()- rel="noopener noreferrer">current()}}" class="mr-2">
                       <i class="fab fa-facebook mr-1"></i> {{trans('general.share')}}
                     </a>
 
-                    <a target="_blank" href="https://twitter.com/intent/tweet?url={{url()->current()}}&text={{ $response->title }}">
+                    <a target="_blank" href="https://twitter.com/intent/tweet?url={{url()- rel="noopener noreferrer">current()}}&text={{ $response->title }}">
                       <i class="fab fa-twitter mr-1"></i> Tweet
                     </a>
                   </div>

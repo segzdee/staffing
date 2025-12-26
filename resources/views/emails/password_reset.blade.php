@@ -25,7 +25,7 @@
                     <!-- Logo -->
                     <tr>
                         <td style="padding: 25px 0; text-align: center;">
-                            <a style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #2F3133; text-decoration: none; text-shadow: 0 1px 0 white;" href="http://localhost/gostock" target="_blank">
+                            <a style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #2F3133; text-decoration: none; text-shadow: 0 1px 0 white;" href="http://localhost/gostock" target="_blank" rel="noopener noreferrer">
                               {{$settings->title}}
                             </a>
                         </td>
@@ -57,7 +57,7 @@
                  background-color: #3869D4; border-radius: 3px; color: #ffffff; font-size: 15px; line-height: 25px;
                  text-align: center; text-decoration: none; -webkit-text-size-adjust: none; background-color: #3869D4;"
                                                             class="button"
-                                                            target="_blank">
+                                                            target="_blank" rel="noopener noreferrer">
                                                             {{trans('emails.password_reset')}}
                                                         </a>
                                                     </td>
@@ -83,7 +83,7 @@
                                                         </p>
 
                                                         <p style="margin-top: 0; color: #74787E; font-size: 12px; line-height: 1.5em;">
-                                                            <a style="color: #3869D4;" href="{{url('password/reset', $token)}}" target="_blank">
+                                                            <a style="color: #3869D4;" href="{{url('password/reset', $token)}}" target="_blank" rel="noopener noreferrer">
                                                                 {{url('password/reset', $token)}}
                                                             </a>
                                                         </p>
@@ -104,7 +104,7 @@
                                     <td style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; color: #AEAEAE; padding: 35px; text-align: center;">
                                         <p style="margin-top: 0; color: #74787E; font-size: 12px; line-height: 1.5em;">
                                             &copy; <?php echo date('Y'); ?>
-                                            <a style="color: #3869D4;" href="{{url('/')}}" target="_blank">{{$settings->title}}</a>.
+                                            <a style="color: #3869D4;" href="{{url('/')}}" target="_blank" rel="noopener noreferrer">{{$settings->title}}</a>.
                                             {{trans('emails.rights_reserved')}}
                                         </p>
                                     </td>

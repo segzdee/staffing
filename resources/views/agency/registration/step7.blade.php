@@ -27,7 +27,7 @@
                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
             </div>
             <div class="ml-3 text-sm">
-                <label for="terms_accepted" class="font-medium text-gray-700">I accept the <a href="{{ route('terms') }}" class="text-indigo-600 hover:text-indigo-500" target="_blank">General Terms of Service</a>.</label>
+                <label for="terms_accepted" class="font-medium text-gray-700">I accept the <a href="{{ route('terms') }}" class="text-indigo-600 hover:text-indigo-500" target="_blank" rel="noopener noreferrer">General Terms of Service</a>.</label>
             </div>
         </div>
         @error('terms_accepted')
@@ -55,7 +55,7 @@
                        class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
             </div>
             <div class="ml-3 text-sm">
-                <label for="privacy_accepted" class="font-medium text-gray-700">I have read the <a href="{{ route('privacy.settings') }}" class="text-indigo-600 hover:text-indigo-500" target="_blank">Privacy Policy</a>.</label>
+                <label for="privacy_accepted" class="font-medium text-gray-700">I have read the <a href="{{ route('privacy.settings') }}" class="text-indigo-600 hover:text-indigo-500" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</label>
             </div>
         </div>
         @error('privacy_accepted')

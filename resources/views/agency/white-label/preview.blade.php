@@ -170,7 +170,7 @@
                 </p>
                 @if(!$config->hide_powered_by)
                     <p class="text-gray-500 text-sm">
-                        Powered by <a href="https://overtimestaff.com" target="_blank" class="hover:text-white transition-colors" style="color: {{ $config->primary_color }}">OvertimeStaff</a>
+                        Powered by <a href="https://overtimestaff.com" target="_blank" class="hover:text-white transition-colors" style="color: {{ $config- rel="noopener noreferrer">primary_color }}">OvertimeStaff</a>
                     </p>
                 @endif
             </div>

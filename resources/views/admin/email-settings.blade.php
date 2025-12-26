@@ -68,7 +68,7 @@
                           </select>
                           <p class="help-block margin-bottom-zero @if (env_value('MAIL_MAILER', 'smtp') != 'ses') display-none @endif" id="ses">
                             {{ trans('admin.info_ses_email') }}
-                            <a href="{{ url('panel/admin/storage') }}" target="_blank">{{ trans('admin.storage') }}</a>
+                            <a href="{{ url('panel/admin/storage') }}" target="_blank" rel="noopener noreferrer">{{ trans('admin.storage') }}</a>
                           </p>
                         </div>
                       </div>
@@ -598,7 +598,7 @@
                     <div class="callout callout-warning">
                       <h4><i class="icon fa fa-exclamation-triangle"></i> {{ __('general.important') }}</h4>
 
-                      <p>{{ __('general.test_smtp') }} <strong><a href="https://www.smtper.net" target="_blank">https://www.smtper.net</a></strong></p>
+                      <p>{{ __('general.test_smtp') }} <strong><a href="https://www.smtper.net" target="_blank" rel="noopener noreferrer">https://www.smtper.net</a></strong></p>
                     </div>
 
                     <button type="submit" class="btn btn-success">{{ trans('admin.save') }}</button>

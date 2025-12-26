@@ -67,7 +67,7 @@
                 <label class="col-sm-2 control-label">Merchant ID</label>
                 <div class="col-sm-10">
                   <input type="text" value="{{ $data->key }}" name="key" class="form-control">
-                 <p class="help-block"><a href="https://www.coinpayments.net/acct-settings" target="_blank">https://www.coinpayments.net/acct-settings</a></p>
+                 <p class="help-block"><a href="https://www.coinpayments.net/acct-settings" target="_blank" rel="noopener noreferrer">https://www.coinpayments.net/acct-settings</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->

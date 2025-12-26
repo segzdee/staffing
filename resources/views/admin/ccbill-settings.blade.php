@@ -101,7 +101,7 @@
                 <label class="col-sm-2 control-label">CCBill Salt Key</label>
                 <div class="col-sm-10">
                   <input type="text" value="{{ $data->ccbill_salt }}" name="ccbill_salt" class="form-control">
-                  <p class="help-block"><a href="https://support.ccbill.com/" target="_blank">https://support.ccbill.com</a></p>
+                  <p class="help-block"><a href="https://support.ccbill.com/" target="_blank" rel="noopener noreferrer">https://support.ccbill.com</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->

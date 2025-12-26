@@ -62,7 +62,7 @@
                 <p class="text-sm text-gray-600 mt-1">
                     @if($publicProfileEnabled)
                         Your profile is visible at:
-                        <a href="{{ route('profile.public', $publicProfileSlug) }}" target="_blank" class="text-blue-600 hover:underline">
+                        <a href="{{ route('profile.public', $publicProfileSlug) }}" target="_blank" class="text-blue-600 hover:underline" rel="noopener noreferrer">
                             {{ route('profile.public', $publicProfileSlug) }}
                         </a>
                     @else

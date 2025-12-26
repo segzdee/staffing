@@ -202,7 +202,7 @@
                     {{ old('agree_terms') ? 'checked' : '' }}
                 >
                 <label for="agree_terms" class="text-sm font-medium leading-snug text-muted-foreground select-none">
-                    I agree to the <a href="{{ route('terms') }}" target="_blank" class="text-primary hover:underline">Terms of Service</a> and <a href="{{ route('privacy.settings') }}" target="_blank" class="text-primary hover:underline">Privacy Policy</a>
+                    I agree to the <a href="{{ route('terms') }}" target="_blank" class="text-primary hover:underline" rel="noopener noreferrer">Terms of Service</a> and <a href="{{ route('privacy.settings') }}" target="_blank" class="text-primary hover:underline" rel="noopener noreferrer">Privacy Policy</a>
                 </label>
             </div>
             @error('agree_terms')

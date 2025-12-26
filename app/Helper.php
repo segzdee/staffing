@@ -139,7 +139,9 @@ class Helper
                 break;
         }
 
-        chmod($image, 0777);
+        // Security: Use restrictive permissions (0644 = owner read/write, others read-only)
+        // File ownership should be set by the web server, not via chmod
+        chmod($image, 0644);
 
         return $image;
     }
@@ -197,7 +199,9 @@ class Helper
                 break;
         }
 
-        chmod($image, 0777);
+        // Security: Use restrictive permissions (0644 = owner read/write, others read-only)
+        // File ownership should be set by the web server, not via chmod
+        chmod($image, 0644);
 
         return $image;
     }

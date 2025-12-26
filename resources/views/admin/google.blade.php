@@ -54,7 +54,7 @@
                         <label class="col-sm-2 control-label">reCAPTCHA Secret Key</label>
                         <div class="col-sm-10">
                           <input type="password" value="{{ env_value('INVISIBLE_RECAPTCHA_SECRETKEY', '') }}" name="INVISIBLE_RECAPTCHA_SECRETKEY" class="form-control" placeholder="*************">
-                          <p class="help-block margin-bottom-zero"><a href="https://www.google.com/recaptcha/admin/create" target="_blank">https://www.google.com/recaptcha/admin/create</a></p>
+                          <p class="help-block margin-bottom-zero"><a href="https://www.google.com/recaptcha/admin/create" target="_blank" rel="noopener noreferrer">https://www.google.com/recaptcha/admin/create</a></p>
                         </div>
                       </div>
                     </div><!-- /.box-body -->

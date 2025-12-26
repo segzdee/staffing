@@ -377,7 +377,7 @@
                    @endforeach
                    </select>
                    <p class="help-block">
-                     {{ trans('general.info_stripe_connect_countries') }} <a href="https://dashboard.stripe.com/settings/connect/express" target="_blank">https://dashboard.stripe.com/settings/connect/express</a>
+                     {{ trans('general.info_stripe_connect_countries') }} <a href="https://dashboard.stripe.com/settings/connect/express" target="_blank" rel="noopener noreferrer">https://dashboard.stripe.com/settings/connect/express</a>
                    </p>
                </div>
              </div>

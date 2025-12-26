@@ -71,7 +71,7 @@
                 <label class="col-sm-2 control-label">API Key</label>
                 <div class="col-sm-10">
                   <input type="password" value="{{ $data->key }}" name="key" class="form-control">
-                 <p class="help-block"><a href="https://www.mollie.com/dashboard/developers/api-keys" target="_blank">https://www.mollie.com/dashboard/developers/api-keys</a></p>
+                 <p class="help-block"><a href="https://www.mollie.com/dashboard/developers/api-keys" target="_blank" rel="noopener noreferrer">https://www.mollie.com/dashboard/developers/api-keys</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->

@@ -71,7 +71,7 @@
                 <label class="col-sm-2 control-label">Razorpay Key</label>
                 <div class="col-sm-10">
                   <input type="text" value="{{ $data->key }}" name="key" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.razorpay.com/#/app/keys" target="_blank">https://dashboard.razorpay.com/#/app/keys</a></p>
+                 <p class="help-block"><a href="https://dashboard.razorpay.com/#/app/keys" target="_blank" rel="noopener noreferrer">https://dashboard.razorpay.com/#/app/keys</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->
@@ -82,7 +82,7 @@
                 <label class="col-sm-2 control-label">Razorpay Secret Key</label>
                 <div class="col-sm-10">
                   <input type="password" value="{{ $data->key_secret }}" name="key_secret" class="form-control">
-                 <p class="help-block"><a href="https://dashboard.razorpay.com/#/app/keys" target="_blank">https://dashboard.razorpay.com/#/app/keys</a></p>
+                 <p class="help-block"><a href="https://dashboard.razorpay.com/#/app/keys" target="_blank" rel="noopener noreferrer">https://dashboard.razorpay.com/#/app/keys</a></p>
                 </div>
               </div>
             </div><!-- /.box-body -->

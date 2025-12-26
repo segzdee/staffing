@@ -22,7 +22,7 @@
                     <tr>
                         <td style="padding: 25px 0; text-align: center;">
                             <img src="{{url('img')}}/{{$logo}}" alt="" width="100">
-                            <a style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #2F3133; text-decoration: none; text-shadow: 0 1px 0 white;" href="{{url('/')}}" target="_blank">
+                            <a style="font-family: Arial, &#039;Helvetica Neue&#039;, Helvetica, sans-serif; font-size: 16px; font-weight: bold; color: #2F3133; text-decoration: none; text-shadow: 0 1px 0 white;" href="{{url('/')}}" target="_blank" rel="noopener noreferrer">
                                 {{$title_site}}
                             </a>
                         </td>

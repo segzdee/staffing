@@ -6,7 +6,7 @@
 				<tbody><tr>
 				<td>
 				<div style="padding:20px 0;font-size:18px;font-weight:bold;color:#f02d00;border-bottom:1px solid #dcdcdc">
-			<a href="{{ url('/')}}" style="display:inline-block;color:#fff;text-decoration:none" target="_blank">
+			<a href="{{ url('/')}}" style="display:inline-block;color:#fff;text-decoration:none" target="_blank" rel="noopener noreferrer">
 			<img  src="{{url('img/logo-blue.png')}}" width="150">
 		</a>
 		</div>
@@ -24,7 +24,7 @@
 		{{ trans('auth.password_reset_mail') }}
 	</div>
 	<div style="margin:30px 0 35px 0">
-		<a href="{{ url('password/reset', $token) }}" style="display:inline-block;padding:4px 20px;font-weight:bold;line-height:24px;text-decoration:none;color:#f02d00;border:1px solid #f02d00;border-radius:3px" target="_blank">
+		<a href="{{ url('password/reset', $token) }}" style="display:inline-block;padding:4px 20px;font-weight:bold;line-height:24px;text-decoration:none;color:#f02d00;border:1px solid #f02d00;border-radius:3px" target="_blank" rel="noopener noreferrer">
 			{{ trans('auth.password_reset_2') }}
 			</a>
 		</div>

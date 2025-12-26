@@ -53,7 +53,7 @@
                                     </div>
                                     <div class="panel-body text-center">
                                         @if($documentUrls['front'])
-                                            <a href="{{ $documentUrls['front'] }}" target="_blank" class="document-preview">
+                                            <a href="{{ $documentUrls['front'] }}" target="_blank" class="document-preview" rel="noopener noreferrer">
                                                 <img src="{{ $documentUrls['front'] }}" alt="Document Front" class="img-responsive" style="max-height: 300px; margin: 0 auto;">
                                             </a>
                                             <p class="text-muted small mt-2">Click to view full size</p>
@@ -72,7 +72,7 @@
                                     </div>
                                     <div class="panel-body text-center">
                                         @if($documentUrls['back'])
-                                            <a href="{{ $documentUrls['back'] }}" target="_blank" class="document-preview">
+                                            <a href="{{ $documentUrls['back'] }}" target="_blank" class="document-preview" rel="noopener noreferrer">
                                                 <img src="{{ $documentUrls['back'] }}" alt="Document Back" class="img-responsive" style="max-height: 300px; margin: 0 auto;">
                                             </a>
                                             <p class="text-muted small mt-2">Click to view full size</p>
@@ -93,7 +93,7 @@
                                         <strong>Selfie Photo</strong>
                                     </div>
                                     <div class="panel-body text-center">
-                                        <a href="{{ $documentUrls['selfie'] }}" target="_blank" class="document-preview">
+                                        <a href="{{ $documentUrls['selfie'] }}" target="_blank" class="document-preview" rel="noopener noreferrer">
                                             <img src="{{ $documentUrls['selfie'] }}" alt="Selfie" class="img-responsive img-circle" style="max-height: 200px; margin: 0 auto;">
                                         </a>
                                         <p class="text-muted small mt-2">Click to view full size</p>

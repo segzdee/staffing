@@ -68,7 +68,7 @@
                        <label class="col-sm-2 control-label">{{ trans('general.iso_code') }}</label>
                        <div class="col-sm-10">
                          <input type="text" value="{{ $state->code }}" name="iso_code" class="form-control" placeholder="{{ trans('general.iso_code') }} (NY)">
-                         <p class="help-block">{{ trans('general.iso_code_states') }} <a href="https://en.wikipedia.org/wiki/ISO_3166-2" target="_blank">(ISO 3166-2 subdivision code)</a></p>
+                         <p class="help-block">{{ trans('general.iso_code_states') }} <a href="https://en.wikipedia.org/wiki/ISO_3166-2" target="_blank" rel="noopener noreferrer">(ISO 3166-2 subdivision code)</a></p>
                        </div>
                      </div>
                    </div><!-- /.box-body -->

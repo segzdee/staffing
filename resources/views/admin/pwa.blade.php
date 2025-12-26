@@ -53,7 +53,7 @@
                    </div><!-- /.box-body -->
 
                    <div class="box-body">
-                     <h4>PNG ICONS for the PWA (<a href="https://maskable.app/editor" target="_blank">https://maskable.app/editor</a>)</h4>
+                     <h4>PNG ICONS for the PWA (<a href="https://maskable.app/editor" target="_blank" rel="noopener noreferrer">https://maskable.app/editor</a>)</h4>
                    </div>
 
                    <!-- Start Box Body -->
@@ -192,7 +192,7 @@
                    <hr />
 
                    <div class="box-body">
-                     <h4>PNG SPLASH screens for the PWA (<a href="https://appsco.pe/developer/splash-screens" target="_blank">https://appsco.pe/developer/splash-screens</a>)</h4>
+                     <h4>PNG SPLASH screens for the PWA (<a href="https://appsco.pe/developer/splash-screens" target="_blank" rel="noopener noreferrer">https://appsco.pe/developer/splash-screens</a>)</h4>
                    </div>
 
                    <!-- Start Box Body -->

@@ -123,7 +123,7 @@
 					</form>
 
 					@if ($settings->captcha == 'on')
-						<small class="btn-block text-center mt-4 text-gray-500">{{trans('auth.protected_recaptcha')}} <a href="https://policies.google.com/privacy" target="_blank">{{trans('general.privacy')}}</a> - <a href="https://policies.google.com/terms" target="_blank">{{trans('general.terms')}}</a></small>
+						<small class="btn-block text-center mt-4 text-gray-500">{{trans('auth.protected_recaptcha')}} <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">{{trans('general.privacy')}}</a> - <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">{{trans('general.terms')}}</a></small>
 					@endif
 
 					@if ($settings->registration_active == '1')

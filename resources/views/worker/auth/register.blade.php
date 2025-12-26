@@ -426,9 +426,9 @@
                        class="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-ring">
                 <label for="terms" class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     I agree to the
-                    <a href="/terms" target="_blank" class="font-medium text-primary hover:underline">Terms of Service</a>
+                    <a href="/terms" target="_blank" class="font-medium text-primary hover:underline" rel="noopener noreferrer">Terms of Service</a>
                     and
-                    <a href="/privacy" target="_blank" class="font-medium text-primary hover:underline">Privacy Policy</a>
+                    <a href="/privacy" target="_blank" class="font-medium text-primary hover:underline" rel="noopener noreferrer">Privacy Policy</a>
                 </label>
             </div>
             <p x-show="errors.terms" x-text="errors.terms" class="text-sm text-destructive mt-1 ml-6" role="alert"></p>

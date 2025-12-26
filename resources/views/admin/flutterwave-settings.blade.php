@@ -62,7 +62,7 @@
                <label class="col-sm-2 control-label">Public Key</label>
                <div class="col-sm-10">
                  <input type="text" value="{{ $data->key }}" name="key" class="form-control">
-                <p class="help-block"><a href="https://dashboard.flutterwave.com/dashboard/settings/apis" target="_blank">https://dashboard.flutterwave.com/dashboard/settings/apis</a></p>
+                <p class="help-block"><a href="https://dashboard.flutterwave.com/dashboard/settings/apis" target="_blank" rel="noopener noreferrer">https://dashboard.flutterwave.com/dashboard/settings/apis</a></p>
                </div>
              </div>
            </div><!-- /.box-body -->
@@ -73,7 +73,7 @@
                <label class="col-sm-2 control-label">Secret Key</label>
                <div class="col-sm-10">
                  <input type="text" value="{{ $data->key_secret }}" name="key_secret" class="form-control">
-                <p class="help-block"><a href="https://dashboard.flutterwave.com/dashboard/settings/apis" target="_blank">https://dashboard.flutterwave.com/dashboard/settings/apis</a></p>
+                <p class="help-block"><a href="https://dashboard.flutterwave.com/dashboard/settings/apis" target="_blank" rel="noopener noreferrer">https://dashboard.flutterwave.com/dashboard/settings/apis</a></p>
                </div>
              </div>
            </div><!-- /.box-body -->

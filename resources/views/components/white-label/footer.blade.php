@@ -86,7 +86,7 @@
 
             @if(!$hidePoweredBy)
                 <p class="text-gray-500 text-sm">
-                    Powered by <a href="https://overtimestaff.com" target="_blank" rel="noopener" class="hover:text-white transition-colors" style="color: {{ $primaryColor }}">OvertimeStaff</a>
+                    Powered by <a href="https://overtimestaff.com" target="_blank" rel="noopener" class="hover:text-white transition-colors" style="color: {{ $primaryColor }}" rel="noopener noreferrer">OvertimeStaff</a>
                 </p>
             @endif
         </div>

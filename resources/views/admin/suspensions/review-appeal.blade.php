@@ -56,7 +56,7 @@
                                         {{ $evidence['name'] ?? 'Document' }}
                                     </span>
                                     @if(isset($evidence['path']))
-                                        <a href="{{ Storage::url($evidence['path']) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <a href="{{ Storage::url($evidence['path']) }}" target="_blank" class="btn btn-sm btn-outline-primary" rel="noopener noreferrer">
                                             <i class="fas fa-download"></i> View
                                         </a>
                                     @endif

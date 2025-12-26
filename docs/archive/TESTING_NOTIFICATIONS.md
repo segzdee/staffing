@@ -4,7 +4,7 @@
 
 ### ✅ 1. Reverb Keys Generated
 - REVERB_APP_ID: `982262`
-- REVERB_APP_KEY: `qbkaewaad7gauyd4nldo`
+- REVERB_APP_KEY: `YOUR_REVERB_APP_KEY`
 - REVERB_APP_SECRET: `hahdpj6mpco1qqpr8i7l`
 - BROADCAST_DRIVER: `reverb`
 - REVERB_HOST: `localhost`

@@ -6,7 +6,7 @@ Your Laravel Cloud database is configured as follows:
 
 ### Connection String
 ```
-mysql://ylln4okatw3eypmj:8rfN60oN51awZj8LLqNp@db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud?name=Cloud%20-%20staffing
+mysql://YOUR_DATABASE_USERNAME:YOUR_DATABASE_PASSWORD@db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud?name=Cloud%20-%20staffing
 ```
 
 ### Environment Variables
@@ -18,14 +18,14 @@ Add these to your Laravel Cloud environment variables:
 DB_CONNECTION=mysql
 DB_HOST=db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud
 DB_PORT=3306
-DB_USERNAME=ylln4okatw3eypmj
-DB_PASSWORD=8rfN60oN51awZj8LLqNp
+DB_USERNAME=YOUR_DATABASE_USERNAME
+DB_PASSWORD=YOUR_DATABASE_PASSWORD
 DB_DATABASE=staffing
 ```
 
 **Option 2: Using DATABASE_URL (Alternative)**
 ```env
-DATABASE_URL=mysql://ylln4okatw3eypmj:8rfN60oN51awZj8LLqNp@db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud:3306/staffing
+DATABASE_URL=mysql://YOUR_DATABASE_USERNAME:YOUR_DATABASE_PASSWORD@db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud:3306/staffing
 ```
 
 **Note:** 
@@ -37,8 +37,8 @@ DATABASE_URL=mysql://ylln4okatw3eypmj:8rfN60oN51awZj8LLqNp@db-a0a22c02-3a24-4c4f
 
 - **Host**: `db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud`
 - **Port**: `3306`
-- **Username**: `ylln4okatw3eypmj`
-- **Password**: `8rfN60oN51awZj8LLqNp`
+- **Username**: `YOUR_DATABASE_USERNAME`
+- **Password**: `YOUR_DATABASE_PASSWORD`
 - **Region**: `eu-central-1` (Europe - Frankfurt)
 - **Provider**: Laravel Cloud Managed Database
 
@@ -126,8 +126,8 @@ To connect from your local machine (if allowed by Laravel Cloud):
 DB_CONNECTION=mysql
 DB_HOST=db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud
 DB_PORT=3306
-DB_USERNAME=ylln4okatw3eypmj
-DB_PASSWORD=8rfN60oN51awZj8LLqNp
+DB_USERNAME=YOUR_DATABASE_USERNAME
+DB_PASSWORD=YOUR_DATABASE_PASSWORD
 DB_DATABASE=staffing
 ```
 

@@ -9,7 +9,7 @@
    ✅ Database: Connected
    Host: db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.db.laravel.cloud
    Database: main
-   Username: ylln4okatw3eypmj
+   Username: YOUR_DATABASE_USERNAME
    Migrations: 286 run
 
 🔴 Checking Redis Connection...

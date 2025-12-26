@@ -9,7 +9,7 @@ Your Laravel Cloud Redis cache is configured with TLS encryption and username au
 redis-cli -h cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud \
   -p 6379 \
   --user application \
-  --pass BYeRt00Hn3CKLojaGVys \
+  --pass YOUR_REDIS_PASSWORD \
   --sni cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud \
   --tls
 ```
@@ -22,7 +22,7 @@ Add these to your Laravel Cloud environment variables:
 REDIS_HOST=tls://cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud
 REDIS_USERNAME=application
 REDIS_PORT=6379
-REDIS_PASSWORD=BYeRt00Hn3CKLojaGVys
+REDIS_PASSWORD=YOUR_REDIS_PASSWORD
 REDIS_DB=0
 REDIS_CACHE_DB=0
 ```
@@ -32,7 +32,7 @@ REDIS_CACHE_DB=0
 - **Host**: `cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud`
 - **Port**: `6379`
 - **Username**: `application`
-- **Password**: `BYeRt00Hn3CKLojaGVys`
+- **Password**: `YOUR_REDIS_PASSWORD` (set in environment variables)
 - **Scheme**: `tls` (TLS encryption enabled)
 - **SNI**: `cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud`
 - **Region**: `eu-central-1` (Europe - Frankfurt)
@@ -94,7 +94,7 @@ Connect directly using the redis-cli command:
 redis-cli -h cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud \
   -p 6379 \
   --user application \
-  --pass BYeRt00Hn3CKLojaGVys \
+  --pass YOUR_REDIS_PASSWORD \
   --sni cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud \
   --tls
 ```
@@ -219,7 +219,7 @@ To connect from your local machine (if allowed by Laravel Cloud):
 REDIS_HOST=tls://cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud
 REDIS_USERNAME=application
 REDIS_PORT=6379
-REDIS_PASSWORD=BYeRt00Hn3CKLojaGVys
+REDIS_PASSWORD=YOUR_REDIS_PASSWORD
 REDIS_DB=0
 REDIS_CACHE_DB=0
 ```

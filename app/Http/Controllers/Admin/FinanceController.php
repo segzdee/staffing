@@ -312,18 +312,45 @@ class FinanceController extends Controller
             'email' => 'email',
         ]);
 
+        // SECURITY: Only update secret fields if new value provided (not empty)
+        $secretFields = ['key_secret', 'webhook_secret'];
+        foreach ($secretFields as $field) {
+            if (isset($input[$field]) && empty($input[$field])) {
+                unset($input[$field]);
+            }
+        }
+
         $data->fill($input)->save();
 
-        // Set Keys on .env file
+        // SECURITY: Audit log for payment gateway changes
+        \Log::channel('admin')->info('Payment gateway settings updated', [
+            'admin_id' => auth()->id(),
+            'gateway' => $data->name,
+            'gateway_id' => $id,
+            'changed_fields' => array_keys($input),
+            'ip' => $request->ip(),
+        ]);
+
+        // Set Keys on .env file (only if new values provided)
         if ($data->name == 'Stripe') {
-            Helper::envUpdate('STRIPE_KEY', $input['key']);
-            Helper::envUpdate('STRIPE_SECRET', $input['key_secret']);
-            Helper::envUpdate('STRIPE_WEBHOOK_SECRET', $input['webhook_secret']);
+            if (!empty($input['key'])) {
+                Helper::envUpdate('STRIPE_KEY', $input['key']);
+            }
+            if (!empty($input['key_secret'])) {
+                Helper::envUpdate('STRIPE_SECRET', $input['key_secret']);
+            }
+            if (!empty($input['webhook_secret'])) {
+                Helper::envUpdate('STRIPE_WEBHOOK_SECRET', $input['webhook_secret']);
+            }
         }
 
         if ($data->name == 'Flutterwave') {
-            Helper::envUpdate('FLW_PUBLIC_KEY', $input['key']);
-            Helper::envUpdate('FLW_SECRET_KEY', $input['key_secret']);
+            if (!empty($input['key'])) {
+                Helper::envUpdate('FLW_PUBLIC_KEY', $input['key']);
+            }
+            if (!empty($input['key_secret'])) {
+                Helper::envUpdate('FLW_SECRET_KEY', $input['key_secret']);
+            }
         }
 
         return back()->withSuccessMessage(__('admin.success_update'));

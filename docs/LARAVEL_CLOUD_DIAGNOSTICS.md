@@ -127,8 +127,8 @@ php artisan view:cache
 DB_CONNECTION=mysql
 DB_HOST=db-a0a22c02-3a24-4c4f-a286-c2ce91c97325.eu-central-1.public.db.laravel.cloud
 DB_PORT=3306
-DB_USERNAME=ylln4okatw3eypmj
-DB_PASSWORD=8rfN60oN51awZj8LLqNp
+DB_USERNAME=YOUR_DATABASE_USERNAME
+DB_PASSWORD=YOUR_DATABASE_PASSWORD
 DB_DATABASE=staffing
 ```
 
@@ -137,7 +137,7 @@ DB_DATABASE=staffing
 REDIS_HOST=tls://cache-a0a22d2a-b96f-4397-ba7f-1110e25f50c1.eu-central-1.public.caches.laravel.cloud
 REDIS_USERNAME=application
 REDIS_PORT=6379
-REDIS_PASSWORD=BYeRt00Hn3CKLojaGVys
+REDIS_PASSWORD=YOUR_REDIS_PASSWORD
 REDIS_DB=0
 REDIS_CACHE_DB=0
 ```

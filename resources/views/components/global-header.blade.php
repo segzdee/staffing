@@ -52,7 +52,7 @@
                         x-cloak>
                         <template x-for="lang in languages" :key="lang.code">
                             <button @click="currentLang = lang.code; langDropdown = false"
-                                :class="currentLang === lang.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'"
+                                :class="currentLang === lang.code ? 'bg-amber-50 text-amber-700' : 'text-gray-700 hover:bg-gray-50'"
                                 class="w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors">
                                 <img :src="'/images/flags/' + lang.flag + '.svg'"
                                     class="w-5 h-4 rounded-sm object-cover" onerror="this.style.display='none'">

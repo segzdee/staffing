@@ -22,10 +22,29 @@
             <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-foreground mb-6">
                 Staffing, <span class="text-primary">Simplified.</span>
             </h1>
-            <p class="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-                The global shift marketplace. Connect with verified workers instantly. No agencies. No phone calls. Just
-                work.
+            <p class="text-xl text-muted-foreground mb-6 max-w-3xl mx-auto leading-relaxed">
+                Unlike traditional agencies, OvertimeStaff is a direct marketplace. Post shifts, workers apply instantly, and our AI matches you with verified talent—no middlemen, no markups, no phone tag.
             </p>
+            <p class="text-lg text-muted-foreground/80 mb-10 max-w-2xl mx-auto">
+                Escrow-protected payments. Instant payouts. Real-time matching. Built for the modern workforce.
+            </p>
+
+            {{-- Market Stats - Prominent Display --}}
+            <div class="mb-10 flex flex-wrap justify-center items-center gap-6 sm:gap-8 text-sm">
+                <div class="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+                    <span class="text-muted-foreground font-medium">VOL:</span>
+                    <span class="text-2xl font-bold text-primary" x-data x-text="'247'">247</span>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <span class="text-muted-foreground font-medium">VAL:</span>
+                    <span class="text-2xl font-bold text-green-600" x-data x-text="'$42.5K'">$42.5K</span>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                    <span class="text-muted-foreground font-medium">AVG:</span>
+                    <span class="text-2xl font-bold text-blue-600" x-data x-text="'$32/hr'">$32/hr</span>
+                </div>
+            </div>
+
             <div class="flex flex-col sm:flex-row justify-center gap-4">
                 <x-ui.button size="lg" as="a" href="{{ route('register', ['type' => 'business']) }}">
                     Get Started
@@ -61,19 +80,8 @@
                 </div>
             </section>
 
-            {{-- Trust Indicators --}}
-            <div class="pt-8 border-t border-border">
-                <p class="text-sm font-medium text-muted-foreground mb-6">Trusted by industry leaders worldwide</p>
-                <div
-                    class="flex flex-wrap justify-center gap-8 opacity-60 grayscale transition-all hover:grayscale-0 hover:opacity-100">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google"
-                        class="h-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" alt="IBM" class="h-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg" alt="Airbnb"
-                        class="h-6">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon" class="h-6">
-                </div>
-            </div>
+            {{-- Trust Indicators - Removed until we have verified client relationships --}}
+            {{-- If you have real clients, uncomment and add "Trusted by teams at..." prefix --}}
         </div>
     </section>
 
@@ -84,62 +92,64 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid md:grid-cols-3 gap-8">
                 {{-- Feature 1 --}}
-                <x-ui.card class="bg-card hover:shadow-md transition-shadow">
-                    <x-ui.card-header>
-                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 text-primary">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                <x-ui.card class="bg-card hover:shadow-lg transition-all border-2 border-transparent hover:border-primary/20">
+                    <x-ui.card-header class="pb-4">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <x-ui.card-title class="text-xl mb-2">Instant Booking</x-ui.card-title>
+                                <p class="text-muted-foreground leading-relaxed text-sm">
+                                    Post a shift and fill it in minutes. Our AI matching algorithm connects you with the best available
+                                    talent instantly—no waiting, no back-and-forth.
+                                </p>
+                            </div>
                         </div>
-                        <x-ui.card-title>Instant Booking</x-ui.card-title>
                     </x-ui.card-header>
-                    <x-ui.card-content>
-                        <p class="text-muted-foreground leading-relaxed">
-                            Post a shift and fill it in minutes. Our matching algorithm connects you with the best available
-                            talent instantly.
-                        </p>
-                    </x-ui.card-content>
                 </x-ui.card>
 
                 {{-- Feature 2 --}}
-                <x-ui.card class="bg-card hover:shadow-md transition-shadow">
-                    <x-ui.card-header>
-                        <div
-                            class="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center mb-4 text-green-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
+                <x-ui.card class="bg-card hover:shadow-lg transition-all border-2 border-transparent hover:border-green-500/20">
+                    <x-ui.card-header class="pb-4">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <x-ui.card-title class="text-xl mb-2">Verified Talent</x-ui.card-title>
+                                <p class="text-muted-foreground leading-relaxed text-sm">
+                                    Every worker is vetted before they can claim shifts. ID verification, right-to-work checks, and skills assessment—all automated, all transparent.
+                                </p>
+                            </div>
                         </div>
-                        <x-ui.card-title>Verified Talent</x-ui.card-title>
                     </x-ui.card-header>
-                    <x-ui.card-content>
-                        <p class="text-muted-foreground leading-relaxed">
-                            Every worker is vetted. ID checks, right-to-work verification, and skills assessment before they
-                            can claim a shift.
-                        </p>
-                    </x-ui.card-content>
                 </x-ui.card>
 
                 {{-- Feature 3 --}}
-                <x-ui.card class="bg-card hover:shadow-md transition-shadow">
-                    <x-ui.card-header>
-                        <div
-                            class="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center mb-4 text-purple-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
+                <x-ui.card class="bg-card hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-500/20">
+                    <x-ui.card-header class="pb-4">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0">
+                                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <x-ui.card-title class="text-xl mb-2">Automatic Payroll</x-ui.card-title>
+                                <p class="text-muted-foreground leading-relaxed text-sm">
+                                    Escrow-protected payments, automatic tax handling, and instant worker payouts. You approve hours, we handle everything else.
+                                </p>
+                            </div>
                         </div>
-                        <x-ui.card-title>Automatic Payroll</x-ui.card-title>
                     </x-ui.card-header>
-                    <x-ui.card-content>
-                        <p class="text-muted-foreground leading-relaxed">
-                            We handle the payments, taxes, and invoices. You just approve the hours and get back to
-                            business.
-                        </p>
-                    </x-ui.card-content>
                 </x-ui.card>
             </div>
         </div>

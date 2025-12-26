@@ -319,7 +319,7 @@
                                :required="registrationMethod === 'phone'"
                                autocomplete="tel"
                                :class="{ 'border-destructive focus-visible:ring-destructive': errors.phone }"
-                               placeholder="(555) 123-4567" />
+                               placeholder="+356 2123 4567" />
                     </div>
                 </div>
                 <p x-show="errors.phone" x-text="errors.phone" class="text-sm text-destructive mt-1" role="alert"></p>

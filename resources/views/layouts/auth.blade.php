@@ -67,7 +67,7 @@
     {{-- Split Screen Container --}}
     <div class="flex min-h-screen">
         {{-- Left Panel - Brand --}}
-        <div class="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden">
+        <div class="hidden lg:flex lg:w-1/2 relative bg-gradient-to-br from-amber-700 via-orange-700 to-rose-800 overflow-hidden">
             @include('auth.partials.brand-panel', [
                 'brandHeading' => trim($__env->yieldContent('brand-headline', 'Work. Covered.')),
                 'brandSubheading' => trim($__env->yieldContent('brand-subtext', 'When shifts break, the right people show up.'))

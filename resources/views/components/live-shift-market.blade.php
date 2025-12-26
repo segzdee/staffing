@@ -111,8 +111,15 @@
         </div>
     @endif
 
-    {{-- Loading State --}}
-    <div x-show="loading" class="text-center py-12">
+    {{-- Loading State - Only show briefly, then show demo shifts if no real data --}}
+    <div x-show="loading && shifts.length === 0" 
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="text-center py-12">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         <p class="mt-4 text-gray-600">Loading shifts...</p>
     </div>

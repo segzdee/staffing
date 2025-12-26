@@ -20,6 +20,10 @@
     <div class="space-y-6 px-4 sm:px-0"
          x-data="{
              userType: '{{ $type }}',
+             password: '',
+             strength: 0,
+             strengthText: '',
+             strengthTextColor: 'text-gray-600',
              headlines: {
                  worker: { headline: 'Start earning today.', subtext: 'Find shifts that fit your schedule.' },
                  business: { headline: 'Find workers instantly.', subtext: 'Post a shift and get matched in 15 minutes.' },
@@ -30,6 +34,35 @@
                  google: '{{ route('social.redirect', ['provider' => 'google']) }}',
                  apple: '{{ route('social.redirect', ['provider' => 'apple']) }}',
                  facebook: '{{ route('social.redirect', ['provider' => 'facebook']) }}'
+             },
+             checkStrength() {
+                 const p = this.password;
+                 let score = 0;
+                 
+                 if (p.length >= 8) score++;
+                 if (p.length >= 12) score++;
+                 if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+                 if (/\d/.test(p)) score++;
+                 if (/[^a-zA-Z\d]/.test(p)) score++;
+                 
+                 this.strength = Math.min(score, 4);
+                 
+                 if (this.strength === 0) {
+                     this.strengthText = 'Too short';
+                     this.strengthTextColor = 'text-gray-500';
+                 } else if (this.strength === 1) {
+                     this.strengthText = 'Weak';
+                     this.strengthTextColor = 'text-red-600';
+                 } else if (this.strength === 2) {
+                     this.strengthText = 'Fair';
+                     this.strengthTextColor = 'text-orange-600';
+                 } else if (this.strength === 3) {
+                     this.strengthText = 'Good';
+                     this.strengthTextColor = 'text-yellow-600';
+                 } else {
+                     this.strengthText = 'Strong';
+                     this.strengthTextColor = 'text-green-600';
+                 }
              }
          }"
          x-init="
@@ -41,8 +74,8 @@
          ">
         {{-- Header --}}
         <div class="space-y-2 text-center sm:text-left">
-            <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Create account</h2>
-            <p class="text-sm text-muted-foreground">Get started in minutes.</p>
+            <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-foreground" style="font-family: 'Inter', system-ui, sans-serif; letter-spacing: -0.02em;">Create account</h2>
+            <p class="text-base text-muted-foreground">Join thousands of workers and businesses already on the platform.</p>
         </div>
 
         {{-- Error Messages --}}
@@ -172,7 +205,19 @@
                     required
                     autocomplete="new-password"
                     class="w-full h-12 sm:h-10 text-base sm:text-sm"
+                    x-model="password"
+                    @input="checkStrength()"
                 />
+                {{-- Password Strength Indicator --}}
+                <div x-show="password.length > 0" class="space-y-2">
+                    <div class="flex gap-1 h-1.5">
+                        <div class="flex-1 rounded-full transition-colors" :class="strength >= 1 ? (strength === 1 ? 'bg-red-500' : (strength === 2 ? 'bg-orange-500' : (strength === 3 ? 'bg-yellow-500' : 'bg-green-500'))) : 'bg-gray-200'"></div>
+                        <div class="flex-1 rounded-full transition-colors" :class="strength >= 2 ? (strength === 2 ? 'bg-orange-500' : (strength === 3 ? 'bg-yellow-500' : 'bg-green-500')) : 'bg-gray-200'"></div>
+                        <div class="flex-1 rounded-full transition-colors" :class="strength >= 3 ? (strength === 3 ? 'bg-yellow-500' : 'bg-green-500') : 'bg-gray-200'"></div>
+                        <div class="flex-1 rounded-full transition-colors" :class="strength >= 4 ? 'bg-green-500' : 'bg-gray-200'"></div>
+                    </div>
+                    <p class="text-xs" :class="strengthTextColor" x-text="strengthText"></p>
+                </div>
                 @error('password')
                     <p class="text-sm text-destructive">{{ $message }}</p>
                 @enderror

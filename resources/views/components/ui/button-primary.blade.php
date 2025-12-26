@@ -12,13 +12,13 @@
 $baseClasses = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
 $variantClasses = [
-    'primary' => 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-    'secondary' => 'bg-gray-900 text-white hover:bg-gray-800 focus:ring-gray-500',
-    'outline' => 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 focus:ring-blue-500',
+    'primary' => 'bg-amber-600 text-white hover:bg-amber-700 focus:ring-amber-500',
+    'secondary' => 'bg-slate-800 text-white hover:bg-slate-700 focus:ring-slate-500',
+    'outline' => 'border-2 border-amber-600 text-amber-600 hover:bg-amber-50 focus:ring-amber-500',
     'outline-white' => 'border-2 border-white text-white bg-transparent hover:bg-white/10 focus:ring-white',
-    'outline-dark' => 'border-2 border-gray-900 text-gray-900 bg-transparent hover:bg-gray-900 hover:text-white focus:ring-gray-500',
-    'ghost' => 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
-    'white' => 'bg-white text-gray-900 hover:bg-gray-50 focus:ring-gray-500 border border-gray-200',
+    'outline-dark' => 'border-2 border-slate-800 text-slate-800 bg-transparent hover:bg-slate-800 hover:text-white focus:ring-slate-500',
+    'ghost' => 'text-slate-700 hover:bg-slate-100 focus:ring-slate-500',
+    'white' => 'bg-white text-slate-900 hover:bg-slate-50 focus:ring-slate-500 border border-slate-200',
 ];
 
 $sizeClasses = [

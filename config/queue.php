@@ -13,7 +13,8 @@ return [
     |
     */
 
-    'default' => env('QUEUE_CONNECTION', 'sync'),
+    // SECURITY: Default to database in production, sync only for local development
+    'default' => env('QUEUE_CONNECTION', app()->environment('production') ? 'database' : 'sync'),
 
     /*
     |--------------------------------------------------------------------------

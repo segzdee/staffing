@@ -21,10 +21,10 @@ Comprehensive security cleanup to remove secrets from documentation, secure admi
 - All archive docs with REVERB_APP_KEY
 
 **Secrets Replaced**:
-- `8rfN60oN51awZj8LLqNp` → `YOUR_DATABASE_PASSWORD`
-- `BYeRt00Hn3CKLojaGVys` → `YOUR_REDIS_PASSWORD`
-- `qbkaewaad7gauyd4nldo` → `YOUR_REVERB_APP_KEY`
-- `ylln4okatw3eypmj` → `YOUR_DATABASE_USERNAME`
+- `YOUR_DATABASE_PASSWORD` → `YOUR_DATABASE_PASSWORD`
+- `YOUR_REDIS_PASSWORD` → `YOUR_REDIS_PASSWORD`
+- `YOUR_REVERB_APP_KEY` → `YOUR_REVERB_APP_KEY`
+- `YOUR_DATABASE_USERNAME` → `YOUR_DATABASE_USERNAME`
 
 **Script Created**: `scripts/remove-secrets-from-docs.php`
 
@@ -149,9 +149,9 @@ brew install bfg
 git clone --mirror https://github.com/your-org/staffing.git
 
 # Create passwords.txt with secrets to remove
-echo "8rfN60oN51awZj8LLqNp" > passwords.txt
-echo "BYeRt00Hn3CKLojaGVys" >> passwords.txt
-echo "qbkaewaad7gauyd4nldo" >> passwords.txt
+echo "YOUR_DATABASE_PASSWORD" > passwords.txt
+echo "YOUR_REDIS_PASSWORD" >> passwords.txt
+echo "YOUR_REVERB_APP_KEY" >> passwords.txt
 
 # Remove secrets
 bfg --replace-text passwords.txt staffing.git

@@ -89,7 +89,21 @@
                      <div class="form-group">
                        <label class="col-sm-2 control-label">Amazon Secret</label>
                        <div class="col-sm-10">
-                         <input type="text" value="{{ env_value('AWS_SECRET_ACCESS_KEY', '') }}" name="AWS_SECRET_ACCESS_KEY" class="form-control" placeholder="Amazon Secret">
+                         @php
+                           $awsSecret = env_value('AWS_SECRET_ACCESS_KEY', '');
+                         @endphp
+                         @if($awsSecret)
+                           <div class="input-group">
+                             <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($awsSecret) }}" class="form-control" readonly>
+                             <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                               <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                             </span>
+                           </div>
+                           <p class="help-block text-muted">
+                             <small>Current value is masked. Enter a new value below to update.</small>
+                           </p>
+                         @endif
+                         <input type="password" name="AWS_SECRET_ACCESS_KEY" class="form-control" placeholder="Enter new Amazon secret to update" autocomplete="new-password">
                        </div>
                      </div>
                    </div><!-- /.box-body -->
@@ -131,7 +145,21 @@
                         <div class="form-group">
                           <label class="col-sm-2 control-label">DigitalOcean Secret</label>
                           <div class="col-sm-10">
-                            <input type="text" value="{{ env_value('DOS_SECRET_ACCESS_KEY', '') }}" name="DOS_SECRET_ACCESS_KEY" class="form-control" placeholder="DigitalOcean Secret">
+                            @php
+                              $dosSecret = env_value('DOS_SECRET_ACCESS_KEY', '');
+                            @endphp
+                            @if($dosSecret)
+                              <div class="input-group">
+                                <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($dosSecret) }}" class="form-control" readonly>
+                                <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                                  <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                                </span>
+                              </div>
+                              <p class="help-block text-muted">
+                                <small>Current value is masked. Enter a new value below to update.</small>
+                              </p>
+                            @endif
+                            <input type="password" name="DOS_SECRET_ACCESS_KEY" class="form-control" placeholder="Enter new DigitalOcean secret to update" autocomplete="new-password">
                           </div>
                         </div>
                       </div><!-- /.box-body -->
@@ -190,7 +218,21 @@
                             <div class="form-group">
                               <label class="col-sm-2 control-label">Wasabi Secret</label>
                               <div class="col-sm-10">
-                                <input type="text" value="{{ env_value('WAS_SECRET_ACCESS_KEY', '') }}" name="WAS_SECRET_ACCESS_KEY" class="form-control" placeholder="Wasabi Secret">
+                                @php
+                                  $wasSecret = env_value('WAS_SECRET_ACCESS_KEY', '');
+                                @endphp
+                                @if($wasSecret)
+                                  <div class="input-group">
+                                    <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($wasSecret) }}" class="form-control" readonly>
+                                    <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                                      <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                                    </span>
+                                  </div>
+                                  <p class="help-block text-muted">
+                                    <small>Current value is masked. Enter a new value below to update.</small>
+                                  </p>
+                                @endif
+                                <input type="password" name="WAS_SECRET_ACCESS_KEY" class="form-control" placeholder="Enter new Wasabi secret to update" autocomplete="new-password">
                               </div>
                             </div>
                           </div><!-- /.box-body -->
@@ -232,7 +274,21 @@
                       <div class="form-group">
                         <label class="col-sm-2 control-label">Backblaze Master Application Key</label>
                         <div class="col-sm-10">
-                          <input type="text" value="{{ env_value('BACKBLAZE_APP_KEY', '') }}" name="BACKBLAZE_APP_KEY" class="form-control" placeholder="Backblaze Master Application Key">
+                          @php
+                            $backblazeKey = env_value('BACKBLAZE_APP_KEY', '');
+                          @endphp
+                          @if($backblazeKey)
+                            <div class="input-group">
+                              <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($backblazeKey) }}" class="form-control" readonly>
+                              <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                                <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                              </span>
+                            </div>
+                            <p class="help-block text-muted">
+                              <small>Current value is masked. Enter a new value below to update.</small>
+                            </p>
+                          @endif
+                          <input type="password" name="BACKBLAZE_APP_KEY" class="form-control" placeholder="Enter new Backblaze key to update" autocomplete="new-password">
                         </div>
                       </div>
                     </div><!-- /.box-body -->
@@ -284,7 +340,21 @@
                             <div class="form-group">
                               <label class="col-sm-2 control-label">Vultr Secret</label>
                               <div class="col-sm-10">
-                                <input type="text" value="{{ env_value('VULTR_SECRET_KEY', '') }}" name="VULTR_SECRET_KEY" class="form-control" placeholder="Vultr Secret">
+                                @php
+                                  $vultrSecret = env_value('VULTR_SECRET_KEY', '');
+                                @endphp
+                                @if($vultrSecret)
+                                  <div class="input-group">
+                                    <input type="text" value="{{ \App\Helpers\SecretMaskHelper::mask($vultrSecret) }}" class="form-control" readonly>
+                                    <span class="input-group-addon" style="background-color: #f5f5f5; border-left: 0;">
+                                      <i class="fa fa-lock" title="Secret value is masked for security"></i>
+                                    </span>
+                                  </div>
+                                  <p class="help-block text-muted">
+                                    <small>Current value is masked. Enter a new value below to update.</small>
+                                  </p>
+                                @endif
+                                <input type="password" name="VULTR_SECRET_KEY" class="form-control" placeholder="Enter new Vultr secret to update" autocomplete="new-password">
                               </div>
                             </div>
                           </div><!-- /.box-body -->

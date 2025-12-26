@@ -1416,8 +1416,14 @@ class AdminController extends Controller
         $sql->google_analytics = $request->google_analytics;
         $sql->save();
 
-        foreach ($request->except(['_token']) as $key => $value) {
-            Helper::envUpdate($key, $value);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+        $result = $envService->updateFromRequest($request);
+
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
@@ -1565,8 +1571,14 @@ class AdminController extends Controller
         $this->settings->email_no_reply = $request->MAIL_FROM_ADDRESS;
         $this->settings->save();
 
-        foreach ($request->except(['_token']) as $key => $value) {
-            Helper::envUpdate($key, $value);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+        $result = $envService->updateFromRequest($request);
+
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
@@ -1582,8 +1594,14 @@ class AdminController extends Controller
         $this->settings->twitter_login = $request->twitter_login;
         $this->settings->save();
 
-        foreach ($request->except(['_token']) as $key => $value) {
-            Helper::envUpdate($key, $value);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+        $result = $envService->updateFromRequest($request);
+
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
@@ -1627,18 +1645,25 @@ class AdminController extends Controller
             'VULTR_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,vultr',
         ], $messages);
 
-        // Enabled/Disabled DigitalOcean CDN
-        if (! $request->DOS_CDN) {
-            Helper::envUpdate('DOS_CDN', null);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+
+        // Handle APP_URL trimming
+        if ($request->has('APP_URL')) {
+            $request->merge(['APP_URL' => trim($request->APP_URL, '/')]);
         }
 
-        foreach ($request->except(['_token']) as $key => $value) {
+        // Handle DOS_CDN checkbox
+        if (! $request->has('DOS_CDN') || ! $request->DOS_CDN) {
+            $request->merge(['DOS_CDN' => null]);
+        }
 
-            if ($value == $request->APP_URL) {
-                $value = trim($value, '/');
-            }
+        $result = $envService->updateFromRequest($request);
 
-            Helper::envUpdate($key, $value);
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));

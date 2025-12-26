@@ -6,6 +6,7 @@ use App\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\AdminSettings;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SettingsController extends Controller
@@ -298,8 +299,14 @@ class SettingsController extends Controller
         $sql->google_analytics = $request->google_analytics;
         $sql->save();
 
-        foreach ($request->except(['_token']) as $key => $value) {
-            Helper::envUpdate($key, $value);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+        $result = $envService->updateFromRequest($request);
+
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
@@ -325,8 +332,14 @@ class SettingsController extends Controller
             $this->settings->save();
         }
 
-        foreach ($request->except(['_token']) as $key => $value) {
-            Helper::envUpdate($key, $value);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+        $result = $envService->updateFromRequest($request);
+
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
@@ -348,8 +361,14 @@ class SettingsController extends Controller
             $this->settings->save();
         }
 
-        foreach ($request->except(['_token']) as $key => $value) {
-            Helper::envUpdate($key, $value);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+        $result = $envService->updateFromRequest($request);
+
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
@@ -398,18 +417,35 @@ class SettingsController extends Controller
             'VULTR_BUCKET' => 'required_if:FILESYSTEM_DRIVER,==,vultr',
         ], $messages);
 
-        // Enabled/Disabled DigitalOcean CDN
-        if (! $request->DOS_CDN) {
-            Helper::envUpdate('DOS_CDN', null);
+        // SECURITY: Use whitelist-based environment update service
+        $envService = app(\App\Services\EnvironmentUpdateService::class);
+
+        // Handle APP_URL trimming
+        if ($request->has('APP_URL')) {
+            $request->merge(['APP_URL' => trim($request->APP_URL, '/')]);
         }
 
-        foreach ($request->except(['_token']) as $key => $value) {
+        // Handle DOS_CDN checkbox
+        if (! $request->has('DOS_CDN') || ! $request->DOS_CDN) {
+            $request->merge(['DOS_CDN' => null]);
+        }
 
-            if ($value == $request->APP_URL) {
-                $value = trim($value, '/');
-            }
+        $result = $envService->updateFromRequest($request);
 
-            Helper::envUpdate($key, $value);
+        // Log any rejected keys
+        if (! empty($result['rejected'])) {
+            Log::channel('admin')->warning('Storage settings: Some keys were rejected', [
+                'admin_id' => auth()->id(),
+                'rejected_keys' => $result['rejected'],
+                'ip' => $request->ip(),
+            ]);
+        }
+
+        // Show errors if any
+        if (! empty($result['errors'])) {
+            return back()->withErrors([
+                'errors' => 'Some settings could not be updated: '.implode(', ', array_column($result['errors'], 'key')),
+            ]);
         }
 
         \Session::flash('success', trans('admin.success_update'));
